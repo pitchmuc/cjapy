@@ -5,6 +5,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import IO, Union, List
 from collections import defaultdict
+import time
 
 # Non standard libraries
 import pandas as pd
@@ -511,4 +512,256 @@ class CJA:
         if full:
             params["expansion"] = "approved,favorite,tags,usageSummary,usageSummaryWithRelevancyScore,description,sourceFieldId,segmentable,required,hideFromReporting,hidden,includeExcludeSetting,fieldDefinition,bucketingSetting,noValueOptionsSetting,defaultDimensionSort,persistenceSetting,storageId,tableName,dataSetIds,dataSetType,type,schemaPath,hasData,sourceFieldName,schemaType,sourceFieldType,fromGlobalLookup,multiValued,precision"
         res = self.connector.getData(self.endpoint +path,params=params)
+        return res
+    
+    def getDataViews(self,
+                    limit:int = 100,
+                    full:bool=False,
+                    parentDataGroupId:str=None,
+                    externalIds:str=None,
+                    externalParentIds:str=None,
+                    includeType:str="all",
+                    cached:bool=True,
+                    **kwargs
+                    )->list:
+        """
+        Returns the Data View configuration.
+        Arguments:
+            limit : OPTIONAL : number of results per request (default 100)
+            full : OPTIONAL : define if all possible information are returned.
+            parentDataGroupId : OPTIONAL : Filters data views by a single parentDataGroupId
+            externalIds : OPTIONAL : Comma-delimited list of external ids to limit the response with.
+            externalParentIds : OPTIONAL : Comma-delimited list of external parent ids to limit the response with.
+            dataViewIds : OPTIONAL : Comma-delimited list of data view ids to limit the response with.
+            includeType : OPTIONAL : include additional DataViews not owned by user.(default "all")
+            cached : OPTIONAL : return cached results
+        """
+        path = "/datagroups/dataviews"
+        params = {"limit":limit,"includeType": includeType,"cached":cached,"page":0}
+        if full:
+            params["expansion"] = "name,description,owner,isDeleted,parentDataGroupId,segmentList,currentTimezoneOffset,timezoneDesignator,modified,createdDate,organization,curationEnabled,recentRecordedAccess,sessionDefinition,curatedComponents,externalData,containerNames"
+        if parentDataGroupId:
+            params["parentDataGroupId"] = parentDataGroupId
+        if externalIds:
+            params["externalIds"] = externalIds
+        if externalParentIds:
+            params["externalParentIds"] = externalParentIds
+        res = self.connector.getData(self.endpoint+path, params=params)
+        data = res['content']
+        last = res.get('last',True)
+        while last != True:
+            params["page"] += 1
+            res = self.connector.getData(self.endpoint+path, params=params)
+            data += res['content']
+            last = res.get('last',True)
+        return data
+    
+    def getDataView(self,dataViewId:str=None,full:bool=False,save:bool=False)->dict:
+        """
+        Returns a specific Data View configuration from Configuration ID.
+        Arguments:
+            dataViewId : REQUIRED : The data view ID to retrieve.
+            full : OPTIONAL : getting extra information on the data view
+            save : OPTIONAL : save the response in JSON format
+        """
+        if dataViewId is None:
+            raise ValueError('dataViewId is required')
+        path = f"/datagroups/dataviews/{dataViewId}"
+        params = {}
+        if full:
+            params["expansion"] = "name,description,owner,isDeleted,parentDataGroupId,segmentList,currentTimezoneOffset,timezoneDesignator,modified,createdDate,organization,curationEnabled,recentRecordedAccess,sessionDefinition,curatedComponents,externalData,containerNames"
+        res = self.connector.getData(self.endpoint+path,params=params)
+        if save:
+            with open(f'{dataViewId}_{int(time.time())}.json',"w") as f:
+                f.write(json.dumps(res,indent=4))
+        return res
+    
+    def validateDataView(self, data:Union[dict,IO])->dict:
+        """
+        Validate the dictionary for the creation of a data view.
+        Argument:
+            data : REQUIRED : The dictionary or json file that holds the definition for the dataview to be created.
+        """
+        if data is None:
+            raise ValueError("Require information to be passed for data view creation")
+        path = "/datagroups/dataviews/validate"
+        if '.json' in data:
+            with open(data,'r') as f:
+                data = json.load(f.read())
+        res = self.connector.postData(self.endpoint+path,data=data)
+        return res
+
+
+    def createDataView(self,data:Union[dict,IO]=None,**kwargs)->dict:
+        """
+        Create and stores the given Data View in the db.
+        Arguments:
+            data : REQUIRED : The dictionary or json file that holds the definition for the dataview to be created.
+        """
+        path = "/datagroups/dataviews/"
+        if data is None:
+            raise ValueError("Require information to be passed for data view creation")
+        if '.json' in data:
+            with open(data,'r',encoding=kwargs.get('encoding','utf-8')) as f:
+                data = json.load(f.read())
+        res = self.connector.postData(self.endpoint+path,data=data)
+        return res
+    
+    def deleteDataView(self,dataViewId:str=None)->str:
+        """
+        Delete a data view by its ID.
+        Argument:
+            dataViewId : REQUIRED : the data view ID to be deleted
+        """
+        if dataViewId is None:
+            raise ValueError("Require a data view ID")
+        path = f"/datagroups/dataviews/{dataViewId}"
+        res = self.connector.deleteData(self.endpoint+path)
+        return res
+
+    def updateDataView(self, dataViewId:str=None, data:Union[dict,IO]=None,**kwargs)->dict:
+        """
+        Update the Data View definition (PUT method)
+        Arguments:
+            dataViewId : REQUIRED : the data view ID to be updated
+            data : REQUIRED : The dictionary or JSON file that holds the definition for the dataview to be updated
+        possible kwargs:
+            encoding : if you pass a JSON file, you can change the encoding to read it.
+        """
+        if dataViewId is None:
+            raise ValueError("Require a Data View ID")
+        if data is None:
+            raise ValueError("Require data to be passed for the update")
+        path = f"/datagroups/dataviews/{dataViewId}"
+        if '.json' in data:
+            with open(data,'r',encoding=kwargs.get('encoding','utf-8')) as f:
+                data = json.load(f.read())
+        res = self.connector.putData(self.endpoint+path,data=data)
+        return res
+
+    def getFilters(self,
+                    limit:int=100, 
+                    full:bool=False,
+                    includeType:str="all",
+                    name:str = None,
+                    dataIds:str = None,
+                    ownerId:str = None,
+                    filterByIds:str = None,
+                    cached:bool = True,
+                    )->list:
+        """
+        Returns a list of filters used in CJA.
+        Arguments:
+            limit : OPTIONAL : number of result per request (default 100)
+            full : OPTIONAL : add additional information to the filters
+            includeType : OPTIONAL : Include additional segments not owned by user.(default all)
+                possible values are "shared" "templates" "deleted" "internal"
+            name : OPTIONAL : Filter list to only include segments that contains the Name
+            dataIds : OPTIONAL : Filter list to only include segments tied to the specified data group ID list (comma-delimited)
+            ownerId : OPTIONAL : Filter by a specific owner ID.
+            filterByIds : OPTIONAL : Filters by filter ID (comma-separated list)
+            cached : OPTIONAL : return cached results
+            toBeUsedInRsid : OPTIONAL : The report suite where the segment is intended to be used. This report suite will be used to determine things like compatibility and permissions.
+        """
+        path = "/filters"
+        params = {"limit" : limit,"cached":cached,"includeType":includeType,"page":0}
+        if full:
+            params["expansion"] = "compatibility,definition,internal,modified,isDeleted,definitionLastModified,createdDate,recentRecordedAccess,performanceScore,owner,dataId,ownerFullName,dataName,sharesFullName,approved,favorite,shares,tags,usageSummary,usageSummaryWithRelevancyScore"
+        if name:
+            params["name"] = name
+        if dataIds:
+            params["dataIds"] = dataIds
+        if ownerId:
+            params["ownerId"] = ownerId
+        if filterByIds:
+            params["filterByIds"] = filterByIds
+        res = self.connector.getData(self.endpoint + path,params=params)
+        lastPage = res.get('lastPage',True)
+        data = res['content']
+        while lastPage == False:
+            params["page"] += 1
+            data += res['content']
+            lastPage = res.get('lastPage',True)
+        return data
+
+    def getFilter(self,filterId:str=None,full:bool=False,)->dict:
+        """
+        Returns a single filter definition by its ID.
+        Arguments:
+            filterId : REQUIRED : ID of the filter
+            full : OPTIONAL : Boolean to define additional elements
+        """
+        if filterId is None:
+            raise ValueError("Require a filter ID")
+        path = f"/filters/{filterId}"
+        params = {}
+        if full:
+            params["expansion"] = "compatibility,definition,internal,modified,isDeleted,definitionLastModified,createdDate,recentRecordedAccess,performanceScore,owner,dataId,ownerFullName,dataName,sharesFullName,approved,favorite,shares,tags,usageSummary,usageSummaryWithRelevancyScore"
+        res = self.connector.getData(self.endpoint+path,params=params)
+        return res
+    
+    def deleteFilter(self,filterId:str=None)->str:
+        """
+        Delete a filter based on its ID.
+        Arguments:
+            filterId : REQUIRED : Filter ID to be deleted
+        """
+        if filterId is None:
+            raise ValueError("Require a filter ID")
+        path = f"/filters/{filterId}"
+        res = self.connector.deleteData(self.endpoint+path)
+        return res
+    
+    def validateFilter(self,data:Union[dict,IO]=None,**kwargs)->dict:
+        """
+        Validate the syntax for filter creation.
+        Arguments:
+            data : REQUIRED : Dictionary or JSON file to create a filter
+        possible kwargs:
+            encoding : if you pass a JSON file, you can change the encoding to read it.
+        """
+        if data is None:
+            raise ValueError("Require some data to validate")
+        path = "/filters/validate"
+        if '.json' in data:
+            with open(data,'r',encoding=kwargs.get('encoding','utf-8')) as f:
+                data = json.load(f.read())
+        res = self.connector.postData(self.endpoint+path,data=data)
+        return res
+
+    def createFilter(self,data:Union[dict,IO]=None,**kwargs)->dict:
+        """
+        Create a filter.
+        Arguments:
+            data : REQUIRED : Dictionary or JSON file to create a filter
+        possible kwargs:
+            encoding : if you pass a JSON file, you can change the encoding to read it.
+        """
+        if data is None:
+            raise ValueError("Require some data to validate")
+        path = "/filters"
+        if '.json' in data:
+            with open(data,'r',encoding=kwargs.get('encoding','utf-8')) as f:
+                data = json.load(f.read())
+        res = self.connector.postData(self.endpoint+path,data=data)
+        return res
+    
+    def updateFilter(self,filterId:str=None, data:Union[dict,IO]=None,**kwargs)->dict:
+        """
+        Create a filter.
+        Arguments:
+            filterId : REQUIRED : Filter ID to be updated
+            data : REQUIRED : Dictionary or JSON file to update the filter
+        possible kwargs:
+            encoding : if you pass a JSON file, you can change the encoding to read it.
+        """
+        if filterId is None:
+            raise ValueError("Require a filter ID")
+        if data is None:
+            raise ValueError("Require some data to validate")
+        path = f"/filters/{filterId}"
+        if '.json' in data:
+            with open(data,'r',encoding=kwargs.get('encoding','utf-8')) as f:
+                data = json.load(f.read())
+        res = self.connector.putData(self.endpoint+path,data=data)
         return res
