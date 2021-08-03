@@ -5,7 +5,7 @@ from typing import Dict, Union
 import jwt
 import requests
 
-from aanalytics2 import configs
+from cjapy import configs
 
 
 def get_token_and_expiry_for_config(config: dict, verbose: bool = False, save: bool = False, *args, **kwargs) -> \
@@ -26,8 +26,9 @@ def get_token_and_expiry_for_config(config: dict, verbose: bool = False, save: b
         'exp': now_plus_24h,
         'iss': config['org_id'],
         'sub': config['tech_id'],
+        "https://ims-na1.adobelogin.com/s/ent_dataservices_sdk":True,
         'https://ims-na1.adobelogin.com/s/ent_cja_sdk': True,
-        'aud': f'https://ims-na1.adobelogin.com/c/{config["client_id"]}'
+        'aud': f'https://ims-na1.adobelogin.com/c/{config["client_id"]}',
     }
     encoded_jwt = _get_jwt(payload=jwt_payload, private_key=private_key)
 

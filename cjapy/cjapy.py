@@ -10,7 +10,7 @@ import time
 # Non standard libraries
 import pandas as pd
 
-from cjapy import config, connector, token_provider
+from cjapy import config, connector
 
 JsonOrDataFrameType = Union[pd.DataFrame, dict]
 JsonListOrDataFrameType = Union[pd.DataFrame, List[dict]]
@@ -37,6 +37,7 @@ class CJA:
         if admin:
             params['expansion'] = 'admin'
         res = self.connector.getData(self.endpoint + path, params=params)
+        return res
     
     def getCalculatedMetrics(self,full:bool=False,
                             inclType:str='all',
@@ -46,7 +47,7 @@ class CJA:
                             filterByIds:str=None,
                             favorite:bool=False,
                             approved:bool=False,
-                            output:str="dataframe")->JsonListOrDataFrameType:
+                            output:str="df")->JsonListOrDataFrameType:
         """
         Returns a dataframe or the list of calculated Metrics.
         Arguments:
@@ -68,7 +69,7 @@ class CJA:
             output : OPTIONAL : by default returns a "dataframe", can also return the list when set to "raw"
         """
         path = "/calculatedmetrics"
-        params = {'limit': limit,"includeType":inclType,'pagination':False}
+        params = {'limit': limit,"includeType":inclType,'pagination':False,'page':0}
         if full:
             params['expension'] = "dataName,approved,favorite,shares,tags,sharesFullName,usageSummary,usageSummaryWithRelevancyScore,reportSuiteName,siteTitle,ownerFullName,modified,migratedIds,isDeleted,definition,authorization,compatibility,legacyId,internal,dataGroup,categories"
         if dataIds is not None:
@@ -82,8 +83,15 @@ class CJA:
         if approved:
             params['approved'] = approved
         res = self.connector.getData(self.endpoint + path, params=params)
-        if output=="dataframe":
-            df = pd.DataFrame(res)
+        data = res['content']
+        lastPage = res.get('lastPage',True)
+        while lastPage != True:
+            params['page'] += 1
+            res = self.connector.getData(self.endpoint + path, params=params)
+            data += res['content']
+            lastPage = res.get('lastPage',True)
+        if output=="df":
+            df = pd.DataFrame(data)
             return df
         return res
 
@@ -111,7 +119,7 @@ class CJA:
         path = f"/calculatedmetrics/{calcId}"
         params = {'includeHidden':True}
         if full:
-            params['expansion'] = "approved,favorite,shares,tags,sharesFullName,usageSummary,usageSummaryWithRelevancyScore,reportSuiteName,siteTitle,ownerFullName,modified,migratedIds,isDeleted,definition,authorization,compatibility,legacyId,internal,dataGroup,categories,reportTimeAttribution,warning"
+            params['expansion'] = "approved,favorite,shares,tags,sharesFullName,usageSummary,usageSummaryWithRelevancyScore,reportSuiteName,siteTitle,ownerFullName,modified,migratedIds,isDeleted,definition,authorization,compatibility,legacyId,internal,dataGroup,categories"
         res = self.connector.getData(self.endpoint+path,params=params)
         return res
 
@@ -438,7 +446,7 @@ class CJA:
         res = self.connector.getData(self.endpoint+path,params=params)
         return res
     
-    def getDimensions(self,dataviewId:str=None,full:bool=False,inclType:str=None)->dict:
+    def getDimensions(self,dataviewId:str=None,full:bool=False,inclType:str=None,verbose:bool=False)->dict:
         """
         Used to retrieve dimensions for a dataview
         Arguments:
@@ -454,7 +462,7 @@ class CJA:
             params['expansion'] = "approved,favorite,tags,usageSummary,usageSummaryWithRelevancyScore,description,sourceFieldId,segmentable,required,hideFromReporting,hidden,includeExcludeSetting,fieldDefinition,bucketingSetting,noValueOptionsSetting,defaultDimensionSort,persistenceSetting,storageId,tableName,dataSetIds,dataSetType,type,schemaPath,hasData,sourceFieldName,schemaType,sourceFieldType,fromGlobalLookup,multiValued,precision"
         if inclType == "hidden":
             params["includeType"] = "hidden"
-        res = self.connector.getData(self.endpoint +path,params=params)
+        res = self.connector.getData(self.endpoint +path,params=params,verbose=verbose)
         return res
     
     def getDimension(self,dataviewId:str=None,dimensionId:str=None,full:bool=True):
@@ -476,7 +484,7 @@ class CJA:
         res = self.connector.getData(self.endpoint +path,params=params)
         return res
 
-    def getMetrics(self,dataviewId:str=None,full:bool=False,inclType:str=None)->dict:
+    def getMetrics(self,dataviewId:str=None,full:bool=False,inclType:str=None,verbose:bool=False)->dict:
         """
         Used to retrieve metrics for a dataview
         Arguments:
@@ -492,7 +500,7 @@ class CJA:
             params['expansion'] = "approved,favorite,tags,usageSummary,usageSummaryWithRelevancyScore,description,sourceFieldId,segmentable,required,hideFromReporting,hidden,includeExcludeSetting,fieldDefinition,bucketingSetting,noValueOptionsSetting,defaultDimensionSort,persistenceSetting,storageId,tableName,dataSetIds,dataSetType,type,schemaPath,hasData,sourceFieldName,schemaType,sourceFieldType,fromGlobalLookup,multiValued,precision"
         if inclType == "hidden":
             params["includeType"] = "hidden"
-        res = self.connector.getData(self.endpoint +path,params=params)
+        res = self.connector.getData(self.endpoint +path,params=params,verbose=verbose)
         return res
     
     def getDimension(self,dataviewId:str=None,metricId:str=None,full:bool=True):
@@ -516,25 +524,29 @@ class CJA:
     
     def getDataViews(self,
                     limit:int = 100,
-                    full:bool=False,
+                    full:bool=True,
+                    output:str="df",
                     parentDataGroupId:str=None,
                     externalIds:str=None,
                     externalParentIds:str=None,
                     includeType:str="all",
                     cached:bool=True,
+                    verbose:bool=False,
                     **kwargs
-                    )->list:
+                    )->JsonListOrDataFrameType:
         """
         Returns the Data View configuration.
         Arguments:
             limit : OPTIONAL : number of results per request (default 100)
-            full : OPTIONAL : define if all possible information are returned.
+            full : OPTIONAL : define if all possible information are returned (default True).
+            output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
             parentDataGroupId : OPTIONAL : Filters data views by a single parentDataGroupId
             externalIds : OPTIONAL : Comma-delimited list of external ids to limit the response with.
             externalParentIds : OPTIONAL : Comma-delimited list of external parent ids to limit the response with.
             dataViewIds : OPTIONAL : Comma-delimited list of data view ids to limit the response with.
             includeType : OPTIONAL : include additional DataViews not owned by user.(default "all")
             cached : OPTIONAL : return cached results
+            verbose : OPTIONAL : add comments in the console.
         """
         path = "/datagroups/dataviews"
         params = {"limit":limit,"includeType": includeType,"cached":cached,"page":0}
@@ -546,17 +558,20 @@ class CJA:
             params["externalIds"] = externalIds
         if externalParentIds:
             params["externalParentIds"] = externalParentIds
-        res = self.connector.getData(self.endpoint+path, params=params)
+        res = self.connector.getData(self.endpoint+path, params=params,verbose=verbose)
         data = res['content']
         last = res.get('last',True)
         while last != True:
             params["page"] += 1
-            res = self.connector.getData(self.endpoint+path, params=params)
+            res = self.connector.getData(self.endpoint+path, params=params,verbose=verbose)
             data += res['content']
             last = res.get('last',True)
+        if output == "df":
+            df = pd.DataFrame(data)
+            return df
         return data
     
-    def getDataView(self,dataViewId:str=None,full:bool=False,save:bool=False)->dict:
+    def getDataView(self,dataViewId:str=None,full:bool=True,save:bool=False)->dict:
         """
         Returns a specific Data View configuration from Configuration ID.
         Arguments:
@@ -642,18 +657,21 @@ class CJA:
     def getFilters(self,
                     limit:int=100, 
                     full:bool=False,
+                    output:str="df",
                     includeType:str="all",
                     name:str = None,
                     dataIds:str = None,
                     ownerId:str = None,
                     filterByIds:str = None,
                     cached:bool = True,
-                    )->list:
+                    verbose:bool = False,
+                    )->JsonListOrDataFrameType:
         """
         Returns a list of filters used in CJA.
         Arguments:
             limit : OPTIONAL : number of result per request (default 100)
             full : OPTIONAL : add additional information to the filters
+            output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
             includeType : OPTIONAL : Include additional segments not owned by user.(default all)
                 possible values are "shared" "templates" "deleted" "internal"
             name : OPTIONAL : Filter list to only include segments that contains the Name
@@ -667,21 +685,25 @@ class CJA:
         params = {"limit" : limit,"cached":cached,"includeType":includeType,"page":0}
         if full:
             params["expansion"] = "compatibility,definition,internal,modified,isDeleted,definitionLastModified,createdDate,recentRecordedAccess,performanceScore,owner,dataId,ownerFullName,dataName,sharesFullName,approved,favorite,shares,tags,usageSummary,usageSummaryWithRelevancyScore"
-        if name:
+        if name is not None:
             params["name"] = name
-        if dataIds:
+        if dataIds is not None:
             params["dataIds"] = dataIds
-        if ownerId:
+        if ownerId is not None:
             params["ownerId"] = ownerId
-        if filterByIds:
+        if filterByIds is not None:
             params["filterByIds"] = filterByIds
-        res = self.connector.getData(self.endpoint + path,params=params)
+        res = self.connector.getData(self.endpoint + path,params=params,verbose=verbose)
         lastPage = res.get('lastPage',True)
         data = res['content']
         while lastPage == False:
             params["page"] += 1
+            res = self.connector.getData(self.endpoint + path,params=params,verbose=verbose)
             data += res['content']
             lastPage = res.get('lastPage',True)
+        if output == "df":
+            df = pd.DataFrame(data)
+            return df
         return data
 
     def getFilter(self,filterId:str=None,full:bool=False,)->dict:

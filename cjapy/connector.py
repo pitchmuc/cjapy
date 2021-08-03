@@ -5,7 +5,7 @@ from copy import deepcopy
 # Non standard libraries
 import requests
 
-from aanalytics2 import config, token_provider
+from cjapy import config, token_provider
 
 
 class AdobeRequest:
@@ -78,7 +78,9 @@ class AdobeRequest:
             res = requests.get(endpoint, headers=headers, params=params, data=data)
         if kwargs.get("verbose", False):
             print(f"request URL : {res.request.url}")
-            print(f"statut_code : {res.status_code}")
+            print(f"status_code : {res.status_code}")
+            print(f"request_header : {res.request.headers}")
+            print(f"res_text : {res.text}")
         try:
             while str(res.status_code) == "429":
                 if kwargs.get("verbose", False):

@@ -115,6 +115,7 @@ def configure(org_id: str = None,
     config_object["org_id"] = org_id
     config_object["client_id"] = client_id
     header["x-api-key"] = client_id
+    header["x-gw-ims-org-id"] = org_id
     config_object["tech_id"] = tech_id
     config_object["secret"] = secret
     config_object["pathToKey"] = path_to_key
@@ -141,3 +142,24 @@ def get_private_key_from_config(config: dict) -> str:
     with open(Path(private_key_path), 'r') as f:
         private_key = f.read()
     return private_key
+
+def generateLoggingObject() -> dict:
+    """
+    Generates a dictionary for the logging object with basic configuration.
+    You can find the information for the different possible values on the logging documentation.
+        https://docs.python.org/3/library/logging.html
+    Output:
+        level : Level of the logger to display information (NOTSET, DEBUG,INFO,WARNING,EROR,CRITICAL)
+        stream : If the logger should display print statements
+        file : If the logger should write the messages to a file
+        filename : name of the file where log are written
+        format : format of the logs
+    """
+    myObject = {
+        "level": "WARNING",
+        "stream": True,
+        "file": False,
+        "format": "%(asctime)s::%(name)s::%(funcName)s::%(levelname)s::%(message)s::%(lineno)d",
+        "filename": "cjapy.log",
+    }
+    return myObject
