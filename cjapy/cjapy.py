@@ -15,6 +15,22 @@ from cjapy import config, connector
 JsonOrDataFrameType = Union[pd.DataFrame, dict]
 JsonListOrDataFrameType = Union[pd.DataFrame, List[dict]]
 
+class Workspace:
+    """
+    A class to return data from the getReport method.
+    """
+    startDate = None,
+    endDate = None,
+    filters = None
+
+    def __init__(self,responseData:dict)->None:
+        """
+        Setup the different values from the response of the getReport
+        Argument:
+            responseData : REQUIRED : data returned & predigested by the getReport method.
+        """
+
+
 class CJA:
     """
     Class that instantiate a connection to a single CJA API connection.
@@ -654,6 +670,18 @@ class CJA:
         res = self.connector.putData(self.endpoint+path,data=data)
         return res
 
+    def copyDataView(self,dataViewId:str=None)->dict:
+        """
+        Copy the setting of a specific data view.
+        Arguments:
+            dataViewId : REQUIRED : Data View ID to copy the setting on
+        """
+        if dataViewId is None:
+            raise ValueError("Require a data view ID")
+        path = f"/datagroups/dataviews/copy/{dataViewId}"
+        res = self.connector.putData(self.endpoint+path)
+        return res
+
     def getFilters(self,
                     limit:int=100, 
                     full:bool=False,
@@ -787,3 +815,64 @@ class CJA:
                 data = json.load(f.read())
         res = self.connector.putData(self.endpoint+path,data=data)
         return res
+    
+    def getReport(self,
+                request: Union[dict,IO] = None,
+                limit : int = 1000,
+                n_results : Union[int,str] = "inf",
+                allowRemoteLoad: str = "default",
+                useCache:bool = True,
+                useResultsCache:bool = False,
+                includeOberonXml:bool = False,
+                includePredictiveObjects:bool = False,
+                returnsNone: bool = True,
+                countRepeatInstance:bool = True,
+                dataViewId:str = None
+            ) -> Workspace:
+        """
+        Return an instance of Workspace that contains the data requested.
+        Argumnents:
+            request : REQUIRED : either a dictionary of a JSON file that contains the request information.
+            limit : OPTIONAL : number of results per request (default 1000)
+            n_results : OPTIONAL : total number of results returns. Use "inf" to return everything (default "inf")
+            allowRemoteLoad : OPTIONAL : Controls if Oberon should remote load data. Default behavior is true with fallback to false if remote data does not exist
+            useCache : OPTIONAL : Use caching for faster requests (Do not do any report caching)
+            useResultsCache : OPTIONAL : Use results caching for faster reporting times (This is a pass through to Oberon which manages the Cache)
+            includeOberonXml : OPTIONAL : Controls if Oberon XML should be returned in the response - DEBUG ONLY
+            includePredictiveObjects : OPTIONAL : Controls if platform Predictive Objects should be returned in the response. Only available when using Anomaly Detection or Forecasting- DEBUG ONLY
+            returnsNone : OPTIONAL: Overwritte the request setting to return None values.
+            countRepeatInstance : OPTIONAL: Overwritte the request setting to count repeatInstances values.
+            dataViewId : OPTIONAL : Overwrite the data View ID used for report. Only works if the same components are presents. 
+        """
+        path = "/reports"
+        params = {
+            "allowRemoteLoad":allowRemoteLoad,
+            "useCache":useCache,
+            "useResultsCache":useResultsCache,
+            "includeOberonXml":includeOberonXml,
+            "includePlatformPredictiveObjects":includePredictiveObjects
+                }
+        if '.json' in request:
+            with open(request,'r') as f:
+                dataRequest = json.load(f.read())
+        elif type(request) == dict:
+            dataRequest = request
+        else:
+            raise ValueError("Require a JSON or Dictionary to request data")
+        ### Settings
+        dataRequest['settings']['page'] = 0
+        dataRequest['settings']['limit'] = limit
+        if returnsNone:
+            dataRequest['settings']['nonesBehavior'] = "return-nones"
+        else:
+            dataRequest['settings']['nonesBehavior'] = "exclude-nones"
+        if countRepeatInstance:
+            dataRequest['settings']['countRepeatInstances'] = True
+        else:
+            dataRequest['settings']['countRepeatInstances'] = False
+        if dataViewId is not None:
+            dataRequest["dataId"] = dataViewId
+        ### Request data
+        res = self.connector.postData(self.endpoint,data=dataRequest,params=params)
+        return res
+        
