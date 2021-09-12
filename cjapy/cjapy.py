@@ -6,99 +6,59 @@ from pathlib import Path
 from typing import IO, Union, List
 from collections import defaultdict
 import time
+import logging
 
 # Non standard libraries
 import pandas as pd
-
 from cjapy import config, connector
+from .workspace import Workspace
 
 JsonOrDataFrameType = Union[pd.DataFrame, dict]
 JsonListOrDataFrameType = Union[pd.DataFrame, List[dict]]
 
 
-class Workspace:
-    """
-    A class to return data from the getReport method.
-    """
-
-    startDate = None
-    endDate = None
-    metricFilters = None
-    globalFilters = None
-    settings = None
-
-    def __init__(self, responseData: dict, metricContainer: dict = None) -> None:
-        """
-        Setup the different values from the response of the getReport
-        Argument:
-            responseData : REQUIRED : data returned & predigested by the getReport method.
-            metricContainer : REQUIRED : metricContainer containing columns and filters
-        """
-
-
-class ReportRequestCreator:
-    """
-    A class to help build a request for CJA API getReport
-    """
-
-    template = {
-        "globalFilters": [{"type": "dateRange", "dateRange": "-/-"}],
-        "metricContainer": {
-            "metrics": [
-                {"columnId": "0", "id": "", "sort": "desc", "filters": []},
-                {
-                    "columnId": "1",
-                    "id": "",
-                    "filters": [""],
-                },
-            ],
-            "metricFilters": [
-                {
-                    "id": "0",
-                    "type": "",
-                    "segmentId": "",
-                },
-                {
-                    "id": "1",
-                    "type": "",
-                    "segmentId": "",
-                },
-            ],
-        },
-        "dimension": "",
-        "settings": {
-            "countRepeatInstances": True,
-            "limit": 10,
-            "page": 0,
-            "nonesBehavior": "exclude-nones",
-        },
-        "statistics": {"functions": ["col-max", "col-min"]},
-        "dataId": "",
-    }
-
-    def __init__(self, template: dict = None) -> None:
-        """
-        Instanciate the constructor.
-        Arguments:
-            template : OPTIONAL : overwrite the template with the definition provided.
-        """
-        self.template = template or self.template
-        pass
-
-
 class CJA:
     """
     Class that instantiate a connection to a single CJA API connection.
+    You can pass a logging object to log information.
     """
 
+    loggingEnabled = False
+    logger = None
+
     def __init__(
-        self, config_object: dict = config.config_object, header: dict = config.header
+        self,
+        config_object: dict = config.config_object,
+        header: dict = config.header,
+        loggingObject: dict = None,
     ) -> None:
         """
         Instantiate the class with the information provided.
+        Arguments:
+            loggingObject : OPTIONAL :If you want to set logging capability for your actions.
+            header : REQUIRED : config header loaded (DO NOT MODIFY)
+            config_object : REQUIRED : config object loaded (DO NOT MODIFY)
         """
+        if loggingObject is not None and sorted(
+            ["level", "stream", "format", "filename", "file"]
+        ) == sorted(list(loggingObject.keys())):
+            self.loggingEnabled = True
+            self.logger = logging.getLogger(f"{__name__}.login")
+            self.logger.setLevel(loggingObject["level"])
+            formatter = logging.Formatter(loggingObject["format"])
+            if loggingObject["file"]:
+                fileHandler = logging.FileHandler(loggingObject["filename"])
+                fileHandler.setFormatter(formatter)
+                self.logger.addHandler(fileHandler)
+            if loggingObject["stream"]:
+                streamHandler = logging.StreamHandler()
+                streamHandler.setFormatter(formatter)
+                self.logger.addHandler(streamHandler)
         self.connector = connector.AdobeRequest(
-            config_object=config_object, header=header
+            config_object=config_object,
+            header=header,
+            loggingEnabled=self.loggingEnabled,
+            logger=self.logger,
         )
         self.header = self.connector.header
         self.endpoint = config.endpoints["global"]
@@ -107,6 +67,8 @@ class CJA:
         """
         return the current user
         """
+        if self.loggingEnabled:
+            self.logger.debug("getCurrentUser start")
         path = "/aresconfig/users/me"
         params = {"useCache": useCache}
         if admin:
@@ -146,6 +108,8 @@ class CJA:
             approved : OPTIONAL : If set to true, returns only approved calculated metrics. (default False)
             output : OPTIONAL : by default returns a "dataframe", can also return the list when set to "raw"
         """
+        if self.loggingEnabled:
+            self.logger.debug(f"getCalculatedMetrics start, output: {output}")
         path = "/calculatedmetrics"
         params = {
             "limit": limit,
@@ -188,6 +152,8 @@ class CJA:
         Arguments:
             output : OPTIONAL : default to "raw", can return "dataframe".
         """
+        if self.loggingEnabled:
+            self.logger.debug(f"getCalculatedMetricsFunctions start, output: {output}")
         path = "/calculatedmetrics/functions"
         res = self.connector.getData(self.endpoint + path)
         if output == "dataframe":
@@ -203,6 +169,8 @@ class CJA:
         """
         if calcId is None:
             raise ValueError("Requires a Calculated Metrics ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"getCalculatedMetric start, id: {calcId}")
         path = f"/calculatedmetrics/{calcId}"
         params = {"includeHidden": True}
         if full:
@@ -220,6 +188,8 @@ class CJA:
         """
         if data is None:
             raise ValueError("Require a dictionary to create the calculated metrics")
+        if self.loggingEnabled:
+            self.logger.debug(f"createCalculatedMetric start")
         path = "/calculatedmetrics"
         res = self.connector.postData(self.endpoint + path, data=data)
         return res
@@ -232,6 +202,8 @@ class CJA:
         """
         if data is None or type(data) == dict:
             raise ValueError("Require a dictionary to create the calculated metrics")
+        if self.loggingEnabled:
+            self.logger.debug(f"validateCalculatedMetric start")
         path = "/calculatedmetrics/validate"
         res = self.connector.postData(self.endpoint + path, data=data)
         return res
@@ -244,6 +216,8 @@ class CJA:
         """
         if calcId is None:
             raise ValueError("requires a calculated metrics ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"deleteCalculateMetrics start, id: {calcId}")
         path = f"/calculatedmetrics/{calcId}"
         res = self.connector.deleteData(self.endpoint + path)
         return res
@@ -259,6 +233,8 @@ class CJA:
             raise ValueError("Require a calculated metrics")
         if data is None or type(data) == dict:
             raise ValueError("Require a dictionary to create the calculated metrics")
+        if self.loggingEnabled:
+            self.logger.debug(f"updateCalculatedMetrics start, id: {calcId}")
         path = f"/calculatedmetrics/{calcId}"
         res = self.connector.putData(self.endpoint + path, data=data)
         return res
@@ -278,6 +254,8 @@ class CJA:
             limit : OPTIONAL : number of result per request.
             useCache: OPTIONAL : Caching the result (default True)
         """
+        if self.loggingEnabled:
+            self.logger.debug(f"getShares start")
         params = {"limit": limit, "includeType": inclType, "useCache": useCache}
         path = "/componentmetadata/shares"
         if userId is not None:
@@ -292,6 +270,8 @@ class CJA:
             shareId : REQUIRED : the element ID.
             useCache : OPTIONAL : If caching the response (True by default)
         """
+        if self.loggingEnabled:
+            self.logger.debug(f"getShare start")
         params = {"useCache": useCache}
         if shareId is None:
             raise ValueError("Require an ID to retrieve the element")
@@ -307,6 +287,8 @@ class CJA:
         """
         if shareId is None:
             raise ValueError("Require an ID to retrieve the element")
+        if self.loggingEnabled:
+            self.logger.debug(f"deleteShare start, id: {shareId}")
         path = f"/componentmetadata/shares/{shareId}"
         res = self.connector.deleteData(self.endpoint + path)
         return res
@@ -331,6 +313,8 @@ class CJA:
         path = "/componentmetadata/shares/component/search"
         if data is None:
             raise ValueError("require a dictionary to specify the search.")
+        if self.loggingEnabled:
+            self.logger.debug(f"searchShares start")
         params = {"limit": limit}
         if full:
             params["expansion"] = "sharesFullName"
@@ -361,6 +345,8 @@ class CJA:
         """
         if data is None or type(data) != list:
             raise ValueError("Require a list of element to share")
+        if self.loggingEnabled:
+            self.logger.debug(f"updateShares start")
         path = "/componentmetadata/shares"
         params = {"useCache": useCache}
         res = self.connector.putData(self.endpoint + path, params=params, data=data)
@@ -372,6 +358,8 @@ class CJA:
         Arguments:
             limit : OPTIONAL : Number of result per request.
         """
+        if self.loggingEnabled:
+            self.logger.debug(f"getTags start")
         path = "/componentmetadata/tags"
         params = {"limit": limit}
         res = self.connector.getData(self.endpoint + path, params=params)
@@ -396,6 +384,8 @@ class CJA:
         path = "/componentmetadata/tags"
         if data is None and type(data) != list:
             raise ValueError("Require a list of tags to be created")
+        if self.loggingEnabled:
+            self.logger.debug(f"createTags start")
         res = self.connector.postData(self.endpoint + path, data=data)
         return res
 
@@ -429,6 +419,8 @@ class CJA:
             "dataView",
         ]:
             raise KeyError("componentType not in the enum")
+        if self.loggingEnabled:
+            self.logger.debug(f"deleteTags start")
         params = {componentType: componentType, componentIds: componentIds}
         res = self.connector.deleteData(self.endpoint + path, params=params)
         return res
@@ -441,6 +433,8 @@ class CJA:
         """
         if tagId is None:
             raise ValueError("Require a tag ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"getTag start, id: {tagId}")
         path = f"/componentmetadata/tags/{tagId}"
         res = self.connector.getData(self.endpoint + path)
         return res
@@ -475,6 +469,8 @@ class CJA:
             "dataView",
         ]:
             raise KeyError("componentType not in the enum")
+        if self.loggingEnabled:
+            self.logger.debug(f"getComponentTags start")
         params = {"componentId": componentId, "componentType": componentType}
         path = "/componentmetadata/tags/search"
         res = self.connector.getData(self.endpoint + path, params=params)
@@ -506,6 +502,8 @@ class CJA:
         path = "/componentmetadata/tags/tagitems"
         if data is None or type(data) != list:
             raise ValueError("Require a list of elements to update")
+        if self.loggingEnabled:
+            self.logger.debug(f"updateTags start")
         res = self.connector.putData(self.endpoint + path, data=data)
         return res
 
@@ -550,6 +548,8 @@ class CJA:
             raise ValueError("Require a data ID")
         if dimension is None:
             raise ValueError("Require a dimension")
+        if self.loggingEnabled:
+            self.logger.debug(f"getTopItems start")
         params = {
             "dataId": dataId,
             "dimension": dimension,
@@ -598,6 +598,8 @@ class CJA:
         """
         if dataviewId is None:
             raise ValueError("Require a Data View ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"getDimensions start")
         path = f"/datagroups/data/{dataviewId}/dimensions"
         params = {}
         if full:
@@ -625,6 +627,8 @@ class CJA:
             raise ValueError("Require a Data View ID")
         if dimensionId is None:
             raise ValueError("Require a Dimension ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"getDimension start, id: {dimensionId}")
         path = f"/datagroups/data/{dataviewId}/dimensions/{dimensionId}"
         params = {}
         if full:
@@ -650,6 +654,8 @@ class CJA:
         """
         if dataviewId is None:
             raise ValueError("Require a Data View ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"getMetrics start")
         path = f"/datagroups/data/{dataviewId}/metrics"
         params = {}
         if full:
@@ -663,7 +669,7 @@ class CJA:
         )
         return res
 
-    def getDimension(
+    def getMetric(
         self, dataviewId: str = None, metricId: str = None, full: bool = True
     ):
         """
@@ -677,6 +683,8 @@ class CJA:
             raise ValueError("Require a Data View ID")
         if metricId is None:
             raise ValueError("Require a Dimension ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"getMetric start, id: {metricId}")
         path = f"/datagroups/data/{dataviewId}/metrics/{metricId}"
         params = {}
         if full:
@@ -713,6 +721,8 @@ class CJA:
             cached : OPTIONAL : return cached results
             verbose : OPTIONAL : add comments in the console.
         """
+        if self.loggingEnabled:
+            self.logger.debug(f"getDataViews start, output: {output}")
         path = "/datagroups/dataviews"
         params = {
             "limit": limit,
@@ -759,6 +769,8 @@ class CJA:
         """
         if dataViewId is None:
             raise ValueError("dataViewId is required")
+        if self.loggingEnabled:
+            self.logger.debug(f"getDataView start")
         path = f"/datagroups/dataviews/{dataViewId}"
         params = {}
         if full:
@@ -779,10 +791,12 @@ class CJA:
         """
         if data is None:
             raise ValueError("Require information to be passed for data view creation")
+        if self.loggingEnabled:
+            self.logger.debug(f"validateDataView start")
         path = "/datagroups/dataviews/validate"
         if ".json" in data:
             with open(data, "r") as f:
-                data = json.load(f.read())
+                data = json.load(f)
         res = self.connector.postData(self.endpoint + path, data=data)
         return res
 
@@ -797,7 +811,9 @@ class CJA:
             raise ValueError("Require information to be passed for data view creation")
         if ".json" in data:
             with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
-                data = json.load(f.read())
+                data = json.load(f)
+        if self.loggingEnabled:
+            self.logger.debug(f"createDataView start")
         res = self.connector.postData(self.endpoint + path, data=data)
         return res
 
@@ -809,6 +825,8 @@ class CJA:
         """
         if dataViewId is None:
             raise ValueError("Require a data view ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"deleteDataView start, id: {dataViewId}")
         path = f"/datagroups/dataviews/{dataViewId}"
         res = self.connector.deleteData(self.endpoint + path)
         return res
@@ -828,6 +846,8 @@ class CJA:
             raise ValueError("Require a Data View ID")
         if data is None:
             raise ValueError("Require data to be passed for the update")
+        if self.loggingEnabled:
+            self.logger.debug(f"updateDataView start, id: {dataViewId}")
         path = f"/datagroups/dataviews/{dataViewId}"
         if ".json" in data:
             with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
@@ -843,6 +863,8 @@ class CJA:
         """
         if dataViewId is None:
             raise ValueError("Require a data view ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"copyDataView start, id: {dataViewId}")
         path = f"/datagroups/dataviews/copy/{dataViewId}"
         res = self.connector.putData(self.endpoint + path)
         return res
@@ -875,6 +897,8 @@ class CJA:
             cached : OPTIONAL : return cached results
             toBeUsedInRsid : OPTIONAL : The report suite where the segment is intended to be used. This report suite will be used to determine things like compatibility and permissions.
         """
+        if self.loggingEnabled:
+            self.logger.debug(f"getFilters start, output: {output}")
         path = "/filters"
         params = {
             "limit": limit,
@@ -924,6 +948,8 @@ class CJA:
         """
         if filterId is None:
             raise ValueError("Require a filter ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"getFilter start, id: {filterId}")
         path = f"/filters/{filterId}"
         params = {}
         if full:
@@ -941,6 +967,8 @@ class CJA:
         """
         if filterId is None:
             raise ValueError("Require a filter ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"deleteFilter start, id: {filterId}")
         path = f"/filters/{filterId}"
         res = self.connector.deleteData(self.endpoint + path)
         return res
@@ -955,6 +983,8 @@ class CJA:
         """
         if data is None:
             raise ValueError("Require some data to validate")
+        if self.loggingEnabled:
+            self.logger.debug(f"validateFilter start")
         path = "/filters/validate"
         if ".json" in data:
             with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
@@ -972,10 +1002,12 @@ class CJA:
         """
         if data is None:
             raise ValueError("Require some data to validate")
+        if self.loggingEnabled:
+            self.logger.debug(f"createFilter start")
         path = "/filters"
         if ".json" in data:
             with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
-                data = json.load(f.read())
+                data = json.load(f)
         res = self.connector.postData(self.endpoint + path, data=data)
         return res
 
@@ -994,6 +1026,8 @@ class CJA:
             raise ValueError("Require a filter ID")
         if data is None:
             raise ValueError("Require some data to validate")
+        if self.loggingEnabled:
+            self.logger.debug(f"updateFilter start, id: {filterId}")
         path = f"/filters/{filterId}"
         if ".json" in data:
             with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
@@ -1001,12 +1035,92 @@ class CJA:
         res = self.connector.putData(self.endpoint + path, data=data)
         return res
 
-    def _readData(self, response: dict = None) -> dict:
+    def _prepareData(
+        self,
+        dataRows: list = None,
+        reportType: str = "normal",
+    ) -> dict:
         """
         Read the data returned by the getReport and returns a dictionary used by the Workspace class.
         Arguments:
-            response : REQUIRED : Response data from CJA API getReport
+            dataRows : REQUIRED : data rows data from CJA API getReport
+            reportType : REQUIRED : "normal" or "static"
         """
+        if dataRows is None:
+            raise ValueError("Require dataRows")
+        data_rows = deepcopy(dataRows)
+        expanded_rows = {}
+        if reportType == "normal":
+            for row in data_rows:
+                expanded_rows[row["itemId"]] = [row["value"]]
+                expanded_rows[row["itemId"]] += row["data"]
+        elif reportType == "static":
+            expanded_rows = data_rows
+        return expanded_rows
+
+    def _decrypteStaticData(
+        self, dataRequest: dict = None, response: dict = None
+    ) -> dict:
+        """
+        From the request dictionary and the response, decrypte the data to standardise the reading.
+        """
+        dataRows = []
+        ## retrieve StaticRow ID and segmentID
+        tableSegmentsRows = {
+            obj["id"]: obj["segmentId"]
+            for obj in dataRequest["metricContainer"]["metricFilters"]
+            if obj["id"].startswith("STATIC_ROW")
+        }
+        ## retrieve place and segmentID
+        segmentApplied = {}
+        for obj in dataRequest["metricContainer"]["metricFilters"]:
+            if obj["id"].startswith("STATIC_ROW") == False:
+                if obj["type"] == "breakdown":
+                    segmentApplied[obj["id"]] = f"{obj['dimension']}:::{obj['itemId']}"
+                elif obj["type"] == "segment":
+                    segmentApplied[obj["id"]] = obj["segmentId"]
+                elif obj["type"] == "dateRange":
+                    segmentApplied[obj["id"]] = obj["dateRange"]
+        ### table columnIds and StaticRow IDs
+        tableColumnIds = {
+            obj["columnId"]: obj["filters"][0]
+            for obj in dataRequest["metricContainer"]["metrics"]
+        }
+        ### create relations for metrics with Filter on top
+        filterRelations = {
+            obj["filters"][0]: obj["filters"][1:]
+            for obj in dataRequest["metricContainer"]["metrics"]
+            if len(obj["filters"]) > 1
+        }
+        staticRows = set(val for val in tableSegmentsRows.values())
+        nb_rows = len(staticRows)  ## define  how many segment used as rows
+        nb_columns = int(
+            len(dataRequest["metricContainer"]["metrics"]) / nb_rows
+        )  ## use to detect rows
+        staticRows = set(val for val in tableSegmentsRows.values())
+        staticRowsNames = []
+        for row in staticRows:
+            if row.startswith("s") and "@" in row:
+                filter = self.getFilter(row)
+                staticRowsNames.append(filter["name"])
+            else:
+                staticRowsNames.append(row)
+        staticRowDict = {
+            row: rowName for row, rowName in zip(staticRows, staticRowsNames)
+        }
+        ### metrics
+        dataRows = defaultdict(list)
+        for row in staticRowDict:  ## iter on the different static rows
+            for column, data in zip(
+                response["columns"]["columnIds"], response["summaryData"]["totals"]
+            ):
+                if tableSegmentsRows[tableColumnIds[column]] == row:
+                    ## check translation of metricId with Static Row ID
+                    if row not in dataRows[staticRowDict[row]]:
+                        dataRows[staticRowDict[row]].append(row)
+                    dataRows[staticRowDict[row]].append(data)
+                ## should ends like : {'segmentName' : ['STATIC',123,456]}
+        return nb_columns, tableColumnIds, segmentApplied, filterRelations, dataRows
 
     def getReport(
         self,
@@ -1022,7 +1136,10 @@ class CJA:
         countRepeatInstance: bool = None,
         ignoreZeroes: bool = None,
         dataViewId: str = None,
-    ) -> Workspace:
+        resolveColumns: bool = True,
+        save: bool = False,
+        returnClass: bool = True,
+    ) -> Union[Workspace, dict]:
         """
         Return an instance of Workspace that contains the data requested.
         Argumnents:
@@ -1038,6 +1155,9 @@ class CJA:
             countRepeatInstance : OPTIONAL: Overwritte the request setting to count repeatInstances values.
             ignoreZeroes : OPTIONAL : Ignore zeros in the results
             dataViewId : OPTIONAL : Overwrite the data View ID used for report. Only works if the same components are presents.
+            resolveColumns: OPTIONAL : automatically resolve columns from ID to name for calculated metrics & segments. Default True. (works on returnClass only)
+            save : OPTIONAL : If you want to save the data (in JSON or CSV, depending the class is used or not)
+            returnClass : OPTIONAL : return the class building dataframe and better comprehension of data. (default yes)
         """
         path = "/reports"
         params = {
@@ -1075,6 +1195,107 @@ class CJA:
         res = self.connector.postData(
             self.endpoint + path, data=dataRequest, params=params
         )
+        if "rows" in res.keys():
+            reportType = "normal"
+            dataRows = res.get("rows")
+            columns = res.get("columns")
+            summaryData = res.get("summaryData")
+            totalElements = res.get("numberOfElements")
+            lastPage = res.get("lastPage", True)
+            while lastPage != True:
+                dataRequest["settings"]["page"] += 1
+                res = self.connector.postData(
+                    self.endpoint + path, data=dataRequest, params=params
+                )
+                dataRows += res.get("rows")
+                lastPage = res.get("lastPage", True)
+                totalElements += res.get("numberOfElements")
+                if float(totalElements) >= float(n_results):
+                    ## force end of loop when a limit is set on n_results
+                    lastPage = True
+            if returnClass == False:
+                return dataRows
+            ### create relation between metrics and filters applied
+            columnIdRelations = {
+                obj["columnId"]: obj["id"]
+                for obj in dataRequest["metricContainer"]["metrics"]
+            }
+            filterRelations = {
+                obj["columnId"]: obj["filters"]
+                for obj in dataRequest["metricContainer"]["metrics"]
+                if len(obj.get("filters", [])) > 0
+            }
+            metricFilters = {}
+            metricFilterTranslation = {}
+            for filter in dataRequest["metricContainer"].get("metricFilters", []):
+                filterId = filter["id"]
+                if filter["type"] == "breakdown":
+                    filterValue = f"{filter['dimension']}:{filter['itemId']}"
+                    metricFilters[filter["dimension"]] = filter["itemId"]
+                if filter["type"] == "dateRange":
+                    filterValue = f"{filter['dateRange']}"
+                    metricFilters[filterValue] = filterValue
+                if filter["type"] == "segment":
+                    filterValue = f"{filter['segmentId']}"
+                    if filterValue.startswith("s") and "@AdobeOrg" in filterValue:
+                        seg = self.getFilter(filterValue)
+                        metricFilters[filterValue] = seg["name"]
+                metricFilterTranslation[filterId] = filterValue
+            metricColumns = {}
+            for colId in columnIdRelations.keys():
+                metricColumns[colId] = columnIdRelations[colId]
+                for element in filterRelations.get(colId, []):
+                    metricColumns[colId] += f":::{metricFilterTranslation[element]}"
+        else:
+            if returnClass == False:
+                return res
+            reportType = "static"
+            columns = None  ## no "columns" key in response
+            summaryData = res.get("summaryData")
+            (
+                nb_columns,
+                tableColumnIds,
+                segmentApplied,
+                filterRelations,
+                dataRows,
+            ) = self._decrypteStaticData(dataRequest=dataRequest, response=res)
+            ### Findings metrics
+            metricFilters = {}
+            metricColumns = []
+            for i in range(nb_columns):
+                metric: str = res["columns"]["columnIds"][i]
+                metricName = metric.split(":::")[0]
+                if metricName.startswith("cm"):
+                    calcMetric = self.getCalculatedMetric(metricName)
+                    metricName = calcMetric["name"]
+                correspondingStatic = tableColumnIds[metric]
+                ## if the static row has a filter
+                if correspondingStatic in list(filterRelations.keys()):
+                    ## finding segment applied to metrics
+                    for element in filterRelations[correspondingStatic]:
+                        segId = segmentApplied[element]
+                        metricName += f":::{segId}"
+                        metricFilters["id"] = segId
+                        if segId.startswith("s") and "@AdobeOrg" in segId:
+                            seg = self.getFilter(segId)
+                            metricFilters[segId] = seg["name"]
+                metricColumns.append(metricName)
+                ### ending with ['metric1','metric2 + segId',...]
         ### preparing data points
-        metricsContainer = dataRequest["metricContainer"]
-        return res
+        preparedData = self._prepareData(dataRows, reportType=reportType)
+        if returnClass:
+            ## Using the class
+            data = Workspace(
+                responseData=preparedData,
+                dataRequest=dataRequest,
+                columns=columns,
+                summaryData=summaryData,
+                cjaConnector=self,
+                reportType=reportType,
+                metrics=metricColumns,  ## for normal type   ## for staticReport
+                metricFilters=metricFilters,
+                resolveColumns=resolveColumns,
+            )
+            if save:
+                data.to_csv()
+            return data

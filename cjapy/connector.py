@@ -15,12 +15,16 @@ class AdobeRequest:
         restTime : Time to rest before sending new request when reaching too many request status code.
     """
 
+    loggingEnabled = False
+
     def __init__(
         self,
         config_object: dict = config.config_object,
         header: dict = config.header,
         verbose: bool = False,
         retry: int = 0,
+        loggingEnabled: bool = False,
+        logger: object = None,
     ) -> None:
         """
         Set the connector to be used for handling request to AAM
@@ -29,6 +33,8 @@ class AdobeRequest:
             header : OPTIONAL : header of the config modules
             verbose : OPTIONAL : display comment on the request.
             retry : OPTIONAL : If you wish to retry failed GET requests
+            loggingEnabled : OPTIONAL : if the logging is enable for that instance.
+            logger : OPTIONAL : instance of the logger created
         """
         if config_object["org_id"] == "":
             raise Exception(
@@ -36,6 +42,8 @@ class AdobeRequest:
             )
         self.config = deepcopy(config_object)
         self.header = deepcopy(header)
+        self.loggingEnabled = loggingEnabled
+        self.logger = logger
         self.restTime = 30
         self.retry = retry
         if self.config["token"] == "" or time.time() > self.config["date_limit"]:
@@ -44,6 +52,8 @@ class AdobeRequest:
             )
             token = token_and_expiry["token"]
             expiry = token_and_expiry["expiry"]
+            if self.loggingEnabled:
+                self.logger.info("token retrieved : {token}")
             self.token = token
             self.config["token"] = token
             self.config["date_limit"] = time.time() + expiry / 1000 - 500
@@ -55,10 +65,14 @@ class AdobeRequest:
         """
         now = time.time()
         if now > self.config["date_limit"]:
+            if self.loggingEnabled:
+                self.logger.warning("token expired. Trying to retrieve a new token")
             token_with_expiry = token_provider.get_token_and_expiry_for_config(
                 config=self.config
             )
             token = token_with_expiry["token"]
+            if self.loggingEnabled:
+                self.logger.info("new token retrieved : {token}")
             self.config["token"] = token
             self.config["date_limit"] = (
                 time.time() + token_with_expiry["expiry"] / 1000 - 500
@@ -92,12 +106,14 @@ class AdobeRequest:
         if kwargs.get("verbose", False):
             print(f"request URL : {res.request.url}")
             print(f"status_code : {res.status_code}")
-            print(f"request_header : {res.request.headers}")
-            print(f"res_text : {res.text}")
+        if self.loggingEnabled:
+            self.logger.debug(f"request_header : {res.request.headers}")
         try:
             while str(res.status_code) == "429":
-                if kwargs.get("verbose", False):
-                    print(f"Too many requests: retrying in {self.restTime} seconds")
+                if self.loggingEnabled:
+                    self.logger.info(
+                        f"Too many requests: retrying in {self.restTime} seconds"
+                    )
                 time.sleep(self.restTime)
                 res = requests.get(endpoint, headers=headers, params=params, data=data)
             res_json = res.json()
@@ -107,9 +123,15 @@ class AdobeRequest:
                 try:
                     return json.loads(res.text)
                 except:
+                    if self.loggingEnabled:
+                        self.logger.error(
+                            f"GET method failed: {res.status}, {res.status}"
+                        )
                     return res.text
             res_json = {"error": "Request Error"}
             while internRetry > 0:
+                if self.loggingEnabled:
+                    self.logger.warning(f"Trying again with internal retry")
                 if kwargs.get("verbose", False):
                     print("Retry parameter activated")
                     print(f"{internRetry} retry left")
@@ -162,6 +184,10 @@ class AdobeRequest:
                 try:
                     return json.loads(res.text)
                 except:
+                    if self.loggingEnabled:
+                        self.logger.error(
+                            f"POST method failed: {res.status}, {res.text}"
+                        )
                     return res.text
             res_json = {"error": "Request Error"}
         return res_json
@@ -199,6 +225,8 @@ class AdobeRequest:
                 )
             res_json = res.json()
         except:
+            if self.loggingEnabled:
+                self.logger.error(f"PATCH method failed: {res.status}, {res.text}")
             res_json = {"error": "Request Error"}
         return res_json
 
@@ -223,11 +251,13 @@ class AdobeRequest:
             res = requests.put(endpoint, headers=headers, data=json.dumps(data))
         elif params is not None and data is not None:
             res = requests.put(
-                endpoint, headers=headers, params=params, data=json.dumps(data=data)
+                endpoint, headers=headers, params=params, data=json.dumps(data)
             )
         try:
             status_code = res.json()
         except:
+            if self.loggingEnabled:
+                self.logger.error(f"PUT method failed: {res.status}, {res.text}")
             status_code = {"error": "Request Error"}
         return status_code
 
@@ -252,5 +282,7 @@ class AdobeRequest:
                 res = requests.delete(endpoint, headers=headers, params=params)
             status_code = res.status_code
         except:
+            if self.loggingEnabled:
+                self.logger.error(f"DELETE method failed: {res.status}, {res.text}")
             status_code = {"error": "Request Error"}
         return status_code
