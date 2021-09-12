@@ -23,12 +23,18 @@ Functionalities that are covered :
 * Get, Update and Delete Dataview
 * Get, Update and Delete Filters
 * Get Top items for a dimension
-* Run a report
+* Run a report (by default returning a Workspace instance)
 
-documentation on reporting [here](./docs/main.md)
+Documentation is split in different places:
+
+* Core methods to setup `cjapy`: [main documentation](./docs/main.md)
+* Methods provided by the CJA class: [cja documentation](./docs/cja.md)
+* Workspace class documentation: [Workspace class](./docs/workspace.md)
 
 ## Getting Started
 
+A documentation is provided to get started quickly with the CJA API wrapper in python.\
+You can find it here: [get started on `cjapy`](./docs/getting_started.md)\
 To install the library with PIP use:
 
 ```cli
