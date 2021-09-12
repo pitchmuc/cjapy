@@ -77,7 +77,7 @@ Here is the list of the possible create options.
 * createCalculatedMetricValidate: Validate a calculated metrics definition or object passed.
   Arguments:
   * metricJSON : REQUIRED : Calculated Metrics information to create. (Required: name, definition, rsid)
-      More information can be found at this address https://adobedocs.github.io/analytics-2.0-apis/#/calculatedmetrics/calculatedmetrics_createCalculatedMetric
+      More information can be found at this address <https://adobedocs.github.io/analytics-2.0-apis/#/calculatedmetrics/calculatedmetrics_createCalculatedMetric>
 
 * createTags : This method creates a tag and associate it with a component.
   Arguments:

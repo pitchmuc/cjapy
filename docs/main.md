@@ -92,3 +92,5 @@ The method generate this dictionary, used as the basic setup:
 
 You can obviously modify the elements in that dictionary to set the configuration that you want.\
 More information and details can be found on reading the [Logging module](https://docs.python.org/3/library/logging.html)
+
+[Back to README](../README.md)

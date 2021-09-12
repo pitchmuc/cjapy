@@ -890,12 +890,12 @@ class CJA:
             output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
             includeType : OPTIONAL : Include additional segments not owned by user.(default all)
                 possible values are "shared" "templates" "deleted" "internal"
-            name : OPTIONAL : Filter list to only include segments that contains the Name
-            dataIds : OPTIONAL : Filter list to only include segments tied to the specified data group ID list (comma-delimited)
+            name : OPTIONAL : Filter list to only include filters that contains the Name
+            dataIds : OPTIONAL : Filter list to only include filters tied to the specified data group ID list (comma-delimited)
             ownerId : OPTIONAL : Filter by a specific owner ID.
             filterByIds : OPTIONAL : Filters by filter ID (comma-separated list)
             cached : OPTIONAL : return cached results
-            toBeUsedInRsid : OPTIONAL : The report suite where the segment is intended to be used. This report suite will be used to determine things like compatibility and permissions.
+            toBeUsedInRsid : OPTIONAL : The report suite where the filters is intended to be used. This report suite will be used to determine things like compatibility and permissions.
         """
         if self.loggingEnabled:
             self.logger.debug(f"getFilters start, output: {output}")
@@ -1275,7 +1275,7 @@ class CJA:
                     for element in filterRelations[correspondingStatic]:
                         segId = segmentApplied[element]
                         metricName += f":::{segId}"
-                        metricFilters["id"] = segId
+                        metricFilters[segId] = segId
                         if segId.startswith("s") and "@AdobeOrg" in segId:
                             seg = self.getFilter(segId)
                             metricFilters[segId] = seg["name"]
