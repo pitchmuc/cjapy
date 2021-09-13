@@ -4,7 +4,7 @@ import json
 from copy import deepcopy
 from pathlib import Path
 from typing import IO, Union, List
-from collections import defaultdict
+from collections import defaultdict, deque
 import time
 import logging
 
@@ -12,6 +12,7 @@ import logging
 import pandas as pd
 from cjapy import config, connector
 from .workspace import Workspace
+from .requestCreator import RequestCreator
 
 JsonOrDataFrameType = Union[pd.DataFrame, dict]
 JsonListOrDataFrameType = Union[pd.DataFrame, List[dict]]
@@ -1100,7 +1101,7 @@ class CJA:
         staticRows = set(val for val in tableSegmentsRows.values())
         staticRowsNames = []
         for row in staticRows:
-            if row.startswith("s") and "@" in row:
+            if row.startswith("s") and "@AdobeOrg" in row:
                 filter = self.getFilter(row)
                 staticRowsNames.append(filter["name"])
             else:
@@ -1125,7 +1126,7 @@ class CJA:
     def getReport(
         self,
         request: Union[dict, IO] = None,
-        limit: int = 1000,
+        limit: int = 20000,
         n_results: Union[int, str] = "inf",
         allowRemoteLoad: str = "default",
         useCache: bool = True,
@@ -1133,7 +1134,7 @@ class CJA:
         includeOberonXml: bool = False,
         includePredictiveObjects: bool = False,
         returnsNone: bool = None,
-        countRepeatInstance: bool = None,
+        countRepeatInstances: bool = None,
         ignoreZeroes: bool = None,
         dataViewId: str = None,
         resolveColumns: bool = True,
@@ -1152,13 +1153,15 @@ class CJA:
             includeOberonXml : OPTIONAL : Controls if Oberon XML should be returned in the response - DEBUG ONLY
             includePredictiveObjects : OPTIONAL : Controls if platform Predictive Objects should be returned in the response. Only available when using Anomaly Detection or Forecasting- DEBUG ONLY
             returnsNone : OPTIONAL: Overwritte the request setting to return None values.
-            countRepeatInstance : OPTIONAL: Overwritte the request setting to count repeatInstances values.
+            countRepeatInstances : OPTIONAL: Overwritte the request setting to count repeatInstances values.
             ignoreZeroes : OPTIONAL : Ignore zeros in the results
             dataViewId : OPTIONAL : Overwrite the data View ID used for report. Only works if the same components are presents.
             resolveColumns: OPTIONAL : automatically resolve columns from ID to name for calculated metrics & segments. Default True. (works on returnClass only)
             save : OPTIONAL : If you want to save the data (in JSON or CSV, depending the class is used or not)
             returnClass : OPTIONAL : return the class building dataframe and better comprehension of data. (default yes)
         """
+        if self.loggingEnabled:
+            self.logger.debug(f"Start getReport")
         path = "/reports"
         params = {
             "allowRemoteLoad": allowRemoteLoad,
@@ -1181,7 +1184,7 @@ class CJA:
             dataRequest["settings"]["nonesBehavior"] = "return-nones"
         else:
             dataRequest["settings"]["nonesBehavior"] = "exclude-nones"
-        if countRepeatInstance:
+        if countRepeatInstances:
             dataRequest["settings"]["countRepeatInstances"] = True
         else:
             dataRequest["settings"]["countRepeatInstances"] = False
@@ -1192,16 +1195,23 @@ class CJA:
         else:
             dataRequest["statistics"]["ignoreZeroes"] = False
         ### Request data
+        if self.loggingEnabled:
+            self.logger.debug(f"getReport request: {json.dumps(dataRequest)}")
         res = self.connector.postData(
             self.endpoint + path, data=dataRequest, params=params
         )
         if "rows" in res.keys():
             reportType = "normal"
+            if self.loggingEnabled:
+                self.logger.debug(f"reportType: {reportType}")
             dataRows = res.get("rows")
             columns = res.get("columns")
             summaryData = res.get("summaryData")
             totalElements = res.get("numberOfElements")
             lastPage = res.get("lastPage", True)
+            if float(len(dataRows)) >= float(n_results):
+                ## force end of loop when a limit is set on n_results
+                lastPage = True
             while lastPage != True:
                 dataRequest["settings"]["page"] += 1
                 res = self.connector.postData(
@@ -1210,7 +1220,7 @@ class CJA:
                 dataRows += res.get("rows")
                 lastPage = res.get("lastPage", True)
                 totalElements += res.get("numberOfElements")
-                if float(totalElements) >= float(n_results):
+                if float(len(dataRows)) >= float(n_results):
                     ## force end of loop when a limit is set on n_results
                     lastPage = True
             if returnClass == False:
@@ -1250,6 +1260,8 @@ class CJA:
             if returnClass == False:
                 return res
             reportType = "static"
+            if self.loggingEnabled:
+                self.logger.debug(f"reportType: {reportType}")
             columns = None  ## no "columns" key in response
             summaryData = res.get("summaryData")
             (
@@ -1282,8 +1294,12 @@ class CJA:
                 metricColumns.append(metricName)
                 ### ending with ['metric1','metric2 + segId',...]
         ### preparing data points
+        if self.loggingEnabled:
+            self.logger.debug(f"preparing data")
         preparedData = self._prepareData(dataRows, reportType=reportType)
         if returnClass:
+            if self.loggingEnabled:
+                self.logger.debug(f"returning Workspace class")
             ## Using the class
             data = Workspace(
                 responseData=preparedData,
@@ -1299,3 +1315,148 @@ class CJA:
             if save:
                 data.to_csv()
             return data
+
+    def getMultidimensionalReport(
+        self,
+        dimensions: list = None,
+        dimensionLimit: dict = None,
+        metrics: list = None,
+        dataViewId: str = None,
+        globalFilters: list = None,
+        metricFilters: dict = None,
+        countRepeatInstances: bool = True,
+        returnNones: bool = True,
+    ) -> pd.DataFrame:
+        """
+        Realize a multi-level breakdown report from the elements provided.
+        Returns either
+        Arguments:
+            dimensions : REQUIRED : list of the dimension to breakdown. In the order of the breakdown.
+            dimensionLimit : REQUIRED : the number of results to return for each breakdown.
+                dictionnary like this: {'dimension1':5,'dimension2':10}
+                You can ask to return everything from a dimension by using the 'inf' method
+            metrics : REQUIRED : list of metrics to return
+            dataViewId : REQUIRED : The dataView Id to use for your report.
+            globalFilters : REQUIRED : list of filtersID to be used.
+                example : ["filterId1","2020-01-01T00:00:00.000/2020-02-01T00:00:00.000"]
+            metricFilters : OPTIONAL : dictionary of the filter you want to apply to the metrics.
+                dictionnary like this : {"metric1":"segId1","metric":"segId2"}
+            countRepeatInstances : OPTIONAL : set to count repeatInstances values (or not). True by default.
+            returnNones : OPTIONAL : Set the behavior of the None values in that request. (True by default)
+        """
+        if self.loggingEnabled:
+            self.logger.debug(f"Starting getMultidimensionalReport")
+        template = RequestCreator()
+        template.setDataViewId(dataViewId)
+        template.setRepeatInstance(countRepeatInstances)
+        template.setNoneBehavior(returnNones)
+        for filter in globalFilters:
+            template.addGlobalFilter(filter)
+        for metric in metrics:
+            template.addMetric(metric)
+        for filterKey in metricFilters:
+            template.addMetricFilter(
+                metricId=filterKey, filterId=metricFilters[filterKey]
+            )
+        level = 0
+        list_breakdown = deepcopy(
+            dimensions[1:]
+        )  ## use to assign the correct variable to the itemsId retrieved
+        dict_breakdown_itemId = defaultdict(list)  ## for dimension - itemId
+        dict_breakdown_relation = defaultdict(list)  ## for itemId - Sub itemId
+        translate_itemId_value = {}  ## for translation between itemId and Value
+        for dimension in dimensions:
+            df_final = pd.DataFrame()
+            template.setDimension(dimension)
+            if float(dimensionLimit[dimension]) > 20000:
+                template.setLimit("20000")
+                limit = "20000"
+            else:
+                template.setLimit(dimensionLimit[dimension])
+                limit = dimensionLimit[dimension]
+            ### if we need to add filters
+            if dimension == dimensions[0]:
+                if self.loggingEnabled:
+                    self.logger.debug(f"Starting first iteration: {dimension}")
+                request = template.to_dict()
+                res = self.getReport(
+                    request=request,
+                    n_results=dimensionLimit[dimension],
+                    limit=limit,
+                )
+                dataframe = res.dataframe
+                dict_breakdown_itemId[list_breakdown[level]] = list(dataframe["itemId"])
+                ### ex : {'dimension1' : [itemID1,itemID2,...]}
+                translate_itemId_value[dimension] = {
+                    itemId: value
+                    for itemId, value in zip(
+                        list(dataframe["itemId"]), list(dataframe.iloc[:, 1])
+                    )
+                }  ### {"dimension1":{'itemIdValue':'realValue'}}
+            else:  ### starting breakdowns
+                if self.loggingEnabled:
+                    self.logger.debug(f"Starting breakdowns")
+                for itemId in dict_breakdown_itemId[dimension]:
+                    ### for each item in the previous element
+                    if level > 1:
+                        ## adding previous breakdown value to the metric filter
+                        original_filterId = dict_breakdown_relation[itemId]
+                        for metric in metrics:
+                            template.addMetricFilter(
+                                metricId=metric, filterId=original_filterId
+                            )
+                    filterId = f"{dimensions[level - 1]}:::{itemId}"
+                    for metric in metrics:
+                        template.addMetricFilter(metricId=metric, filterId=filterId)
+                    request = template.to_dict()
+                    print("after adding")
+                    print(json.dumps(request, indent=4))
+                    res = self.getReport(
+                        request=request,
+                        n_results=dimensionLimit[dimension],
+                        limit=limit,
+                    )
+                    ## cleaning breakdown filters
+                    template.removeMetricFilter(filterId=filterId)
+                    if level > 1:
+                        original_filterId = dict_breakdown_relation[itemId]
+                        template.removeMetricFilter(filterId=original_filterId)
+                    print("after remove")
+                    print(json.dumps(template.to_dict(), indent=4))
+                    dataframe = res.dataframe
+                    list_itemIds = list(dataframe["itemId"])
+                    dict_breakdown_itemId[dimension] = list_itemIds
+                    ### ex : {'dimension2' : [itemID1,itemID2,...]}
+                    dict_breakdown_relation = {
+                        itemId: filterId for itemId in list_itemIds
+                    }
+                    ## translating itemId to value
+                    ## {'dimension1':{'itemId':'value'}}
+                    translate_itemId_value[dimension] = {
+                        itemId: value
+                        for itemId, value in zip(
+                            list(dataframe["itemId"]), list(dataframe.iloc[:, 1])
+                        )
+                    }
+                    ## in case breakdown doesn't have values.
+                    if dataframe.empty == False:
+                        nb_metrics = len(metrics)
+                        metricsCols = list(dataframe.columns[-nb_metrics:])
+                        dictReplace = {
+                            oldColName: newColName
+                            for oldColName, newColName in zip(metricsCols, metrics)
+                        }
+                        dataframe.rename(columns=dictReplace, inplace=True)
+                        columns_order = deque(dataframe.columns)
+                        for lvl in range(level):
+                            dataframe[dimensions[lvl]] = translate_itemId_value[
+                                dimensions[lvl]
+                            ].get(itemId, itemId)
+                            columns_order.appendleft(dimensions[lvl])
+                        if df_final.empty:
+                            df_final = dataframe
+                        else:
+                            df_final = df_final.append(dataframe, ignore_index=True)
+                    df_final = df_final[columns_order]
+            level += 1
+        return df_final

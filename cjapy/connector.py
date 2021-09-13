@@ -53,7 +53,7 @@ class AdobeRequest:
             token = token_and_expiry["token"]
             expiry = token_and_expiry["expiry"]
             if self.loggingEnabled:
-                self.logger.info("token retrieved : {token}")
+                self.logger.info(f"token retrieved : {token}")
             self.token = token
             self.config["token"] = token
             self.config["date_limit"] = time.time() + expiry / 1000 - 500
@@ -107,7 +107,8 @@ class AdobeRequest:
             print(f"request URL : {res.request.url}")
             print(f"status_code : {res.status_code}")
         if self.loggingEnabled:
-            self.logger.debug(f"request_header : {res.request.headers}")
+            self.logger.debug(f"request_URL : {res.request.url}")
+            self.logger.debug(f"status_code: {res.status_code}")
         try:
             while str(res.status_code) == "429":
                 if self.loggingEnabled:
@@ -173,12 +174,19 @@ class AdobeRequest:
             res = requests.post(
                 endpoint, headers=headers, params=params, data=json.dumps(data)
             )
+        if self.loggingEnabled:
+            self.logger.debug(f"request_URL : {res.request.url}")
+            self.logger.debug(f"status_code: {res.status_code}")
         try:
+            while (
+                res.status_code == 429 or res.json().get("error_code", None) == "429050"
+            ):
+                if self.loggingEnabled:
+                    self.logger.warning(f"too many request: {res.status}, {res.text}")
+                time.sleep(30)
+                res = self.postData(endpoint, headers=headers, params=params, data=data)
             res_json = res.json()
-            if res.status_code == 429 or res_json.get("error_code", None) == "429050":
-                res_json["status_code"] = 429
         except:
-            print(res.status_code)
             ## handling 1.4
             if kwargs.get("legacy", False):
                 try:
@@ -215,6 +223,9 @@ class AdobeRequest:
             res = requests.patch(
                 endpoint, headers=headers, params=params, data=json.dumps(data)
             )
+        if self.loggingEnabled:
+            self.logger.debug(f"request_URL : {res.request.url}")
+            self.logger.debug(f"status_code: {res.status_code}")
         try:
             while str(res.status_code) == "429":
                 if kwargs.get("verbose", False):
@@ -253,6 +264,9 @@ class AdobeRequest:
             res = requests.put(
                 endpoint, headers=headers, params=params, data=json.dumps(data)
             )
+        if self.loggingEnabled:
+            self.logger.debug(f"request_URL : {res.request.url}")
+            self.logger.debug(f"status_code: {res.status_code}")
         try:
             status_code = res.json()
         except:

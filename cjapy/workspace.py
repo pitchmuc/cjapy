@@ -45,7 +45,7 @@ class Workspace:
         self.dataRequest = dataRequest
         self.requestSize = dataRequest["settings"]["limit"]
         self.settings = dataRequest["settings"]
-        self.pageRequested = dataRequest["settings"]["page"]
+        self.pageRequested = dataRequest["settings"]["page"] + 1
         self.summaryData = summaryData
         self.reportType = reportType
         ## global filters resolution
@@ -93,9 +93,10 @@ class Workspace:
             metrics: list = metrics  ## case when a list is used
             columns_data.append("FilterId")
             columns_data += metrics
-        df_init.columns = columns_data
+        if df_init.empty == False:
+            df_init.columns = columns_data
+            self.columns = list(df_init.columns)
         self.row_numbers = len(df_init)
-        self.columns = list(df_init.columns)
         self.dataframe = df_init
 
     def __str__(self):

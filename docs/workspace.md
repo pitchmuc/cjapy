@@ -48,3 +48,25 @@ Define if the report requested was a "normal" report or a "static" report.\
 the rowNumbers provide a quick way to find the number of results returned and provided in your dataframe.\
 The columns gives you the different columns that are provided in your dataframe.
 
+## Methods
+
+The `Workspace` class provide some methods available on your data.
+
+### to_csv
+
+`to_csv` is a method to save your data into a csv file format.\
+It takes its concept from the pandas.DataFrame.to_csv() methods.
+Arguments:
+
+* filename: OPTIONAL : name of the file.
+* delimiter: OPTIONAL : delimiter of the CSV
+* index: OPTIONAL : should the index be included in the CSV (default False)
+
+### to_json
+
+`to_json` is a method to save your data into a JSON file format.\
+It takes its concept from the pandas.DataFrame.to_json() methods.
+Arguments:
+
+* filename : OPTIONAL : name of the file
+* orient : OPTIONAL : orientation of the JSON
