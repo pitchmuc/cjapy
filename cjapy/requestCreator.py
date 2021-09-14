@@ -1,6 +1,7 @@
-from types import MappingProxyType
 from copy import deepcopy
 import datetime
+import json
+from time import time
 
 
 class RequestCreator:
@@ -163,7 +164,6 @@ class RequestCreator:
             filterId : REQUIRED : The filter to add.
                 when breakdown, use the following format for the value "dimension:::itemId"
         """
-        print("to remove: " + filterId)
         found = False  ## flag
         if filterId is None:
             raise ValueError("Require a filter ID")
@@ -183,7 +183,6 @@ class RequestCreator:
                 for metric in self.__request["metricContainer"]["metrics"]:
                     if metricFilterId in metric.get("filters", []):
                         metric["filters"].remove(metricFilterId)
-                        print("remove")
                 self.__metricFilterCount -= 1
 
     def setLimit(self, limit: int = 100) -> None:
@@ -279,6 +278,16 @@ class RequestCreator:
 
     def to_dict(self):
         """
-        Return the request
+        Return the request definition
         """
         return deepcopy(self.__request)
+
+    def save(self, fileName: str = None):
+        """
+        save the request definition in a JSON file.
+        Argument:
+            filename : OPTIONAL : Name of the file. (default cjapy_request_<timestamp>.json)
+        """
+        fileName = fileName or f"cjapy_request_{int(time())}.json"
+        with open(fileName, "w") as f:
+            f.write(json.dumps(self.to_dict(), indent=4))

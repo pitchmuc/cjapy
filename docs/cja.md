@@ -32,7 +32,7 @@ There are several get methods available in the API.
 Example of getFilters usage:
 
 ```python
-mysegments = mycompany.getSegments(extended_info=True,save=True)
+mysegments = mycompany.getFilters()
 ```
 
 Example of getDimensions usage:
@@ -41,97 +41,222 @@ Example of getDimensions usage:
 mydims = mycompany.getDimensions('rsid')
 ```
 
+List of GET methods:
+
+* getCurrentUser
+  return the current user
+
+* getCalculatedMetrics
+  Returns a dataframe or the list of calculated Metrics.
+  Arguments
+  * full : OPTIONAL : returns all possible attributs if set to True (False by default)
+  * inclType : OPTIONAL : returns the type selected.Possible options are:
+    - all (default)
+    - shared
+    - templates
+    - unauthorized
+    - deleted
+    - internal
+    - curatedItem
+  * dataIds : OPTIONAL : Filters the result to calculated metrics tied to a specific Data View ID (comma-delimited)
+  * ownerId : OPTIONAL : Filters the result by specific loginId.
+  * limit : OPTIONAL : Number of results per request (Default 100)
+  * filterByIds : OPTIONAL : Filter list to only include calculated metrics in the specified * list (comma-delimited),
+  * favorite : OPTIONAL : If set to true, return only favorties calculated metrics. (default False)
+  * approved : OPTIONAL : If set to true, returns only approved calculated metrics. (default False)
+  * output : OPTIONAL : by default returns a "dataframe", can also return the list when set to "raw"
+
+* getCalculatedMetricsFunctions
+  Returns a list of calculated metrics functions.
+  Arguments:
+  * output : OPTIONAL : default to "raw", can return "dataframe".
+
+* getCalculatedMetric
+  Return a single calculated metrics based on its ID.
+  Arguments:
+  * calcId : REQUIRED : The calculated me
+
+* getShares
+  Returns the elements shared.
+  Arguments:
+  * userId : OPTIONAL : User ID to return details for.
+  * inclType : OPTIONAL : Include additional shares not owned by the user
+  * limit : OPTIONAL : number of result per request.
+  * useCache: OPTIONAL : Caching the result (default True)
+
+* getShare
+  Returns a specific share element.
+  Arguments:
+  * shareId : REQUIRED : the element ID.
+  * useCache : OPTIONAL : If caching the response (True by defaul
+
+* getTags
+  Return the tags for the company.
+  Arguments:
+  * limit : OPTIONAL : Number of result per request.
+
+* getTag
+  Return a single tag data by its ID.
+  Arguments:
+  * tagId : REQUIRED : The tag ID to retrieve.
+
+* getComponentTags
+  Return tags for a component based on its ID and type.
+  Arguments:
+  * componentId : REQUIRED : The component ID
+  * componentType : REQUIRED : The component type.
+      could be any of the following ; "segment" "dashboard" "bookmark" "calculatedMetric" "project" "dateRange" "metric" "dimension" "virtualReportSuite" "scheduledJob" "alert" "classificationSet" "dataView"
+
+* getTopItems
+  Get the top X items (based on paging restriction) for the specified dimension and dataId. Defaults to last 90 days.
+  Arguments:
+  * dataId : REQUIRED : Data Group or Data View to run the report against
+  * dimension : REQUIRED : Dimension to run the report against. Example: "variables/page"
+  * dateRange : OPTIONAL : Format: YYYY-MM-DD/YYYY-MM-DD (default 90 days)
+  * startDate: OPTIONAL : Format: YYYY-MM-DD
+  * endDate : OPTIONAL : Format: YYYY-MM-DD
+  * limit : OPTIONAL : Number of results per request (default 100)
+  * searchClause : OPTIONAL : General search string; wrap with single quotes. Example: 'PageABC'
+  * searchAnd : OPTIONAL : Search terms that will be AND-ed together. Space delimited.
+  * searchOr : OPTIONAL : Search terms that will be OR-ed together. Space delimited.
+  * searchNot : OPTIONAL : Search terms that will be treated as NOT including. Space delimited.
+  * searchPhrase : OPTIONAL : A full search phrase that will be searched for.
+  * remoteLoad : OPTIONAL : tells to load the result in Oberon if possible (default True)
+  * xml : OPTIONAL : returns the XML for debugging (default False)
+  * noneValues : OPTIONAL : Controls None values to be included (default True)
+
+* getDimensions
+  Used to retrieve dimensions for a dataview
+  Arguments:
+  * dataviewId : REQUIRED : the Data View ID to retrieve data from.
+  * full : OPTIONAL : To add additional elements (default False)
+  * inclType : OPTIONAL : Possibility to add "hidden" values
+
+* getDimension
+  Return a specific dimension based on the dataview ID and dimension ID passed.
+  Arguments:
+  * dataviewId : REQUIRED : the Data View ID to retrieve data from.
+  * dimensionId : REQUIRED : the dimension ID to return
+  * full : OPTIONAL : To add additional elements (default True)
+
+* getMetrics
+  Used to retrieve metrics for a dataview
+  Arguments:
+  * dataviewId : REQUIRED : the Data View ID to retrieve data from.
+  * full : OPTIONAL : To add additional elements (default False)
+  * inclType : OPTIONAL : Possibility to add "hidden" values
+
+* getMetric
+  Return a specific metric based on the dataview ID and dimension ID passed.
+  Arguments:
+  * dataviewId : REQUIRED : the Data View ID to retrieve data from.
+  * metricId : REQUIRED : the metric ID to return
+  * full : OPTIONAL : To add additional elements (default True)
+
+* getDataViews
+  Returns the Data View configuration.
+  Arguments:
+  * limit : OPTIONAL : number of results per request (default 100)
+  * full : OPTIONAL : define if all possible information are returned (default True).
+  * output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
+  * parentDataGroupId : OPTIONAL : Filters data views by a single parentDataGroupId
+  * externalIds : OPTIONAL : Comma-delimited list of external ids to limit the response with.
+  * externalParentIds : OPTIONAL : Comma-delimited list of external parent ids to limit the * response with.
+  * dataViewIds : OPTIONAL : Comma-delimited list of data view ids to limit the response with.
+  * includeType : OPTIONAL : include additional DataViews not owned by user.(default "all")
+  * cached : OPTIONAL : return cached results
+  * verbose : OPTIONAL : add comments in the console.
+
+* getDataView
+  Returns a specific Data View configuration from Configuration ID.
+  Arguments:
+  * dataViewId : REQUIRED : The data view ID to retrieve.
+  * full : OPTIONAL : getting extra information on the data view
+  * save : OPTIONAL : save the response in JSON format
+
+* getFilters
+  Returns a list of filters used in CJA.
+  Arguments:
+  * limit : OPTIONAL : number of result per request (default 100)
+  * full : OPTIONAL : add additional information to the filters
+  * output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
+  * includeType : OPTIONAL : Include additional segments not owned by user.(default all)
+    possible values are "shared" "templates" "deleted" "internal"
+  * name : OPTIONAL : Filter list to only include filters that contains the Name
+  * dataIds : OPTIONAL : Filter list to only include filters tied to the specified data group ID list (comma-delimited)
+  * ownerId : OPTIONAL : Filter by a specific owner ID.
+  * filterByIds : OPTIONAL : Filters by filter ID (comma-separated list)
+  * cached : OPTIONAL : return cached results
+  * toBeUsedInRsid : OPTIONAL : The report suite where the filters is intended to be used. This report suite will be used to determine things like compatibility and permissions.
+
+* getFilter
+  Returns a single filter definition by its ID.
+  Arguments:
+  * filterId : REQUIRED : ID of the filter
+  * full : OPTIONAL : Boolean to define additional elements
+
 ## Create methods
 
 The CJA API  provides some endpoint to create elements.
 Here is the list of the possible create options.
 
-* createVirtualReportSuite: Create a new virtual report suite based on the information provided.
+* createTags: Create tags for the company, attached to components.
   Arguments:
-  * name : REQUIRED : name of the virtual reportSuite
-  * parentRsid : REQUIRED : Parent reportSuite ID for the VRS
-  * segmentLists : REQUIRED : list of segment id to be applied on the ReportSuite.
-  * dataSchema : REQUIRED : Type of schema used for the VRSID. (default : "Cache")
-  * data_dict : OPTIONAL : you can pass directly the dictionary.
-  In this case, you dictionary should looks like this:
+  * data : REQUIRED : list of elements to passed.
+      Example [
+          {
+              "id": 0,
+              "name": "string",
+              "description": "string",
+              "components": [
+              null
+              ]
+          }
+      ]
 
-  ```python
-  data_dict = {
-    'name' : 'xxxx',
-    'parentRsid':'',
-    'segmentLists':'',
-    'dataSchema':'Cache',
-  }
-  ```
-
-* createSegment: This method create segment based on the information provided in the dictionary passed as parameter.
+* createDataView
+  Create and stores the given Data View in the db.
   Arguments:
-  * segmentJSON : REQUIRED : the dictionary that represents the JSON statement for the segment.
-  The segmentJSON is referenced on this [Swagger reference](https://adobedocs.github.io/analytics-2.0-apis/#/segments/segments_createSegment)
+  * data : REQUIRED : The dictionary or json file that holds the definition for the dataview to be created.
 
-* createCalculatedMetrics: This method create a calculated metrics within your Login Company with the provided dictionary.
+* createFilter
   Arguments:
-  * metricJSON : REQUIRED : Calculated Metrics information to create. Required :  name, definition, rsid
-    more information can be found on the [Swagger refrence](https://adobedocs.github.io/analytics-2.0-apis/#/calculatedmetrics/calculatedmetrics_createCalculatedMetric)
-  
-* createCalculatedMetricValidate: Validate a calculated metrics definition or object passed.
-  Arguments:
-  * metricJSON : REQUIRED : Calculated Metrics information to create. (Required: name, definition, rsid)
-      More information can be found at this address <https://adobedocs.github.io/analytics-2.0-apis/#/calculatedmetrics/calculatedmetrics_createCalculatedMetric>
+  * data : REQUIRED : Dictionary or JSON file to create a filter
+  possible kwargs:
+  * encoding : if you pass a JSON file, you can change the encoding to read it.
 
-* createTags : This method creates a tag and associate it with a component.
+* createCalculatedMetric: Create a calculated metrics based on the dictionary
   Arguments:
-  * data : REQUIRED : The list of the tag to be created with their component relation.
-  It looks like the following:
+  * data : REQUIRED : dictionary that will set the creation.
 
-  ```JSON
-  [
-    {
-        "id": 0,
-        "name": "string",
-        "description": "string",
-        "components": [
-        {
-            "componentType": "string",
-            "componentId": "string",
-            "tags": [
-            "Unknown Type: Tag"
-            ]
-        }
-        ]
-    }
-  ]
-  ```
 
 ## DELETE methods
 
 There is a possibility to delete some elements with the Adobe Analytics API 2.0. Please find below the different options that you can delete.
 
-* deleteVirtualReportSuite: delete a Virtual reportSuite based on its ID.
+* deleteFilter: Delete a filter based on its ID.
   Arguments:
-  * vrsid : REQUIRED : The id of the virtual reportSuite to delete.
+  * filterId : REQUIRED : Filter ID to be deleted
 
-* deleteSegment: delete a segment based on the ID.
+* deleteDataView: Delete a data view by its ID.
   Arguments:
-  * segmentID : the ID of the segment to be deleted.
+  * dataViewId : REQUIRED : the data view ID to be deleted
 
-* deleteCalculatedMetrics: Delete a calculated metrics based on its ID.
+* deleteTags: Delete a calculated metrics based on its ID.
+  Removes all tags from the passed componentIds.
+  Note that currently this is done in a single DB query, so there is a single combined response for the entire operation.
   Arguments:
-  * calcID : REQUIRED : Calculated Metrics ID to be deleted
+  * componentIds : REQUIRED : comma separated list of component ids to remove tags.
+  * componentType : REQUIRED : The component type to operate on.
+    could be any of the following ; "segment" "dashboard" "bookmark" "calculatedMetric" "project" "dateRange" "metric" "dimension" "virtualReportSuite" "scheduledJob" "alert" "classificationSet" "dataView"
 
-* deleteTags: Delete all tags from the component Type and the component ids specified.
+* deleteShare: Delete the shares of an element.
   Arguments:
-  * componentIds : REQUIRED : the Comma-separated list of componentIds to operate on.
-  * componentType : REQUIRED : The component type to operate on.\
-    Available values : segment, dashboard, bookmark, calculatedMetric, project, dateRange, metric, dimension, virtualReportSuite, scheduledJob, alert, classificationSet
+  * shareId : REQUIRED : the element ID to be deleted.
 
-* deleteTag : Delete a Tag based on its id.
+* deleteCalculateMetrics : Delete a calculated metrics based on its ID.
   Arguments:
-  * tagId : REQUIRED : The tag ID to be deleted.
-
-* deleteProject : Delete a Project basede on its id.
-  Arguments:
-  * projectId : REQUIRED : The project ID to be deleted.
+  * calcId : REQUIRED : The calculated metrics ID that will be deleted
 
 ### Get report
 
@@ -176,6 +301,52 @@ This will provide the more intelligible report for you.
 
 You can have more information on the `Workspace` instance on that documentation: [cjapy Workspace documentation](./workspace.md)
 
+Example:
+
+```python
+import cjapy
+import json
+
+cjapy.importConfigFile('myConfig.json')
+
+## Possibility 1 : load a request definition delivered by CJA interface debugger.
+with open('myRequest.json','r') as f:
+    myRequest = json.load(f)
+
+myReport = cjapy.getReport(myRequest)
+
+## Possibility 2 : Create a request from scratch via the Request Creator
+myRequest = cjapy.RequestCreator()
+myRequest.setDimension('variables/...')
+# ... other methods to build it
+requestDef = myRequest.to_dict()
+
+myReport = cjapy.getReport(requestDef)
+```
+
 **Handling Throttle** : The throttle limit of 12 requests per 6 seconds or 120 requests per minute is handle automatically. It automatically pause the requests for 50 seconds when the limit is reached.
+
+### Get getMultidimensionalReport
+
+The `getMultidimensionalReport` is a beta feature of the `cjapy` module.\
+This method, as its name suggests, enable you to realize automatic breakdown report in your CJA environment.\
+The back end of that capability is leveraging the `getReport` and wrapping it with a logic.
+It returns a single `dataframe`, with raw ID of the metrics as columns value.
+No reference to timeframe and filters are being returned in the result, as it is for the simple `getReport`
+
+The following arguments are possible with this method:
+
+* dimensions : REQUIRED : list of the dimension to breakdown. In the order of the breakdown.
+* dimensionLimit : REQUIRED : the number of results to return for each breakdown.
+    dictionnary like this: {'dimension1':5,'dimension2':10}
+    You can ask to return everything from a dimension by using the 'inf' method
+* metrics : REQUIRED : list of metrics to return
+* dataViewId : REQUIRED : The dataView Id to use for your report.
+* globalFilters : REQUIRED : list of filtersID to be used.
+    example : ["filterId1","2020-01-01T00:00:00.000/2020-02-01T00:00:00.000"]
+* metricFilters : OPTIONAL : dictionary of the filter you want to apply to the metrics.
+    dictionnary like this : {"metric1":"segId1","metric":"segId2"}
+* countRepeatInstances : OPTIONAL : set to count repeatInstances values (or not). True by default.
+* returnNones : OPTIONAL : Set the behavior of the None values in that request. (True by default)
 
 [Back to README](../README.md)
