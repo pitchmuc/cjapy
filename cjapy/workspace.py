@@ -96,6 +96,8 @@ class Workspace:
         if df_init.empty == False:
             df_init.columns = columns_data
             self.columns = list(df_init.columns)
+        else:
+            self.columns = []
         self.row_numbers = len(df_init)
         self.dataframe = df_init
 
@@ -107,7 +109,8 @@ class Workspace:
                 "globalFilters": self.globalFilters,
                 "totalRows": self.row_numbers,
                 "columns": self.columns,
-            }
+            },
+            indent=4,
         )
 
     def __repr__(self):
@@ -118,7 +121,8 @@ class Workspace:
                 "globalFilters": self.globalFilters,
                 "totalRows": self.row_numbers,
                 "columns": self.columns,
-            }
+            },
+            indent=4,
         )
 
     def to_csv(

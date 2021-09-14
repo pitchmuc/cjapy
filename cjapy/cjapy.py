@@ -1196,7 +1196,7 @@ class CJA:
             dataRequest["statistics"]["ignoreZeroes"] = False
         ### Request data
         if self.loggingEnabled:
-            self.logger.debug(f"getReport request: {json.dumps(dataRequest)}")
+            self.logger.debug(f"getReport request: {json.dumps(dataRequest,indent=4)}")
         res = self.connector.postData(
             self.endpoint + path, data=dataRequest, params=params
         )
@@ -1223,6 +1223,8 @@ class CJA:
                 if float(len(dataRows)) >= float(n_results):
                     ## force end of loop when a limit is set on n_results
                     lastPage = True
+            if self.loggingEnabled:
+                self.logger.debug(f"loop for report over: {len(dataRows)} results")
             if returnClass == False:
                 return dataRows
             ### create relation between metrics and filters applied
@@ -1344,6 +1346,16 @@ class CJA:
             countRepeatInstances : OPTIONAL : set to count repeatInstances values (or not). True by default.
             returnNones : OPTIONAL : Set the behavior of the None values in that request. (True by default)
         """
+        if dimensions is None:
+            raise ValueError("Require a list of dimensions")
+        if dimensionLimit is None:
+            raise ValueError(
+                "Require a dictionary of dimensions with their number of results"
+            )
+        if metrics is None:
+            raise ValueError("Require a list of metrics")
+        if dataViewId is None:
+            raise ValueError("Require a Data View ID")
         if self.loggingEnabled:
             self.logger.debug(f"Starting getMultidimensionalReport")
         template = RequestCreator()
@@ -1354,10 +1366,11 @@ class CJA:
             template.addGlobalFilter(filter)
         for metric in metrics:
             template.addMetric(metric)
-        for filterKey in metricFilters:
-            template.addMetricFilter(
-                metricId=filterKey, filterId=metricFilters[filterKey]
-            )
+        if metricFilters is not None:
+            for filterKey in metricFilters:
+                template.addMetricFilter(
+                    metricId=filterKey, filterId=metricFilters[filterKey]
+                )
         level = 0
         list_breakdown = deepcopy(
             dimensions[1:]
@@ -1384,7 +1397,9 @@ class CJA:
                     n_results=dimensionLimit[dimension],
                     limit=limit,
                 )
+                print(res)
                 dataframe = res.dataframe
+                print(dataframe)
                 dict_breakdown_itemId[list_breakdown[level]] = list(dataframe["itemId"])
                 ### ex : {'dimension1' : [itemID1,itemID2,...]}
                 translate_itemId_value[dimension] = {
