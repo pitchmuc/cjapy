@@ -24,12 +24,14 @@ Functionalities that are covered :
 * Get, Update and Delete Filters
 * Get Top items for a dimension
 * Run a report (by default returning a Workspace instance)
+* (BETA) Run a multi dimensional report 
 
 Documentation is split in different places:
 
 * Core methods to setup `cjapy`: [main documentation](./docs/main.md)
 * Methods provided by the CJA class: [cja documentation](./docs/cja.md)
 * Workspace class documentation: [Workspace class](./docs/workspace.md)
+* RequestCreator class documentation: [RequestCreator class](./docs/requestCreator.md)
 
 ## Getting Started
 

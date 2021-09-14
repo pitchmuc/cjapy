@@ -254,9 +254,107 @@ There is a possibility to delete some elements with the Adobe Analytics API 2.0.
   Arguments:
   * shareId : REQUIRED : the element ID to be deleted.
 
-* deleteCalculateMetrics : Delete a calculated metrics based on its ID.
+* deleteCalculateMetrics: Delete a calculated metrics based on its ID.
   Arguments:
   * calcId : REQUIRED : The calculated metrics ID that will be deleted
+
+## UPDATE methods
+
+CJA API provides some method PUT and PATCH that are available to update some component of the CJA.\
+On each method docstring, I tried to tell if it is a PUT or a PATCH method.
+
+* updateCalculatedMetrics: Will overwrite the calculated metrics object with the new object   (PUT method)
+  Arguments:
+  * calcId : REQUIRED : The calculated metric ID to be updated
+  * data : REQUIRED : The dictionary that will overwrite.
+
+* updateShares: Create one/many shares for one/many components at once. This is a PUT request.
+  For each component object in the passed list, the given shares will replace the current set of shares for each component.
+  Arguments:
+  * data : REQUIRED : list of dictionary containing the component to share.
+      Example  [
+          {
+              "componentType": "string",
+              "componentId": "string",
+              "shares": [
+              {
+                  "shareToId": 0,
+                  "shareToImsId": "string",
+                  "shareToType": "string",
+                  "accessLevel": "string"
+              }
+              ]
+          }
+      ]
+  * useCache : OPTIONAL : Boolean to use caching. Default is True.
+
+* updateTags: This endpoint allows many tags at once to be created/deleted. PUT method.
+  Any tags passed to this endpoint will become the only tags for that componentId (all other tags will be removed).
+  Arguments:
+  * data : REQUIRED : List of tags and component to be tagged.
+    Example [
+              {
+                "componentType": "string",
+                "componentId": "string",
+                "tags": [
+                    {
+                      "id": 0,
+                      "name": "string",
+                      "description": "string",
+                      "components": [
+                      null
+                      ]
+                    }
+                ]
+              }
+            ]
+
+* updateDataView: Update the Data View definition (PUT method)
+  Arguments:
+  * dataViewId : REQUIRED : the data view ID to be updated
+  * data : REQUIRED : The dictionary or JSON file that holds the definition for the dataview to be updated
+  possible kwargs:
+  * encoding : if you pass a JSON file, you can change the encoding to read it.
+
+* updateFilter: Update a filter based on the filter ID.
+  Arguments:
+  * filterId : REQUIRED : Filter ID to be updated
+  * data : REQUIRED : Dictionary or JSON file to update the filter
+  possible kwargs:
+  * encoding : if you pass a JSON file, you can change the encoding to read it.
+
+## Other methods
+
+* validateCalculatedMetric: Validate a calculated metrics definition dictionary.
+  Arguments:
+  * data : REQUIRED : dictionary that will set the creation.
+
+* searchShares: Search for multiple shares on component based on the data passed.
+  Arguments:
+  * data : REQUIRED : dictionary specifying the search.
+    example: {
+        "componentType": "string",
+        "componentIds": [
+            "string"
+        ],
+        "dataId": "string"
+    }
+  * full : OPTIONAL : add additional data in the results.(Default False)
+  * limit : OPTIONAL : number of result per page (10 per default)
+
+* validateDataView: Validate the dictionary for the creation of a data view.
+  Argument:
+  * data : REQUIRED : The dictionary or json file that holds the definition for the dataview to be created.
+
+* copyDataView: Copy the setting of a specific data view.
+  Arguments:
+  * dataViewId : REQUIRED : Data View ID to copy the setting on
+
+* validateFilter: Validate the syntax for filter creation.
+  Arguments:
+  * data : REQUIRED : Dictionary or JSON file to create a filter
+  possible kwargs:
+  * encoding : if you pass a JSON file, you can change the encoding to read it.
 
 ### Get report
 

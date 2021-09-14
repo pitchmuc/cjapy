@@ -369,7 +369,7 @@ class CJA:
     def createTags(self, data: list = None) -> dict:
         """
         Create tags for the company, attached to components.
-        ARguments:
+        Arguments:
             data : REQUIRED : list of elements to passed.
                 Example [
                     {
@@ -1016,7 +1016,7 @@ class CJA:
         self, filterId: str = None, data: Union[dict, IO] = None, **kwargs
     ) -> dict:
         """
-        Create a filter.
+        Update a filter based on the filter ID.
         Arguments:
             filterId : REQUIRED : Filter ID to be updated
             data : REQUIRED : Dictionary or JSON file to update the filter
