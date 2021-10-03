@@ -109,6 +109,7 @@ class AdobeRequest:
         if self.loggingEnabled:
             self.logger.debug(f"request_URL : {res.request.url}")
             self.logger.debug(f"status_code: {res.status_code}")
+            self.logger.debug(f"parameters usde: {json.dumps(params)}")
         try:
             while str(res.status_code) == "429":
                 if self.loggingEnabled:

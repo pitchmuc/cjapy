@@ -589,6 +589,7 @@ class CJA:
         full: bool = False,
         inclType: str = None,
         verbose: bool = False,
+        output: str = "df",
     ) -> dict:
         """
         Used to retrieve dimensions for a dataview
@@ -596,6 +597,7 @@ class CJA:
             dataviewId : REQUIRED : the Data View ID to retrieve data from.
             full : OPTIONAL : To add additional elements (default False)
             inclType : OPTIONAL : Possibility to add "hidden" values
+            output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
         """
         if dataviewId is None:
             raise ValueError("Require a Data View ID")
@@ -612,7 +614,11 @@ class CJA:
         res = self.connector.getData(
             self.endpoint + path, params=params, verbose=verbose
         )
-        return res
+        dimensions = res.get("content", [])
+        if output == "df":
+            df = pd.DataFrame(dimensions)
+            return df
+        return dimensions
 
     def getDimension(
         self, dataviewId: str = None, dimensionId: str = None, full: bool = True
@@ -1371,6 +1377,10 @@ class CJA:
                 template.addMetricFilter(
                     metricId=filterKey, filterId=metricFilters[filterKey]
                 )
+        if self.loggingEnabled:
+            self.logger.debug(
+                f"first request: {json.dumps(template.to_dict(),indent=2)}"
+            )
         level = 0
         list_breakdown = deepcopy(
             dimensions[1:]
@@ -1397,9 +1407,7 @@ class CJA:
                     n_results=dimensionLimit[dimension],
                     limit=limit,
                 )
-                print(res)
                 dataframe = res.dataframe
-                print(dataframe)
                 dict_breakdown_itemId[list_breakdown[level]] = list(dataframe["itemId"])
                 ### ex : {'dimension1' : [itemID1,itemID2,...]}
                 translate_itemId_value[dimension] = {
@@ -1424,8 +1432,8 @@ class CJA:
                     for metric in metrics:
                         template.addMetricFilter(metricId=metric, filterId=filterId)
                     request = template.to_dict()
-                    print("after adding")
-                    print(json.dumps(request, indent=4))
+                    if self.loggingEnabled:
+                        self.logger.info(json.dumps(request, indent=4))
                     res = self.getReport(
                         request=request,
                         n_results=dimensionLimit[dimension],
@@ -1436,8 +1444,8 @@ class CJA:
                     if level > 1:
                         original_filterId = dict_breakdown_relation[itemId]
                         template.removeMetricFilter(filterId=original_filterId)
-                    print("after remove")
-                    print(json.dumps(template.to_dict(), indent=4))
+                    if self.loggingEnabled:
+                        self.logger.debug(json.dumps(template.to_dict(), indent=4))
                     dataframe = res.dataframe
                     list_itemIds = list(dataframe["itemId"])
                     dict_breakdown_itemId[dimension] = list_itemIds
@@ -1474,4 +1482,12 @@ class CJA:
                             df_final = df_final.append(dataframe, ignore_index=True)
                     df_final = df_final[columns_order]
             level += 1
-        return df_final
+        workspace = Workspace(
+            df_final,
+            dataRequest=template.to_dict(),
+            summaryData="notApplicable",
+            cjaConnector=self,
+            reportType="multi",
+            metricFilters="notApplicable",
+        )
+        return workspace

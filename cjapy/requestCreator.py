@@ -75,6 +75,12 @@ class RequestCreator:
         }
         self.today = today
 
+    def __repr__(self):
+        return json.dumps(self.__request, indent=4)
+
+    def __str__(self):
+        return json.dumps(self.__request, indent=4)
+
     def addMetric(self, metricId: str = None) -> None:
         """
         Add a metric to the template.
@@ -89,6 +95,12 @@ class RequestCreator:
             addMetric["sort"] = "desc"
         self.__request["metricContainer"]["metrics"].append(addMetric)
         self.__metricCount += 1
+
+    def getMetrics(self) -> list:
+        """
+        return a list of the metrics used
+        """
+        return [metric["id"] for metric in self.__request["metricContainer"]["metrics"]]
 
     def addMetricFilter(
         self, metricId: str = None, filterId: str = None, metricIndex: int = None
