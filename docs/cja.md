@@ -51,13 +51,13 @@ List of GET methods:
   Arguments
   * full : OPTIONAL : returns all possible attributs if set to True (False by default)
   * inclType : OPTIONAL : returns the type selected.Possible options are:
-    - all (default)
-    - shared
-    - templates
-    - unauthorized
-    - deleted
-    - internal
-    - curatedItem
+    * all (default)
+    * shared
+    * templates
+    * unauthorized
+    * deleted
+    * internal
+    * curatedItem
   * dataIds : OPTIONAL : Filters the result to calculated metrics tied to a specific Data View ID (comma-delimited)
   * ownerId : OPTIONAL : Filters the result by specific loginId.
   * limit : OPTIONAL : Number of results per request (Default 100)
@@ -228,7 +228,6 @@ Here is the list of the possible create options.
 * createCalculatedMetric: Create a calculated metrics based on the dictionary
   Arguments:
   * data : REQUIRED : dictionary that will set the creation.
-
 
 ## DELETE methods
 
@@ -424,13 +423,13 @@ myReport = cjapy.getReport(requestDef)
 
 **Handling Throttle** : The throttle limit of 12 requests per 6 seconds or 120 requests per minute is handle automatically. It automatically pause the requests for 50 seconds when the limit is reached.
 
-### Get getMultidimensionalReport
+### Get getMultidimensionalReport (BETA)
 
 The `getMultidimensionalReport` is a beta feature of the `cjapy` module.\
 This method, as its name suggests, enable you to realize automatic breakdown report in your CJA environment.\
-The back end of that capability is leveraging the `getReport` and wrapping it with a logic.
-It returns a single `dataframe`, with raw ID of the metrics as columns value.
-No reference to timeframe and filters are being returned in the result, as it is for the simple `getReport`
+The back end of that capability is leveraging the `getReport` and wrapping it with a logic.\
+It returns a  `Workspace` instance.\
+No reference to metric filters are being returned in the result as it depends on the iteration of the loop.
 
 The following arguments are possible with this method:
 

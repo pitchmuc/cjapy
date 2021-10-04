@@ -70,3 +70,14 @@ Arguments:
 
 * filename : OPTIONAL : name of the file
 * orient : OPTIONAL : orientation of the JSON
+
+### breakdown
+
+`breakdown` method enables you to breakdown one of your result line in your result dataframe by any other dimension you have in your dataview.\
+**NOTE**: breakdowns are possible only from normal reportType.
+Arguments:
+
+* index : REQUIRED : Value to use as filter for the breakdown or index of the dataframe to use for the breakdown.
+    In the dataframe, the index is generally returned as the first column, the value is the actual value of the dimension you want to breakdown.
+* dimension : REQUIRED : dimension to report on.
+* n_results : OPTIONAL : number of results you want to have on your breakdown. Default 10, can use "inf" to retrieve all possible values.
