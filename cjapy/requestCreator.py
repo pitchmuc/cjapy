@@ -250,7 +250,9 @@ class RequestCreator:
         NOTE : You need to have a dateRange filter at least in the global report.
         Arguments:
             filterId : REQUIRED : The filter to add to the global filter.
-                example : ["filterId1","2020-01-01T00:00:00.000/2020-02-01T00:00:00.000"]
+                example :
+                "s2120430124uf03102jd8021" -> segment
+                "2020-01-01T00:00:00.000/2020-02-01T00:00:00.000" -> dateRange
         """
         filterIdCount = self.__globalFiltersCount
         if filterId.startswith("s") and "@AdobeOrg" in filterId:

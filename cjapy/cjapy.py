@@ -1042,6 +1042,132 @@ class CJA:
         res = self.connector.putData(self.endpoint + path, data=data)
         return res
 
+    def getAuditLog(
+        self,
+        startDate: str = None,
+        endDate: str = None,
+        action: str = None,
+        component: str = None,
+        componentId: str = None,
+        userType: str = None,
+        userId: str = None,
+        userEmail: str = None,
+        description: str = None,
+        pageSize: int = 100,
+        n_results: Union[str, int] = "inf",
+        output: str = "df",
+        save: bool = False,
+    ) -> JsonListOrDataFrameType:
+        """
+        Get Audit Log when few filters are applied.
+        All filters are applied with an AND condition.
+        Arguments:
+            startDate : OPTIONAL : begin range date, format: YYYY-01-01T00:00:00-07 (required if endDate is used)
+            endDate : OPTIONAL : begin range date, format: YYYY-01-01T00:00:00-07 (required if startDate is used)
+            action : OPTIONAL : The type of action a user or system can make.
+                Possible values : CREATE, EDIT, DELETE, LOGIN_FAILED, LOGIN_SUCCESSFUL, API_REQUEST
+            component : OPTIONAL :The type of component.
+                Possible values : CALCULATED_METRIC, CONNECTION, DATA_GROUP, DATA_VIEW, DATE_RANGE, FILTER, MOBILE, PROJECT, REPORT, SCHEDULED_PROJECT
+            componentId : OPTIONAL : The id of the component.
+            userType : OPTIONAL : The type of user.
+            userId : OPTIONAL : The ID of the user.
+            userEmail : OPTIONAL : The email address of the user.
+            description : OPTIONAL : The description of the audit log.
+            pageSize : OPTIONAL : Number of results per page. If left null, the default size is 100.
+            n_results : OPTIONAL : Total number of results you want for that search. Default "inf" will return everything
+            output : OPTIONAL : DataFrame by default, can be "raw"
+        """
+        params = {"pageNumber": 0, "pageSize": pageSize}
+        path = "/auditlogs/api/v1/auditlogs"
+        if startDate is not None and endDate is not None:
+            params["startDate"] = startDate
+            params["endDate"] = endDate
+        if action is not None:
+            params["action"] = action
+        if component is not None:
+            params["component"] = component
+        if componentId is not None:
+            params["componentId"] = componentId
+        if userType is not None:
+            params["userType"]
+        if userId is not None:
+            params["userId"] = userId
+        if userEmail is not None:
+            params["userEmail"] = userEmail
+        if description is not None:
+            params["description"] = description
+        lastPage = False
+        data = []
+        while lastPage != True:
+            res = self.connector.getData(self.endpoint + path, params=params)
+            data += res.get("content", [])
+            lastPage = res.get("last", True)
+            if len(data) > float(n_results):
+                lastPage = True
+            params["pageNumber"] += 1
+        if output == "raw":
+            if save:
+                with open(f"audit_logs_{int(time.time())}.json", "w") as f:
+                    f.write(json.dumps(data))
+        df = pd.DataFrame(data)
+        df["userId"] = df["user"].apply(lambda x: x.get("id", ""))
+        df["componentId"] = df["component"].apply(lambda x: x.get("id", ""))
+        df["componentType"] = df["component"].apply(lambda x: x.get("idType", ""))
+        df["componentName"] = df["component"].apply(lambda x: x.get("name", ""))
+        if save:
+            df.to_csv(f"audit_logs.{int(time.time())}.csv", index=False)
+        return df
+
+    SAMPLE_FILTERMESSAGE_LOGS = {
+        "criteria": {
+            "fieldOperator": "AND",
+            "fields": [
+                {
+                    "fieldType": "COMPONENT",
+                    "value": ["FILTER", "CALCULATED_METRIC"],
+                    "operator": "IN",
+                },
+                {
+                    "fieldType": "DESCRIPTION",
+                    "value": ["created"],
+                    "operator": "CONTAINS",
+                },
+            ],
+            "subCriteriaOperator": "AND",
+            "subCriteria": {
+                "fieldOperator": "OR",
+                "fields": [
+                    {
+                        "fieldType": "USER_EMAIL",
+                        "value": ["jane"],
+                        "operator": "NOT_EQUALS",
+                    },
+                    {
+                        "fieldType": "USER_EMAIL",
+                        "value": ["john"],
+                        "operator": "EQUALS",
+                    },
+                ],
+                "subCriteriaOperator": None,
+                "subCriteria": None,
+            },
+        },
+        "pageSize": 100,
+        "pageNumber": 0,
+    }
+
+    def searchAuditLogs(self, filterMessage: dict = None) -> JsonListOrDataFrameType:
+        """
+        Get Audit Log when few filters are applied, with this method, all filters are applied with friday.
+        Arguments:
+            filterMessage : REQUIRED : A dictionary of the search to the Audit Log.
+        """
+        path = "/auditlogs/api/v1/auditlogs/search"
+        if filterMessage is None:
+            raise ValueError("Require a filterMessage")
+        res = self.connector.postData(self.endpoint + path, data=filterMessage)
+        return res
+
     def _prepareData(
         self,
         dataRows: list = None,

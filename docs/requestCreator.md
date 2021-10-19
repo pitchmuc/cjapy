@@ -73,12 +73,18 @@ We will review the different methods available via the object.
   Arguments:
   * dataViewId : REQUIRED : The Data View ID to be passed.
 
+* `addMetric()`
+  Add a metric to the Request.
+
 * `addGlobalFilter()`
   Add a global filter to the report.
   **NOTE** : You need to have a dateRange filter at least in the global report.
   Arguments:
-  * filterId : REQUIRED : The filter to add to the global filter.
-        example with 2 filters : ["filterId1","2020-01-01T00:00:00.000/2020-02-01T00:00:00.000"]
+  * filterId : REQUIRED : The filter to add to the global filter.\
+        example:\
+        "s293120jf3q9jf38301jd029f030128z482s" -> segment ID\
+        "2020-01-01T00:00:00.000/2020-02-01T00:00:00.000" -> dateRange
+        "dimension:::itemId" -> dimension value
 
 * `setNoneBehavior()`
   Set the behavior of the None values in that request.
@@ -99,7 +105,7 @@ We will review the different methods available via the object.
   Add a filter to a metric.
   Arguments:
   * metricId : REQUIRED : metric where the filter is added
-  * filterId : REQUIRED : The filter to add. 
+  * filterId : REQUIRED : The filter to add.
     When breakdown, use the following format for the value "dimension:::itemId"
   * metricIndex : OPTIONAL : If used, set the filter to the metric located on that index.
 

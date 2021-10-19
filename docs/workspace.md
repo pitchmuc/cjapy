@@ -20,7 +20,7 @@ Accessing the dataframe attribute will permit the access of these data.
 The dataRequest attribute will provide the last status of the request sent to the CJA servers.\
 This can be used to understand the query and the result returned.
 
-## globalFilters and metricFilters
+### globalFilters and metricFilters
 
 globalFilters gives the filters that have been applied at the top of your workspace report, as they apply to all of your reports.\
 metricFilters gives you the list of filters and their name applied to your metrics.
