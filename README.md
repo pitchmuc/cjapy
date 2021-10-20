@@ -28,6 +28,7 @@ Functionalities that are covered :
 * Get, Update and Delete Dataview
 * Get, Update and Delete Filters
 * Get Top items for a dimension
+* Get, Update and delete projects
 * Run a report (by default returning a Workspace instance)
 * (BETA) Run a multi dimensional report
 

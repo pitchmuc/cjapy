@@ -214,6 +214,22 @@ List of GET methods:
   * n_results : OPTIONAL : Total number of results you want for that search. Default "inf" will return everything
   * output : OPTIONAL : DataFrame by default, can be "raw"
 
+* getProjects
+  Returns a list of project ID with their meta information attached to it.
+  Arguments:
+  * full : OPTIONAL : add all metadata attached to the project (default True)
+  * includeType : OPTIONAL : Include additional segments not owned by user. ("all" or "shared")
+  * filterByIds : OPTIONAL : Filter list to only include projects in the specified list (comma-delimited list of IDs)
+  * ownerId : OPTIONAL : Filter list to only include projects owned by the specified imsUserId
+  * limit : OPTIONAL : Number of results per request
+  * save : OPTIONAL : if you want to save the result
+  * output : OPTIONAL : the type of output to return "df" or "raw"
+
+* getProject
+  Return a specific project with its definition
+  Arguments:
+  * projectId : REQUIRED : a project ID to return
+
 ## Create methods
 
 The CJA API  provides some endpoint to create elements.
@@ -248,6 +264,10 @@ Here is the list of the possible create options.
   Arguments:
   * data : REQUIRED : dictionary that will set the creation.
 
+* Create a project based on the definition provided in the argument.
+  Argument:
+  * projectDefinition : REQUIRED : the project dictionary defining the creation.
+
 ## DELETE methods
 
 There is a possibility to delete some elements with the Adobe Analytics API 2.0. Please find below the different options that you can delete.
@@ -275,6 +295,10 @@ There is a possibility to delete some elements with the Adobe Analytics API 2.0.
 * deleteCalculateMetrics: Delete a calculated metrics based on its ID.
   Arguments:
   * calcId : REQUIRED : The calculated metrics ID that will be deleted
+
+* Delete a project by its ID.
+  Arguments:
+  * projectId : REQUIRED : ID of the project to delete.
 
 ## UPDATE methods
 
@@ -341,6 +365,11 @@ On each method docstring, I tried to tell if it is a PUT or a PATCH method.
   possible kwargs:
   * encoding : if you pass a JSON file, you can change the encoding to read it.
 
+* updateProject : Update a project based on the definition provided in the argument. (PUT Method)
+  Arguments:
+  * projectId : REQUIRED : ID of the project to update.
+  * projectDefinition : REQUIRED : the project dictionary defining the creation.
+
 ## Other methods
 
 * validateCalculatedMetric: Validate a calculated metrics definition dictionary.
@@ -381,6 +410,10 @@ On each method docstring, I tried to tell if it is a PUT or a PATCH method.
   That may help you creating the filter.
   Arguments:
   * filterMessage : REQUIRED : A dictionary of the search to the Audit Log.
+
+* validateProject: Validates a Project definition.
+  Arguments:
+  * projectDefinition : REQUIRED : the project dictionary defining the creation.
 
 ### Get report
 

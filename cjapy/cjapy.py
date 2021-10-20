@@ -1172,9 +1172,137 @@ class CJA:
             filterMessage : REQUIRED : A dictionary of the search to the Audit Log.
         """
         path = "/auditlogs/api/v1/auditlogs/search"
+        if self.loggingEnabled:
+            self.logger.debug(f"searchAuditLogs start")
         if filterMessage is None:
             raise ValueError("Require a filterMessage")
         res = self.connector.postData(self.endpoint + path, data=filterMessage)
+        return res
+
+    def getProjects(
+        self,
+        full: bool = True,
+        includeType: str = "all",
+        filterByIds: str = None,
+        ownerId: str = None,
+        limit: int = 1000,
+        save: bool = False,
+        output: str = "df",
+        **kwargs,
+    ) -> JsonListOrDataFrameType:
+        """
+        Returns a list of project ID with their meta information attached to it.
+        Arguments:
+            full : OPTIONAL : add all metadata attached to the project (default True)
+            includeType : OPTIONAL : Include additional segments not owned by user. ("all" or "shared")
+            filterByIds : OPTIONAL : Filter list to only include projects in the specified list (comma-delimited list of IDs)
+            ownerId : OPTIONAL : Filter list to only include projects owned by the specified imsUserId
+            limit : OPTIONAL : Number of results per request
+            save : OPTIONAL : if you want to save the result
+            output : OPTIONAL : the type of output to return "df" or "raw"
+        """
+        if self.loggingEnabled:
+            self.logger.debug(f"getProjects start")
+        path = "/projects"
+        params = {"includeType": includeType, "limit": limit}
+        if full:
+            params[
+                "expansion"
+            ] = "shares,tags,accessLevel,modified,externalReferences,definition"
+        if filterByIds:
+            params["filterByIds"] = filterByIds
+        if ownerId:
+            params["ownerId"] = ownerId
+        res = self.connector.getData(self.endpoint + path, params=params)
+        data = res
+        if output == "raw":
+            if save:
+                with open(f"projects_{int(time.time())}.json", "w") as f:
+                    f.write(json.dumps(data, indent=2))
+        return data
+
+    def getProject(self, projectId: str = None) -> dict:
+        """
+        Return a specific project with its definition
+        Arguments:
+            projectId : REQUIRED : a project ID to return
+        """
+        if projectId is None:
+            raise ValueError("Require a Project ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"getProject start")
+        path = f"/projects/{projectId}"
+        params = {
+            "expansion": "shares,tags,accessLevel,modified,externalReferences,definition"
+        }
+        res = self.connector.getData(self.endpoint + path, params=params)
+        return res
+
+    def deleteProject(self, projectId: str = None) -> dict:
+        """
+        Delete a project by its ID.
+        Arguments:
+            projectId : REQUIRED : ID of the project to delete.
+        """
+        if projectId is None:
+            raise ValueError("Require a project ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"deleteProject start")
+        path = f"/projects/{projectId}"
+        res = self.connector.deleteData(self.endpoint + path)
+        return res
+
+    def createProject(self, projectDefinition: dict = None) -> dict:
+        """
+        Create a project based on the definition provided in the argument.
+        Argument:
+            projectDefinition : REQUIRED : the project dictionary defining the creation.
+        """
+        if projectDefinition is None or type(projectDefinition) != dict:
+            raise ValueError("a project definition dictionary is required")
+        if self.loggingEnabled:
+            self.logger.debug(f"createProject start")
+        path = "/projects"
+        res = self.connector.postData(self.endpoint + path, data=projectDefinition)
+        return res
+
+    def validateProject(self, projectDefinition: dict = None) -> dict:
+        """
+        Validates a Project definition.
+        Arguments:
+            projectDefinition : REQUIRED : the project dictionary defining the creation.
+        """
+        if projectDefinition is None or type(projectDefinition) != dict:
+            raise ValueError("a project definition dictionary is required")
+        if self.loggingEnabled:
+            self.logger.debug(f"validateProject start")
+        path = "/projects/validate"
+        data = {"projects": projectDefinition}
+        res = self.connector.postData(self.endpoint + path, data=data)
+        return res
+
+    def updateProject(
+        self, projectId: str = None, projectDefinition: dict = None
+    ) -> dict:
+        """
+        Update a project based on the definition provided in the argument. (PUT Method)
+        Arguments:
+            projectId : REQUIRED : ID of the project to update.
+            projectDefinition : REQUIRED : the project dictionary defining the creation.
+        """
+        if projectDefinition is None or type(projectDefinition) != dict:
+            raise ValueError("a project definition dictionary is required")
+        if projectId is None:
+            raise ValueError("Require a project ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"updateProject start")
+        path = f"/projects/{projectId}"
+        params = {
+            "expansion": "shares,tags,accessLevel,modified,externalReferences,definition"
+        }
+        res = self.connector.putData(
+            self.endpoint + path, data=projectDefinition, params=params
+        )
         return res
 
     def _prepareData(
