@@ -1165,7 +1165,9 @@ class CJA:
 
     def searchAuditLogs(self, filterMessage: dict = None) -> JsonListOrDataFrameType:
         """
-        Get Audit Log when few filters are applied, with this method, all filters are applied with friday.
+        Get Audit Log when several filters are applied. You can define the different type of operator and connector to use.
+        Operators: EQUALS, CONTAINS, NOT_EQUALS, IN
+        Connectors: AND, OR
         Arguments:
             filterMessage : REQUIRED : A dictionary of the search to the Audit Log.
         """

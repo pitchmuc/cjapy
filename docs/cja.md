@@ -195,6 +195,25 @@ List of GET methods:
   * filterId : REQUIRED : ID of the filter
   * full : OPTIONAL : Boolean to define additional elements
 
+* getAuditLogs
+  Get Audit Log when few filters are applied.
+  All filters are applied with an AND condition.
+  Arguments:
+  * startDate : OPTIONAL : begin range date, format: YYYY-01-01T00:00:00-07 (required if endDate is used)
+  * endDate : OPTIONAL : begin range date, format: YYYY-01-01T00:00:00-07 (required if startDate is used)
+  * action : OPTIONAL : The type of action a user or system can make.
+      Possible values : CREATE, EDIT, DELETE, LOGIN_FAILED, LOGIN_SUCCESSFUL, API_REQUEST
+  * component : OPTIONAL :The type of component.
+      Possible values : CALCULATED_METRIC, CONNECTION, DATA_GROUP, DATA_VIEW, DATE_RANGE, FILTER, MOBILE, PROJECT, REPORT, SCHEDULED_PROJECT
+  * componentId : OPTIONAL : The id of the component.
+  * userType : OPTIONAL : The type of user.
+  * userId : OPTIONAL : The ID of the user.
+  * userEmail : OPTIONAL : The email address of the user.
+  * description : OPTIONAL : The description of the audit log.
+  * pageSize : OPTIONAL : Number of results per page. If left null, the default size is 100.
+  * n_results : OPTIONAL : Total number of results you want for that search. Default "inf" will return everything
+  * output : OPTIONAL : DataFrame by default, can be "raw"
+
 ## Create methods
 
 The CJA API  provides some endpoint to create elements.
@@ -354,6 +373,14 @@ On each method docstring, I tried to tell if it is a PUT or a PATCH method.
   * data : REQUIRED : Dictionary or JSON file to create a filter
   possible kwargs:
   * encoding : if you pass a JSON file, you can change the encoding to read it.
+
+* searchAuditLogs: Get Audit Log when several filters are applied. You can define the different type of operator and connector to use.
+  Operators: EQUALS, CONTAINS, NOT_EQUALS, IN
+  Connectors: AND, OR
+  **Note**: there is a sample for creating a filterMessage available as attribute of your instance: `SAMPLE_FILTERMESSAGE_LOGS`
+  That may help you creating the filter.
+  Arguments:
+  * filterMessage : REQUIRED : A dictionary of the search to the Audit Log.
 
 ### Get report
 
