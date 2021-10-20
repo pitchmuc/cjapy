@@ -1042,7 +1042,7 @@ class CJA:
         res = self.connector.putData(self.endpoint + path, data=data)
         return res
 
-    def getAuditLog(
+    def getAuditLogs(
         self,
         startDate: str = None,
         endDate: str = None,
@@ -1077,6 +1077,8 @@ class CJA:
             n_results : OPTIONAL : Total number of results you want for that search. Default "inf" will return everything
             output : OPTIONAL : DataFrame by default, can be "raw"
         """
+        if self.loggingEnabled:
+            self.logger.debug(f"getAuditLogs start")
         params = {"pageNumber": 0, "pageSize": pageSize}
         path = "/auditlogs/api/v1/auditlogs"
         if startDate is not None and endDate is not None:
@@ -1100,6 +1102,7 @@ class CJA:
         data = []
         while lastPage != True:
             res = self.connector.getData(self.endpoint + path, params=params)
+            print(res)
             data += res.get("content", [])
             lastPage = res.get("last", True)
             if len(data) > float(n_results):
@@ -1110,10 +1113,14 @@ class CJA:
                 with open(f"audit_logs_{int(time.time())}.json", "w") as f:
                     f.write(json.dumps(data))
         df = pd.DataFrame(data)
-        df["userId"] = df["user"].apply(lambda x: x.get("id", ""))
-        df["componentId"] = df["component"].apply(lambda x: x.get("id", ""))
-        df["componentType"] = df["component"].apply(lambda x: x.get("idType", ""))
-        df["componentName"] = df["component"].apply(lambda x: x.get("name", ""))
+        try:
+            df["userId"] = df["user"].apply(lambda x: x.get("id", ""))
+            df["componentId"] = df["component"].apply(lambda x: x.get("id", ""))
+            df["componentType"] = df["component"].apply(lambda x: x.get("idType", ""))
+            df["componentName"] = df["component"].apply(lambda x: x.get("name", ""))
+        except:
+            if self.loggingEnabled:
+                self.logger.debug(f"issue returning results")
         if save:
             df.to_csv(f"audit_logs.{int(time.time())}.csv", index=False)
         return df
