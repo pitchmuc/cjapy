@@ -14,6 +14,7 @@ Documentation is split in different places:
 * Methods provided by the CJA class: [cja documentation](./docs/cja.md)
 * Workspace class documentation: [Workspace class](./docs/workspace.md)
 * RequestCreator class documentation: [RequestCreator class](./docs/requestCreator.md)
+* Project class documentation : [Project class](./docs/projects.md)
 
 ## Versions
 
@@ -29,6 +30,7 @@ Functionalities that are covered :
 * Get, Update and Delete Filters
 * Get Top items for a dimension
 * Get, Update and delete projects
+* Digest Project Information and analyse them via the `Project` class
 * Run a report (by default returning a Workspace instance)
 * (BETA) Run a multi dimensional report
 

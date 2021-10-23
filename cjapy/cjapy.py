@@ -13,6 +13,7 @@ import pandas as pd
 from cjapy import config, connector
 from .workspace import Workspace
 from .requestCreator import RequestCreator
+from .projects import Project
 
 JsonOrDataFrameType = Union[pd.DataFrame, dict]
 JsonListOrDataFrameType = Union[pd.DataFrame, List[dict]]
@@ -63,6 +64,7 @@ class CJA:
         )
         self.header = self.connector.header
         self.endpoint = config.endpoints["global"]
+        self.listProjectIds = []
 
     def getCurrentUser(self, admin: bool = False, useCache: bool = True) -> dict:
         """
@@ -1102,7 +1104,6 @@ class CJA:
         data = []
         while lastPage != True:
             res = self.connector.getData(self.endpoint + path, params=params)
-            print(res)
             data += res.get("content", [])
             lastPage = res.get("last", True)
             if len(data) > float(n_results):
@@ -1115,12 +1116,24 @@ class CJA:
         df = pd.DataFrame(data)
         try:
             df["userId"] = df["user"].apply(lambda x: x.get("id", ""))
+        except:
+            if self.loggingEnabled:
+                self.logger.debug(f"issue extracting userId")
+        try:
             df["componentId"] = df["component"].apply(lambda x: x.get("id", ""))
+        except:
+            if self.loggingEnabled:
+                self.logger.debug(f"issue extracting componentId")
+        try:
             df["componentType"] = df["component"].apply(lambda x: x.get("idType", ""))
+        except:
+            if self.loggingEnabled:
+                self.logger.debug(f"issue extracting componentType")
+        try:
             df["componentName"] = df["component"].apply(lambda x: x.get("name", ""))
         except:
             if self.loggingEnabled:
-                self.logger.debug(f"issue returning results")
+                self.logger.debug(f"issue extracting componentName")
         if save:
             df.to_csv(f"audit_logs.{int(time.time())}.csv", index=False)
         return df
@@ -1185,7 +1198,6 @@ class CJA:
         includeType: str = "all",
         filterByIds: str = None,
         ownerId: str = None,
-        limit: int = 1000,
         save: bool = False,
         output: str = "df",
         **kwargs,
@@ -1197,14 +1209,13 @@ class CJA:
             includeType : OPTIONAL : Include additional segments not owned by user. ("all" or "shared")
             filterByIds : OPTIONAL : Filter list to only include projects in the specified list (comma-delimited list of IDs)
             ownerId : OPTIONAL : Filter list to only include projects owned by the specified imsUserId
-            limit : OPTIONAL : Number of results per request
             save : OPTIONAL : if you want to save the result
             output : OPTIONAL : the type of output to return "df" or "raw"
         """
         if self.loggingEnabled:
             self.logger.debug(f"getProjects start")
         path = "/projects"
-        params = {"includeType": includeType, "limit": limit}
+        params = {"includeType": includeType}
         if full:
             params[
                 "expansion"
@@ -1218,14 +1229,18 @@ class CJA:
         if output == "raw":
             if save:
                 with open(f"projects_{int(time.time())}.json", "w") as f:
-                    f.write(json.dumps(data, indent=2))
+                    f.write(json.dumps(res, indent=2))
+        data = pd.DataFrame(res)
+        if save:
+            data.to_csv(f"projects_{int(time.time())}", index=False)
         return data
 
-    def getProject(self, projectId: str = None) -> dict:
+    def getProject(self, projectId: str = None, projectClass: bool = False) -> dict:
         """
         Return a specific project with its definition
         Arguments:
             projectId : REQUIRED : a project ID to return
+            projectClass : OPTIONAL : Return a Project class that digest the info.
         """
         if projectId is None:
             raise ValueError("Require a Project ID")
@@ -1236,7 +1251,83 @@ class CJA:
             "expansion": "shares,tags,accessLevel,modified,externalReferences,definition"
         }
         res = self.connector.getData(self.endpoint + path, params=params)
+        if projectClass:
+            return Project(res)
         return res
+
+    def getAllProjectDetails(
+        self,
+        projects: JsonListOrDataFrameType = None,
+        filterNameProject: str = None,
+        filterNameOwner: str = None,
+        useAttribute: bool = True,
+        cache: bool = False,
+        rsidSuffix: bool = False,
+    ) -> dict:
+        """
+        Retrieve all projects details. You can either pass the list of dataframe returned from the getProjects methods and some filters.
+        Returns a dict of ProjectId and the value is the Project class for analysis.
+        Arguments:
+            projects : OPTIONAL : Takes the type of object returned from the getProjects (all data - not only the ID).
+                    If None is provided and you never ran the getProjects method, we will call the getProjects method and retrieve the elements.
+                    Otherwise you can pass either a limited list of elements that you want to check details for.
+            filterNameProject : OPTIONAL : If you want to retrieve project details for project with a specific string in their name.
+            filterNameOwner : OPTIONAL : If you want to retrieve project details for project with an owner having a specific name.
+            useAttribute : OPTIONAL : True by default, it will use the projectList saved in the listProjectIds attribute.
+                If you want to start from scratch on the retrieval process of your projects.
+            rsidSuffix : OPTIONAL : If you want to add rsid as suffix of metrics and dimensions (::rsid)
+            cache : OPTIONAL : If you want to cache the different elements retrieved for future usage.
+        Not using filter may end up taking a while to retrieve the information.
+        """
+        if self.loggingEnabled:
+            self.logger.debug(f"starting getAllProjectDetails")
+        ## if no project data
+        if projects is None:
+            if self.loggingEnabled:
+                self.logger.debug(f"No projects passed")
+            if len(self.listProjectIds) > 0 and useAttribute:
+                fullProjectIds = self.listProjectIds
+            else:
+                fullProjectIds = self.getProjects(output="raw", cache=cache)
+        ## if project data is passed
+        elif projects is not None:
+            if self.loggingEnabled:
+                self.logger.debug(f"projects passed")
+            if isinstance(projects, pd.DataFrame):
+                fullProjectIds = projects.to_dict(orient="records")
+            elif isinstance(projects, list):
+                fullProjectIds = (proj["id"] for proj in projects)
+        if filterNameProject is not None:
+            if self.loggingEnabled:
+                self.logger.debug(f"filterNameProject passed")
+            fullProjectIds = [
+                project
+                for project in fullProjectIds
+                if filterNameProject in project["name"]
+            ]
+        if filterNameOwner is not None:
+            if self.loggingEnabled:
+                self.logger.debug(f"filterNameOwner passed")
+            fullProjectIds = [
+                project
+                for project in fullProjectIds
+                if filterNameOwner in project["owner"].get("name", "")
+            ]
+        if self.loggingEnabled:
+            self.logger.info(f"{len(fullProjectIds)} project details to retrieve")
+            self.logger.debug(
+                f"estimated time required : {int(len(fullProjectIds)/60)} minutes"
+            )
+        projectIds = (project["id"] for project in fullProjectIds)
+        projectsDetails = {
+            projectId: self.getProject(
+                projectId, projectClass=True, rsidSuffix=rsidSuffix
+            )
+            for projectId in projectIds
+        }
+        if filterNameProject is None and filterNameOwner is None:
+            self.projectsDetails = projectsDetails
+        return projectsDetails
 
     def deleteProject(self, projectId: str = None) -> dict:
         """
