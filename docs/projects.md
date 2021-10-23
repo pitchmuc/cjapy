@@ -1,4 +1,4 @@
-# Projects in aanalytics2
+# Projects in cjapy
 
 This documentation will provide you with information on how to use the Project class and what can be accessed from it.\
 The projects are Adobe Workspace projects that can now be retrieved by the API.
@@ -117,14 +117,14 @@ Therefore there are 4 optional parameters that can definitely save you a lot of 
 ## Find the components used
 
 One of the most important use-cases that cannot be done directly in Adobe Analytics is where the different components are used.\
-If you have a dimension or a segment, you would like to know wich projects or segment are using it.\
+If you have a dimension or a filter, you would like to know wich projects or filters are using it.\
 I have created a method that is doing that for you : `findComponentsUsage`
 This method takes 7 possibles arguments.
 
 * components : REQUIRED : list of component to look for.
     Example : evar10,event1,prop3,segmentId, calculatedMetricsId
 * ProjectDetails: OPTIONAL : list of instances of `Project` class.
-* segments : OPTIONAL : If you wish to pass the segments to look for. (should contain definition)
+* filters : OPTIONAL : If you wish to pass the segments to look for. (should contain definition)
 * calculatedMetrics : OPTIONAL : If you wish to pass the segments to look for. (should contain definition)
 * recursive : OPTIONAL : if set to True, will also find the reference where the meta component are used.
     e.g. : segments based on your elements will also be searched to see where they are located..
@@ -142,7 +142,7 @@ findings= cja.findComponentsUsage(myElements)
 {
     "evar1" : {
         'filters': [
-            {'segment name':'segmentsId1'},
+            {'filter name':'segmentsId1'},
             ...],
         'calculatedMetrics': [
             {'calculated metrics name':'calcId'},
@@ -155,7 +155,7 @@ findings= cja.findComponentsUsage(myElements)
 ```
 
 Some notes here about the parameters:\
-**recursive**: this option is useful if you want to know a dimension (e.g. evar10) is used in a segment, but also where this segment is also used.\
+**recursive**: this option is useful if you want to know a dimension (e.g. evar10) is used in a filter, but also where this filter is also used.\
 This information will be provided in an additional key of the results `recursion`.\
 On this key, will get a list of dictionary of element names and ids.
 
