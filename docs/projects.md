@@ -112,7 +112,7 @@ Therefore there are 4 optional parameters that can definitely save you a lot of 
 * useAttribute : OPTIONAL : `True` by default, it will use the projectList saved in the `listProjectIds` attribute of your instance.
     It avoids to recreates the call and can save several seconds.
     If you want to start from scratch on the retrieval process of your projects, set it to `False`.
-* rsidSuffix : OPTIONAL : If you want to add rsid as suffix of metrics and dimensions (::rsid)
+* dvIdSuffix : OPTIONAL : If you want to add data view ID as suffix of metrics and dimensions (::dvId)
 
 ## Find the components used
 
@@ -130,7 +130,7 @@ This method takes 7 possibles arguments.
     e.g. : segments based on your elements will also be searched to see where they are located..
 * regexUsed : OPTIONAL : If set to True, the element are definied as a regex and some default setup is turned off.
 * resetProjectDetails : OPTIONAL : Set to false by default. If set to True, it will NOT use the cache.
-* rsidSuffix : OPTIONAL : If you do not give projectDetails (or resetProjectDetails) and you want to look for rsid usage in report for dimensions and metrics.
+* dvIdSuffix : OPTIONAL : If you do not give projectDetails (or resetProjectDetails) and you want to look for data View ID usage in report for dimensions and metrics.
 * verbose : OPTIONAL : print comments along the way
 
 It will return a dictionary as a result and you can call the method like this:
@@ -160,9 +160,9 @@ This information will be provided in an additional key of the results `recursion
 On this key, will get a list of dictionary of element names and ids.
 
 **regexUsed**: If you want to pass a regex in the elements searched.\
-so your list could look like:`myElements = ['evar1[0-9]','event1[2-3]\d','prop1$','segId','calcId']`
+so your list could look like:`myElements = ['dimension[0-9]','segId','calcId']`
 
-**rsidSuffix**: When adding the rsid suffix capability, you can have more option when searching for elements attached to a specific reportSuite.\
+**dvIdSuffix**: When adding the dataView ID suffix capability, you can have more option when searching for elements attached to a specific reportSuite.\
 It could looks like this: `myElements = ['variables/referringdomain::ags862serverlog']`
 
 ### Remarks
