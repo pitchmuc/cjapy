@@ -5,8 +5,8 @@ from copy import deepcopy
 from pathlib import Path
 from typing import IO, Union, List
 from collections import defaultdict, deque
-import time
-import logging
+import time, logging, re
+from itertools import tee
 
 # Non standard libraries
 import pandas as pd
@@ -65,6 +65,9 @@ class CJA:
         self.header = self.connector.header
         self.endpoint = config.endpoints["global"]
         self.listProjectIds = []
+        self.projectsDetails = {}
+        self.filters = []
+        self.calculatedMetrics: JsonListOrDataFrameType = []
 
     def getCurrentUser(self, admin: bool = False, useCache: bool = True) -> dict:
         """
@@ -85,10 +88,11 @@ class CJA:
         inclType: str = "all",
         dataIds: str = None,
         ownerId: str = None,
-        limit: int = 100,
+        limit: int = 1000,
         filterByIds: str = None,
         favorite: bool = False,
         approved: bool = False,
+        cache: bool = True,
         output: str = "df",
     ) -> JsonListOrDataFrameType:
         """
@@ -109,6 +113,7 @@ class CJA:
             filterByIds : OPTIONAL : Filter list to only include calculated metrics in the specified list (comma-delimited),
             favorite : OPTIONAL : If set to true, return only favorties calculated metrics. (default False)
             approved : OPTIONAL : If set to true, returns only approved calculated metrics. (default False)
+            cache : OPTIONAL : cache the result in a local variable.
             output : OPTIONAL : by default returns a "dataframe", can also return the list when set to "raw"
         """
         if self.loggingEnabled:
@@ -122,8 +127,8 @@ class CJA:
         }
         if full:
             params[
-                "expension"
-            ] = "dataName,approved,favorite,shares,tags,sharesFullName,usageSummary,usageSummaryWithRelevancyScore,reportSuiteName,siteTitle,ownerFullName,modified,migratedIds,isDeleted,definition,authorization,compatibility,legacyId,internal,dataGroup,categories"
+                "expansion"
+            ] = "definition,dataName,approved,favorite,shares,tags,sharesFullName,usageSummary,usageSummaryWithRelevancyScore,reportSuiteName,siteTitle,ownerFullName,modified,migratedIds,isDeleted,definition,authorization,compatibility,legacyId,internal,dataGroup,categories"
         if dataIds is not None:
             params["dataIds"] = dataIds
         if ownerId is not None:
@@ -144,7 +149,11 @@ class CJA:
             lastPage = res.get("lastPage", True)
         if output == "df":
             df = pd.DataFrame(data)
+            if cache:
+                self.calculatedMetrics = df
             return df
+        if cache:
+            self.calculatedMetrics = data
         return res
 
     def getCalculatedMetricsFunctions(
@@ -169,6 +178,7 @@ class CJA:
         Return a single calculated metrics based on its ID.
         Arguments:
             calcId : REQUIRED : The calculated metric
+            full : OPTIONAL : If you want to have all details
         """
         if calcId is None:
             raise ValueError("Requires a Calculated Metrics ID")
@@ -880,7 +890,7 @@ class CJA:
 
     def getFilters(
         self,
-        limit: int = 100,
+        limit: int = 1000,
         full: bool = False,
         output: str = "df",
         includeType: str = "all",
@@ -889,6 +899,7 @@ class CJA:
         ownerId: str = None,
         filterByIds: str = None,
         cached: bool = True,
+        cache: bool = True,
         verbose: bool = False,
     ) -> JsonListOrDataFrameType:
         """
@@ -904,6 +915,7 @@ class CJA:
             ownerId : OPTIONAL : Filter by a specific owner ID.
             filterByIds : OPTIONAL : Filters by filter ID (comma-separated list)
             cached : OPTIONAL : return cached results
+            cache : OPTIONAL : If you want to cache the results in a local variable
             toBeUsedInRsid : OPTIONAL : The report suite where the filters is intended to be used. This report suite will be used to determine things like compatibility and permissions.
         """
         if self.loggingEnabled:
@@ -939,6 +951,8 @@ class CJA:
             )
             data += res["content"]
             lastPage = res.get("lastPage", True)
+        if cache:
+            self.filtes = data
         if output == "df":
             df = pd.DataFrame(data)
             return df
@@ -1200,6 +1214,7 @@ class CJA:
         ownerId: str = None,
         save: bool = False,
         output: str = "df",
+        cache: bool = True,
         **kwargs,
     ) -> JsonListOrDataFrameType:
         """
@@ -1210,6 +1225,7 @@ class CJA:
             filterByIds : OPTIONAL : Filter list to only include projects in the specified list (comma-delimited list of IDs)
             ownerId : OPTIONAL : Filter list to only include projects owned by the specified imsUserId
             save : OPTIONAL : if you want to save the result
+            cache : OPTIONAL : if you want to save the project in a local Variable.
             output : OPTIONAL : the type of output to return "df" or "raw"
         """
         if self.loggingEnabled:
@@ -1230,17 +1246,29 @@ class CJA:
             if save:
                 with open(f"projects_{int(time.time())}.json", "w") as f:
                     f.write(json.dumps(res, indent=2))
+            return data
+        if cache:
+            self.listProjectIds = data
         data = pd.DataFrame(res)
         if save:
             data.to_csv(f"projects_{int(time.time())}", index=False)
         return data
 
-    def getProject(self, projectId: str = None, projectClass: bool = False) -> dict:
+    def getProject(
+        self,
+        projectId: str = None,
+        projectClass: bool = False,
+        cache: bool = True,
+        dvIdSuffix: bool = False,
+        **kwargs,
+    ) -> dict:
         """
         Return a specific project with its definition
         Arguments:
             projectId : REQUIRED : a project ID to return
             projectClass : OPTIONAL : Return a Project class that digest the info.
+            cache : OPTIONAL : if you want to save the project in a local Variable.
+            dvIdSuffix : OPTIONAL : If you want to add data view ID as suffix of metrics and dimensions (::dvId)
         """
         if projectId is None:
             raise ValueError("Require a Project ID")
@@ -1252,7 +1280,13 @@ class CJA:
         }
         res = self.connector.getData(self.endpoint + path, params=params)
         if projectClass:
-            return Project(res)
+            return Project(res, dvIdSuffix=dvIdSuffix)
+        if cache:
+            try:
+                self.projectsDetails[projectId] = Project(res)
+            except:
+                if self.loggingEnabled:
+                    self.logger.warning(f"Cannot convert Project to Project class")
         return res
 
     def getAllProjectDetails(
@@ -1262,11 +1296,11 @@ class CJA:
         filterNameOwner: str = None,
         useAttribute: bool = True,
         cache: bool = False,
-        rsidSuffix: bool = False,
+        dvIdSuffix: bool = False,
     ) -> dict:
         """
         Retrieve all projects details. You can either pass the list of dataframe returned from the getProjects methods and some filters.
-        Returns a dict of ProjectId and the value is the Project class for analysis.
+        Returns a dict of ProjectId and the value is the Project class instance for that project.
         Arguments:
             projects : OPTIONAL : Takes the type of object returned from the getProjects (all data - not only the ID).
                     If None is provided and you never ran the getProjects method, we will call the getProjects method and retrieve the elements.
@@ -1275,7 +1309,7 @@ class CJA:
             filterNameOwner : OPTIONAL : If you want to retrieve project details for project with an owner having a specific name.
             useAttribute : OPTIONAL : True by default, it will use the projectList saved in the listProjectIds attribute.
                 If you want to start from scratch on the retrieval process of your projects.
-            rsidSuffix : OPTIONAL : If you want to add rsid as suffix of metrics and dimensions (::rsid)
+            dvIdSuffix : OPTIONAL : If you want to add data view ID as suffix of metrics and dimensions (::dvId)
             cache : OPTIONAL : If you want to cache the different elements retrieved for future usage.
         Not using filter may end up taking a while to retrieve the information.
         """
@@ -1321,7 +1355,7 @@ class CJA:
         projectIds = (project["id"] for project in fullProjectIds)
         projectsDetails = {
             projectId: self.getProject(
-                projectId, projectClass=True, rsidSuffix=rsidSuffix
+                projectId, projectClass=True, dvIdSuffix=dvIdSuffix
             )
             for projectId in projectIds
         }
@@ -1395,6 +1429,171 @@ class CJA:
             self.endpoint + path, data=projectDefinition, params=params
         )
         return res
+
+    def findComponentsUsage(
+        self,
+        components: list = None,
+        projectDetails: list = None,
+        filters: Union[list, pd.DataFrame] = None,
+        calculatedMetrics: Union[list, pd.DataFrame] = None,
+        recursive: bool = False,
+        regexUsed: bool = False,
+        resetProjectDetails: bool = False,
+        dvIdSuffix: bool = False,
+    ) -> dict:
+        """
+        Find the usage of components in the different part of Adobe Analytics setup.
+        Projects, Segment, Calculated metrics.
+        Arguments:
+            components : REQUIRED : list of component to look for.
+                        Example : _tenant.dimensions.val1,filterId, calculatedMetricsId
+            ProjectDetails: OPTIONAL : list of instances of Project class.
+            filters : OPTIONAL : If you wish to pass the filters to look for. (should contain definition)
+                Should be the list or dataframe return by the getFilters method.
+            calculatedMetrics : OPTIONAL : If you wish to pass the segments to look for. (should contain definition)
+                Should be the list or dataframe return by the getCalculatedMetrics method.
+            recursive : OPTIONAL : if set to True, will also find the reference where the meta component are used.
+                segments based on your elements will also be searched to see where they are located.
+            regexUsed : OPTIONAL : If set to True, the element are definied as a regex and some default setup is turned off.
+            resetProjectDetails : OPTIONAL : Set to false by default. If set to True, it will NOT use the cache.
+            dvIdSuffix : OPTIONAL : If you do not give projectDetails and you want to look for rsid usage in report for dimensions and metrics.
+        """
+        if components is None or type(components) != list:
+            raise ValueError("components must be present as a list")
+        if self.loggingEnabled:
+            self.logger.debug(f"starting findComponentsUsage for {components}")
+        listRecusion = []  # for findings on recursion
+        if regexUsed:
+            if self.loggingEnabled:
+                self.logger.debug(f"regex is used")
+        ## Segments
+        if self.loggingEnabled:
+            self.logger.debug(f"retrieving segments")
+        if len(self.filters) == 0 and filters is None:
+            self.filters = self.getFilters(full=True)
+            myFilters = self.filters
+        elif len(self.filters) > 0 and filters is None:
+            if type(self.filters) == list:
+                myFilters = pd.DataFrame(self.filters)
+            myFilters = self.filters
+        elif filters is not None:
+            if type(filters) == list:
+                myFilters = pd.DataFrame(filters)
+        else:
+            myFilters = filters
+        ### Calculated Metrics
+        if self.loggingEnabled:
+            self.logger.debug(f"retrieving calculated metrics")
+        if len(self.calculatedMetrics) == 0 and calculatedMetrics is None:
+            self.calculatedMetrics = self.getCalculatedMetrics(full=True)
+            myMetrics = self.calculatedMetrics
+        elif len(self.calculatedMetrics) > 0 and calculatedMetrics is None:
+            if type(self.calculatedMetrics) == list:
+                myMetrics = pd.DataFrame(self.calculatedMetrics)
+            elif type(self.calculatedMetrics) == pd.DataFrame:
+                myMetrics = self.calculatedMetrics
+        elif calculatedMetrics is not None:
+            if type(calculatedMetrics) == list:
+                myMetrics = pd.DataFrame(calculatedMetrics)
+        else:
+            myMetrics = calculatedMetrics
+        ### Projects
+        if (
+            len(self.projectsDetails) == 0 and projectDetails is None
+        ) or resetProjectDetails:
+            if self.loggingEnabled:
+                self.logger.debug(f"retrieving projects details")
+            self.projectDetails = self.getAllProjectDetails(dvIdSuffix=dvIdSuffix)
+            myProjectDetails = (
+                self.projectsDetails[key].to_dict() for key in self.projectsDetails
+            )
+        elif (
+            len(self.projectsDetails) > 0
+            and projectDetails is None
+            and resetProjectDetails == False
+        ):
+            if self.loggingEnabled:
+                self.logger.debug(f"transforming projects details")
+            myProjectDetails = (
+                self.projectsDetails[key].to_dict() for key in self.projectsDetails
+            )
+        elif projectDetails is not None:
+            if self.loggingEnabled:
+                self.logger.debug(f"setting the project details")
+            if isinstance(projectDetails[0], Project):
+                myProjectDetails = (item.to_dict() for item in projectDetails)
+            elif isinstance(projectDetails[0], dict):
+                myProjectDetails = (Project(item).to_dict() for item in projectDetails)
+        else:
+            raise Exception("Project details were not able to be processed")
+        teeProjects: tuple = tee(
+            myProjectDetails
+        )  ## duplicating the project generator for recursive pass (low memory - intensive computation)
+        returnObj = {
+            element: {"segments": [], "calculatedMetrics": [], "projects": []}
+            for element in components
+        }
+        recurseObj = defaultdict(list)
+        if self.loggingEnabled:
+            self.logger.debug(f"search started")
+            self.logger.debug(f"recursive option : {recursive}")
+            self.logger.debug("Analyzing Filters")
+        for _, seg in myFilters.iterrows():
+            for comp in components:
+                if re.search(f"{comp}", str(seg["definition"])):
+                    returnObj[comp]["segments"].append({seg["name"]: seg["id"]})
+                    if recursive:
+                        listRecusion.append(seg["id"])
+        if self.loggingEnabled:
+            self.logger.debug(f"Analyzing calculated metrics")
+        for _, met in myMetrics.iterrows():
+            for comp in components:
+                if re.search(f"{comp}", str(met["definition"])):
+                    returnObj[comp]["calculatedMetrics"].append(
+                        {met["name"]: met["id"]}
+                    )
+                    if recursive:
+                        listRecusion.append(met["id"])
+        if self.loggingEnabled:
+            self.logger.debug(f"Analyzing projects")
+        for proj in teeProjects[0]:
+            ## mobile reports don't have dimensions.
+            if proj["reportType"] == "desktop":
+                for comp in components:
+                    for element in proj["dimensions"]:
+                        if re.search(f"{comp}", element):
+                            returnObj[comp]["projects"].append(
+                                {proj["name"]: proj["id"]}
+                            )
+                    for element in proj["metrics"]:
+                        if re.search(f"{comp}", element):
+                            returnObj[comp]["projects"].append(
+                                {proj["name"]: proj["id"]}
+                            )
+                    for element in proj.get("segments", []):
+                        if re.search(f"{comp}", element):
+                            returnObj[comp]["projects"].append(
+                                {proj["name"]: proj["id"]}
+                            )
+                    for element in proj.get("calculatedMetrics", []):
+                        if re.search(f"{comp}", element):
+                            returnObj[comp]["projects"].append(
+                                {proj["name"]: proj["id"]}
+                            )
+        if recursive:
+            if self.loggingEnabled:
+                self.logger.debug(f"recursive option checked")
+            for proj in teeProjects[1]:
+                for rec in listRecusion:
+                    for element in proj.get("segments", []):
+                        if re.search(f"{rec}", element):
+                            recurseObj[rec].append({proj["name"]: proj["id"]})
+                    for element in proj.get("calculatedMetrics", []):
+                        if re.search(f"{rec}", element):
+                            recurseObj[rec].append({proj["name"]: proj["id"]})
+        if recursive:
+            returnObj["recursion"] = recurseObj
+        return returnObj
 
     def _prepareData(
         self,

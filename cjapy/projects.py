@@ -9,12 +9,12 @@ class Project:
     It flatten the elements and gives you insights on what your project contains.
     """
 
-    def __init__(self, projectDict: dict = None, rsidSuffix: bool = False):
+    def __init__(self, projectDict: dict = None, dvIdSuffix: bool = False):
         """
         Instancialize the class.
         Arguments:
             projectDict : REQUIRED : the dictionary of the project (returned by getProject method)
-            rsidSuffix : OPTIONAL : If you want to have the rsid suffix to dimension and metrics.
+            dvIdSuffix : OPTIONAL : If you want to have the data view ID suffix to dimension and metrics.
         """
         if projectDict is None:
             raise Exception("require a dictionary")
@@ -40,7 +40,7 @@ class Project:
                     self.nbSubPanels += infos["panels"][panel]["nb_subPanels"]
                     self.subPanelsTypes += infos["panels"][panel]["subPanels_types"]
                 self.elementsUsed: dict = self._findElements(
-                    definition["workspaces"][0], rsidSuffix=rsidSuffix
+                    definition["workspaces"][0], dvIdSuffix=dvIdSuffix
                 )
                 self.nbElementsUsed: int = (
                     len(self.elementsUsed["dimensions"])
@@ -75,7 +75,7 @@ class Project:
             ]
         return dict_data
 
-    def _findElements(self, workspace: dict, rsidSuffix: bool = False) -> list:
+    def _findElements(self, workspace: dict, dvIdSuffix: bool = False) -> list:
         """
         Returns the list of dimensions used in the FreeformReportlet.
         Arguments :
@@ -94,14 +94,14 @@ class Project:
         for panel in workspace["panels"]:
             if "reportSuite" in panel.keys():
                 dict_elements["dataViewIds"].append(panel["reportSuite"]["id"])
-                if rsidSuffix:
+                if dvIdSuffix:
                     tmp_rsid = f"::{panel['reportSuite']['id']}"
                 dict_elements["dataViewNames"].append(
                     panel["reportSuite"].get("__metaData__", {}).get("name", "unknown")
                 )
             elif "rsid" in panel.keys():
                 dict_elements["dataViewIds"].append(panel["rsid"])
-                if rsidSuffix:
+                if dvIdSuffix:
                     tmp_rsid = f"::{panel['rsid']}"
             filters: list = panel.get("segmentGroups", [])
             if len(filters) > 0:

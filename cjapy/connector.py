@@ -103,13 +103,10 @@ class AdobeRequest:
             res = requests.get(endpoint, headers=headers, data=data)
         elif params is not None and data is not None:
             res = requests.get(endpoint, headers=headers, params=params, data=data)
-        if kwargs.get("verbose", False):
-            print(f"request URL : {res.request.url}")
-            print(f"status_code : {res.status_code}")
         if self.loggingEnabled:
             self.logger.debug(f"request_URL : {res.request.url}")
             self.logger.debug(f"status_code: {res.status_code}")
-            self.logger.debug(f"parameters usde: {json.dumps(params)}")
+            self.logger.debug(f"parameters used: {json.dumps(params)}")
         try:
             while str(res.status_code) == "429":
                 if self.loggingEnabled:
