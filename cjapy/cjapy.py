@@ -365,6 +365,105 @@ class CJA:
         res = self.connector.putData(self.endpoint + path, params=params, data=data)
         return res
 
+    def getDateRanges(
+        self,
+        limit: int = 1000,
+        filterByIds: str = None,
+        full: bool = True,
+        includeType: str = "all",
+        output: str = "df",
+    ) -> JsonListOrDataFrameType:
+        """
+        Return daterange information in a list or in a dataframe
+        Arguments:
+            limit : OPTIONAL : Number of result per request.
+            filterByIds : OPTIONAL : Filter list to only include date ranges in the specified list (comma-delimited list of IDs)
+            full : OPTIONAL : additional meta data information included.
+            includeType : OPTIONAL : Show daterange not owned by user (default "all")
+                Possible values are "all", "shared", "templates"
+            output : OPTIONAL : Type of result returned.
+        """
+        if self.loggingEnabled:
+            self.logger.debug(f"getDateRanges start")
+        path = f"/dateranges"
+        params = {"limit": limit}
+        if filterByIds is not None:
+            params["filterByIds"] = filterByIds
+        if full:
+            params[
+                "expansion"
+            ] = "definition,modified,ownerFullName,sharesFullName,shares,tags"
+        if includeType is not None:
+            params["includeType"] = includeType
+        res = self.connector.getData(self.endpoint + path, params=params)
+        data = res.get("content", [])
+        if output == "df":
+            df = pd.DataFrame(data)
+            return df
+        return data
+
+    def getDateRange(self, dateRangeId: str = None) -> dict:
+        """
+        Return a single dateRange definition.
+        Argument:
+            dateRangeId : REQUIRED : date range ID to be returned
+        """
+        if dateRangeId is None:
+            raise ValueError("Require a date range ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"getDateRange start")
+        path = f"/dateranges/{dateRangeId}"
+        params = {
+            "expansion": "definition,modified,ownerFullName,sharesFullName,shares,tags"
+        }
+        res = self.connector.getData(self.endpoint + path, params=params)
+        return res
+
+    def deleteDateRange(self, dateRangeId: str = None) -> dict:
+        """
+        Delete a single dateRange definition.
+        Argument:
+            dateRangeId : REQUIRED : date range ID to be deleted
+        """
+        if dateRangeId is None:
+            raise ValueError("Require a date range ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"deleteDateRange start")
+        path = f"/dateranges/{dateRangeId}"
+        res = self.connector.deleteData(self.endpoint + path)
+        return res
+
+    def updateDateRange(self, dateRangeId: str = None, data: dict = None) -> dict:
+        """
+        Update a single dateRange with the new object
+        Argument:
+            dateRangeId : REQUIRED : date range ID to be updated
+            data : REQUIRED : dictionary holding the new definition
+        """
+        if dateRangeId is None:
+            raise ValueError("Require a date range ID")
+        if data is None:
+            raise ValueError("Require a dictionary with the new information")
+        if self.loggingEnabled:
+            self.logger.debug(f"updateDateRange start")
+        path = f"/dateranges/{dateRangeId}"
+        res = self.connector.putData(self.endpoint + path, data=data)
+        return res
+
+    def createDateRange(self, dateRangeData: dict = None) -> dict:
+        """
+        Update a single dateRange with the new object
+        Argument:
+            dateRangeData : REQUIRED : date range ID to be deleted
+        """
+        if dateRangeData is None:
+            raise ValueError("Require a dictionary with the information")
+        if self.loggingEnabled:
+            self.logger.debug(f"createDateRange start")
+        path = f"/dateranges/"
+        res = self.connector.putData(self.endpoint + path, data=dateRangeData)
+        return res
+
     def getTags(self, limit: int = 100) -> dict:
         """
         Return the tags for the company.
