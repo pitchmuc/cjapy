@@ -436,7 +436,7 @@ class CJA:
     def updateDateRange(self, dateRangeId: str = None, data: dict = None) -> dict:
         """
         Update a single dateRange with the new object
-        Argument:
+        Arguments:
             dateRangeId : REQUIRED : date range ID to be updated
             data : REQUIRED : dictionary holding the new definition
         """
@@ -452,9 +452,9 @@ class CJA:
 
     def createDateRange(self, dateRangeData: dict = None) -> dict:
         """
-        Update a single dateRange with the new object
+        Create a single dateRange with the dictionary passed
         Argument:
-            dateRangeData : REQUIRED : date range ID to be deleted
+            dateRangeData : REQUIRED : date range ID to be created
         """
         if dateRangeData is None:
             raise ValueError("Require a dictionary with the information")

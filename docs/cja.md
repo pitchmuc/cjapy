@@ -107,6 +107,21 @@ List of GET methods:
   * componentType : REQUIRED : The component type.
       could be any of the following ; "segment" "dashboard" "bookmark" "calculatedMetric" "project" "dateRange" "metric" "dimension" "virtualReportSuite" "scheduledJob" "alert" "classificationSet" "dataView"
 
+* getDateRanges
+  Return daterange information in a list or in a dataframe
+  Arguments:
+  * limit : OPTIONAL : Number of result per request.
+  * filterByIds : OPTIONAL : Filter list to only include date ranges in the specified list (comma-delimited list of IDs)
+  * full : OPTIONAL : additional meta data information included.
+  * includeType : OPTIONAL : Show daterange not owned by user (default "all")
+      Possible values are "all", "shared", "templates"
+  * output : OPTIONAL : Type of result returned.
+
+* getDateRange
+  Return a single dateRange definition.
+  Argument:
+  * dateRangeId : REQUIRED : date range ID to be returned
+
 * getTopItems
   Get the top X items (based on paging restriction) for the specified dimension and dataId. Defaults to last 90 days.
   Arguments:
@@ -268,6 +283,11 @@ Here is the list of the possible create options.
   Argument:
   * projectDefinition : REQUIRED : the project dictionary defining the creation.
 
+* createDateRange
+  Create a single dateRange with the dictionary passed
+  Argument:
+  * dateRangeData : REQUIRED : date range ID to be created
+
 ## DELETE methods
 
 There is a possibility to delete some elements with the Adobe Analytics API 2.0. Please find below the different options that you can delete.
@@ -299,6 +319,11 @@ There is a possibility to delete some elements with the Adobe Analytics API 2.0.
 * Delete a project by its ID.
   Arguments:
   * projectId : REQUIRED : ID of the project to delete.
+
+* deleteDateRange
+  Delete a single dateRange definition.
+  Argument:
+  * dateRangeId : REQUIRED : date range ID to be deleted
 
 ## UPDATE methods
 
@@ -369,6 +394,12 @@ On each method docstring, I tried to tell if it is a PUT or a PATCH method.
   Arguments:
   * projectId : REQUIRED : ID of the project to update.
   * projectDefinition : REQUIRED : the project dictionary defining the creation.
+
+* updateDateRange
+  Update a single dateRange with the new object
+  Arguments:
+  * dateRangeId : REQUIRED : date range ID to be updated
+  * data : REQUIRED : dictionary holding the new definition
 
 ## Other methods
 

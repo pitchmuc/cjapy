@@ -11,7 +11,7 @@ You cannot use the API without having access to both elements.
 Documentation is split in different places:
 
 * Core methods to setup `cjapy`: [main documentation](./docs/main.md)
-* Methods provided by the CJA class: [cja documentation](./docs/cja.md)
+* Methods provided by the CJA class instance: [cja documentation](./docs/cja.md)
 * Workspace class documentation: [Workspace class](./docs/workspace.md)
 * RequestCreator class documentation: [RequestCreator class](./docs/requestCreator.md)
 * Project class documentation : [Project class](./docs/projects.md)
@@ -27,6 +27,7 @@ Functionalities that are covered :
 * Get Dimensions & Metrics
 * Get, Update and Delete Tags & Shares
 * Get, Update and Delete Dataview
+* Get, Update and Delete Date Ranges
 * Get, Update and Delete Filters
 * Get Top items for a dimension
 * Get, Update and delete projects
