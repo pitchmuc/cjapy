@@ -254,18 +254,15 @@ class RequestCreator:
                 "s2120430124uf03102jd8021" -> segment
                 "2020-01-01T00:00:00.000/2020-02-01T00:00:00.000" -> dateRange
         """
-        filterIdCount = self.__globalFiltersCount
         if filterId.startswith("s") and "@AdobeOrg" in filterId:
             filterType = "segment"
             filter = {
-                "id": str(filterIdCount),
                 "type": filterType,
                 "segmentId": filterId,
             }
         elif filterId.startswith("20") and "/20" in filterId:
             filterType = "dateRange"
             filter = {
-                "id": str(filterIdCount),
                 "type": filterType,
                 "dateRange": filterId,
             }
@@ -273,7 +270,6 @@ class RequestCreator:
             filterType = "breakdown"
             dimension, itemId = filterId.split(":::")
             filter = {
-                "id": str(filterIdCount),
                 "type": filterType,
                 "dimension": dimension,
                 "itemId": itemId,
@@ -281,7 +277,6 @@ class RequestCreator:
         else:  ### case when it is predefined segments like "All_Visits"
             filterType = "segment"
             filter = {
-                "id": str(filterIdCount),
                 "type": filterType,
                 "segmentId": filterId,
             }
@@ -290,13 +285,101 @@ class RequestCreator:
         ### adding to the globalFilter list
         self.__request["globalFilters"].append(filter)
 
-    def to_dict(self):
+    def updateDateRange(
+        self,
+        dateRange: str = None,
+        shiftingDays: int = None,
+        shiftingDaysEnd: int = None,
+        shiftingDaysStart: int = None,
+    ) -> None:
+        """
+        Update the dateRange filter on the globalFilter list
+        One of the 3 elements specified below is required.
+        Arguments:
+            dateRange : OPTIONAL : string representing the new dateRange string, such as: 2020-01-01T00:00:00.000/2020-02-01T00:00:00.000
+            shiftingDays : OPTIONAL : An integer, if you want to add or remove days from the current dateRange provided. Apply to end and beginning of dateRange.
+                So 2020-01-01T00:00:00.000/2020-02-01T00:00:00.000 with +2 will give 2020-01-03T00:00:00.000/2020-02-03T00:00:00.000
+            shiftingDaysEnd : : OPTIONAL : An integer, if you want to add or remove days from the last part of the current dateRange. Apply only to end of the dateRange.
+                So 2020-01-01T00:00:00.000/2020-02-01T00:00:00.000 with +2 will give 2020-01-01T00:00:00.000/2020-02-03T00:00:00.000
+            shiftingDaysStart : OPTIONAL : An integer, if you want to add or remove days from the last first part of the current dateRange. Apply only to beginning of the dateRange.
+                So 2020-01-01T00:00:00.000/2020-02-01T00:00:00.000 with +2 will give 2020-01-03T00:00:00.000/2020-02-01T00:00:00.000
+        """
+        pos = -1
+        for index, filter in enumerate(self.__request["globalFilters"]):
+            if filter["type"] == "dateRange":
+                pos = index
+                curDateRange = filter["dateRange"]
+                start, end = curDateRange.split("/")
+                start = datetime.datetime.fromisoformat(start)
+                end = datetime.datetime.fromisoformat(end)
+        if dateRange is not None and type(dateRange) == str:
+            for index, filter in enumerate(self.__request["globalFilters"]):
+                if filter["type"] == "dateRange":
+                    pos = index
+                    curDateRange = filter["dateRange"]
+            newDef = {
+                "type": "dateRange",
+                "dateRange": dateRange,
+            }
+        if shiftingDays is not None and type(shiftingDays) == int:
+            newStart = (start + datetime.timedelta(shiftingDays)).isoformat(
+                timespec="milliseconds"
+            )
+            newEnd = (end + datetime.timedelta(shiftingDays)).isoformat(
+                timespec="milliseconds"
+            )
+            newDef = {
+                "type": "dateRange",
+                "dateRange": f"{newStart}/{newEnd}",
+            }
+        elif shiftingDaysEnd is not None and type(shiftingDaysEnd) == int:
+            newEnd = (end + datetime.timedelta(shiftingDaysEnd)).isoformat(
+                timespec="milliseconds"
+            )
+            newDef = {
+                "type": "dateRange",
+                "dateRange": f"{start}/{newEnd}",
+            }
+        elif shiftingDaysStart is not None and type(shiftingDaysStart) == int:
+            newStart = (start + datetime.timedelta(shiftingDaysStart)).isoformat(
+                timespec="milliseconds"
+            )
+            newDef = {
+                "type": "dateRange",
+                "dateRange": f"{newStart}/{end}",
+            }
+        if pos > -1:
+            self.__request["globalFilters"][pos] = newDef
+        else:  ## in case there is no dateRange already
+            self.__request["globalFilters"][pos].append(newDef)
+
+    def removeGlobalFilter(self, index: int = None, filterId: str = None) -> None:
+        """
+        Remove a specific filter from the globalFilter list.
+        You can use either the index of the list or the specific Id of the filter used.
+        Arguments:
+            index : REQUIRED : index in the list return
+            filterId : REQUIRED : the id of the filter to be removed (ex: filterId, dateRange)
+        """
+        pos = -1
+        if index is not None:
+            del self.__request["globalFilters"][index]
+        elif filterId is not None:
+            for index, filter in enumerate(self.__request["globalFilters"]):
+                if filterId in str(filter):
+                    pos = index
+            if pos > -1:
+                del self.__request["globalFilters"][pos]
+                ### decrementing the count for globalFilter
+                self.__globalFiltersCount -= 1
+
+    def to_dict(self) -> None:
         """
         Return the request definition
         """
         return deepcopy(self.__request)
 
-    def save(self, fileName: str = None):
+    def save(self, fileName: str = None) -> None:
         """
         save the request definition in a JSON file.
         Argument:

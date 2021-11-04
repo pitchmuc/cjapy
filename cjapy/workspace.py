@@ -114,7 +114,7 @@ class Workspace:
         return json.dumps(
             {
                 "startDate": self.startDate,
-                "endDate": self.startDate,
+                "endDate": self.endDate,
                 "globalFilters": self.globalFilters,
                 "totalRows": self.row_numbers,
                 "columns": self.columns,
@@ -126,7 +126,7 @@ class Workspace:
         return json.dumps(
             {
                 "startDate": self.startDate,
-                "endDate": self.startDate,
+                "endDate": self.endDate,
                 "globalFilters": self.globalFilters,
                 "totalRows": self.row_numbers,
                 "columns": self.columns,
