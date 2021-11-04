@@ -86,6 +86,13 @@ We will review the different methods available via the object.
         "2020-01-01T00:00:00.000/2020-02-01T00:00:00.000" -> dateRange
         "dimension:::itemId" -> dimension value
 
+* `removeGlobalFilter()`
+  Remove a specific filter from the globalFilter list.
+  You can use either the index of the list or the specific Id of the filter used.
+  Arguments:
+  * index : REQUIRED : index in the list return
+  * filterId : REQUIRED : the id of the filter to be removed (ex: filterId, dateRange)
+
 * `setNoneBehavior()`
   Set the behavior of the None values in that request.
   Arguments:
@@ -114,6 +121,18 @@ We will review the different methods available via the object.
   Arguments:
   * filterId : REQUIRED : The filter to add.
         when breakdown, use the following format for the value "dimension:::itemId"
+
+* `updateDateRange()`
+  Update the dateRange filter on the globalFilter list
+  One of the 3 elements specified below is required.
+  Arguments:
+  * dateRange : OPTIONAL : string representing the new dateRange string, such as: 2020-01-01T00:00:00.000/2020-02-01T00:00:00.000
+  * shiftingDays : OPTIONAL : An integer, if you want to add or remove days from the current dateRange provided. Apply to end and beginning of dateRange.
+      So 2020-01-01T00:00:00.000/2020-02-01T00:00:00.000 with +2 will give 2020-01-03T00:00:00.000/2020-02-03T00:00:00.000
+  * shiftingDaysEnd : : OPTIONAL : An integer, if you want to add or remove days from the last part of the current dateRange. Apply only to end of the dateRange.
+      So 2020-01-01T00:00:00.000/2020-02-01T00:00:00.000 with +2 will give 2020-01-01T00:00:00.000/2020-02-03T00:00:00.000
+  * shiftingDaysStart : OPTIONAL : An integer, if you want to add or remove days from the last first part of the current dateRange. Apply only to beginning of the dateRange.
+      So 2020-01-01T00:00:00.000/2020-02-01T00:00:00.000 with +2 will give 2020-01-03T00:00:00.000/2020-02-01T00:00:00.000
 
 ## Instance attributes
 
