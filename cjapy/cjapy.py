@@ -1728,7 +1728,6 @@ class CJA:
         tableSegmentsRows = {
             obj["id"]: obj["segmentId"]
             for obj in dataRequest["metricContainer"]["metricFilters"]
-            if obj["id"].startswith("STATIC_ROW")
         }
         ## retrieve place and segmentID
         segmentApplied = {}
@@ -1828,11 +1827,13 @@ class CJA:
             "includeOberonXml": includeOberonXml,
             "includePlatformPredictiveObjects": includePredictiveObjects,
         }
-        if ".json" in request:
+        if type(request) == dict:
+            dataRequest = request
+        elif type(request) == RequestCreator:
+            dataRequest = request.to_dict()
+        elif ".json" in request:
             with open(request, "r") as f:
                 dataRequest = json.load(f)
-        elif type(request) == dict:
-            dataRequest = request
         else:
             raise ValueError("Require a JSON or Dictionary to request data")
         ### Settings

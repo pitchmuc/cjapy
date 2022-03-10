@@ -32,6 +32,9 @@ class RequestCreator:
         Arguments:
             request : OPTIONAL : overwrite the template with the definition provided.
         """
+        if '.json' in request and type(request) == str:
+            with open(request,'r') as f:
+                request = json.load(f)
         self.__request = deepcopy(request) or deepcopy(self.template)
         self.__metricCount = len(self.__request["metricContainer"]["metrics"])
         self.__metricFilterCount = len(
