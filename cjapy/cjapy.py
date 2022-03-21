@@ -1731,11 +1731,18 @@ class CJA:
         dataRows = []
         ## retrieve StaticRow ID and segmentID
         if len([metric for metric in dataRequest['metricContainer'].get('metricFilters',[]) if metric.get('id','').startswith("STATIC_ROW_COMPONENT")])>0:
-            tableSegmentsRows = {
-                obj["id"]: obj["segmentId"]
-                for obj in dataRequest["metricContainer"]["metricFilters"]
-                if obj["id"].startswith("STATIC_ROW_COMPONENT")
-            }
+            if  "dateRange" in list(dataRequest['metricContainer'].get('metricFilters',[])[0].keys()):
+                tableSegmentsRows = {
+                    obj["id"]: obj["dateRange"]
+                    for obj in dataRequest["metricContainer"]["metricFilters"]
+                    if obj["id"].startswith("STATIC_ROW_COMPONENT")
+                }
+            elif "segmentId" in list(dataRequest['metricContainer'].get('metricFilters',[])[0].keys()):
+                tableSegmentsRows = {
+                    obj["id"]: obj["segmentId"]
+                    for obj in dataRequest["metricContainer"]["metricFilters"]
+                    if obj["id"].startswith("STATIC_ROW_COMPONENT")
+                }
         else:
             tableSegmentsRows = {
                 obj["id"]: obj["segmentId"]
