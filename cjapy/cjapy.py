@@ -1572,7 +1572,7 @@ class CJA:
                 self.logger.debug(f"regex is used")
         ## Segments
         if self.loggingEnabled:
-            self.logger.debug(f"retrieving segments")
+            self.logger.debug(f"retrieving filters")
         if len(self.filters) == 0 and filters is None:
             self.filters = self.getFilters(full=True)
             myFilters = self.filters
@@ -1634,7 +1634,7 @@ class CJA:
             myProjectDetails
         )  ## duplicating the project generator for recursive pass (low memory - intensive computation)
         returnObj = {
-            element: {"segments": [], "calculatedMetrics": [], "projects": []}
+            element: {"filters": [], "calculatedMetrics": [], "projects": []}
             for element in components
         }
         recurseObj = defaultdict(list)
@@ -1645,7 +1645,7 @@ class CJA:
         for _, seg in myFilters.iterrows():
             for comp in components:
                 if re.search(f"{comp}", str(seg["definition"])):
-                    returnObj[comp]["segments"].append({seg["name"]: seg["id"]})
+                    returnObj[comp]["filters"].append({seg["name"]: seg["id"]})
                     if recursive:
                         listRecusion.append(seg["id"])
         if self.loggingEnabled:
@@ -1674,7 +1674,7 @@ class CJA:
                             returnObj[comp]["projects"].append(
                                 {proj["name"]: proj["id"]}
                             )
-                    for element in proj.get("segments", []):
+                    for element in proj.get("filters", []):
                         if re.search(f"{comp}", element):
                             returnObj[comp]["projects"].append(
                                 {proj["name"]: proj["id"]}
@@ -1689,7 +1689,7 @@ class CJA:
                 self.logger.debug(f"recursive option checked")
             for proj in teeProjects[1]:
                 for rec in listRecusion:
-                    for element in proj.get("segments", []):
+                    for element in proj.get("filters", []):
                         if re.search(f"{rec}", element):
                             recurseObj[rec].append({proj["name"]: proj["id"]})
                     for element in proj.get("calculatedMetrics", []):
