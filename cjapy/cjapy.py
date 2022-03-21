@@ -1396,6 +1396,7 @@ class CJA:
         useAttribute: bool = True,
         cache: bool = False,
         dvIdSuffix: bool = False,
+        output:str="dict",
     ) -> dict:
         """
         Retrieve all projects details. You can either pass the list of dataframe returned from the getProjects methods and some filters.
@@ -1410,6 +1411,7 @@ class CJA:
                 If you want to start from scratch on the retrieval process of your projects.
             dvIdSuffix : OPTIONAL : If you want to add data view ID as suffix of metrics and dimensions (::dvId)
             cache : OPTIONAL : If you want to cache the different elements retrieved for future usage.
+            output : OPTIONAL : If you want to return a "list" or "dict" from this method. (default "dict")
         Not using filter may end up taking a while to retrieve the information.
         """
         if self.loggingEnabled:
@@ -1460,6 +1462,9 @@ class CJA:
         }
         if filterNameProject is None and filterNameOwner is None:
             self.projectsDetails = projectsDetails
+        if output == "list":
+            list_projectsDetails = [projectsDetails[key] for key in projectsDetails]
+            return list_projectsDetails
         return projectsDetails
 
     def deleteProject(self, projectId: str = None) -> dict:
@@ -1725,10 +1730,17 @@ class CJA:
         """
         dataRows = []
         ## retrieve StaticRow ID and segmentID
-        tableSegmentsRows = {
-            obj["id"]: obj["segmentId"]
-            for obj in dataRequest["metricContainer"]["metricFilters"]
-        }
+        if len([metric for metric in dataRequest['metricContainer'].get('metricFilters',[]) if metric.get('id','').startswith("STATIC_ROW_COMPONENT")])>0:
+            tableSegmentsRows = {
+                obj["id"]: obj["segmentId"]
+                for obj in dataRequest["metricContainer"]["metricFilters"]
+                if obj["id"].startswith("STATIC_ROW_COMPONENT")
+            }
+        else:
+            tableSegmentsRows = {
+                obj["id"]: obj["segmentId"]
+                for obj in dataRequest["metricContainer"]["metricFilters"]
+            }
         ## retrieve place and segmentID
         segmentApplied = {}
         for obj in dataRequest["metricContainer"]["metricFilters"]:
