@@ -245,6 +245,19 @@ List of GET methods:
   Arguments:
   * projectId : REQUIRED : a project ID to return
 
+* getAnnotation
+  Return a specific annotation definition.
+  Arguments:
+  * annotationId : REQUIRED : The annotation ID
+
+* getAnnotations
+  Returns a list of the available annotations 
+  Arguments:
+  * full : OPTIONAL : If set to True (default), returned all available information of the annotation.
+  * includeType : OPTIONAL : use to return only "shared" or "all"(default) annotation available.
+  * limit : OPTIONAL : number of result per page (default 1000)
+  * page : OPTIONAL : page used for pagination
+
 ## Create methods
 
 The CJA API  provides some endpoint to create elements.
@@ -288,6 +301,31 @@ Here is the list of the possible create options.
   Argument:
   * dateRangeData : REQUIRED : date range ID to be created
 
+* createAnnotation
+  Create an Annotation.
+  Arguments:
+  * name : REQUIRED : Name of the annotation
+  * dateRange : REQUIRED : Date range of the annotation to be used. 
+      Example: 2022-04-19T00:00:00/2022-04-19T23:59:59
+  * dataViewId : REQUIRED : Data View ID 
+  * metricIds : OPTIONAL : List of metrics ID to be annotated
+  * filterIds : OPTIONAL : List of filters ID to apply for annotation for context.
+  * dimensionObj : OPTIONAL : List of dimensions object specification:
+      {
+          componentType: "dimension"
+          dimensionType: "string"
+          id: "variables/product"
+          operator: "streq"
+          terms: ["unknown"]
+      }
+  * applyToAllReports : OPTIONAL : If the annotation apply to all ReportSuites.
+possible kwargs:
+  * colors: Color to be used, examples: "STANDARD1"
+  * shares: List of userId for sharing the annotation
+  * tags: List of tagIds to be applied
+  * favorite: boolean to set the annotation as favorite (false by default)
+  * approved: boolean to set the annotation as approved (false by default)
+
 ## DELETE methods
 
 There is a possibility to delete some elements with the Adobe Analytics API 2.0. Please find below the different options that you can delete.
@@ -324,6 +362,11 @@ There is a possibility to delete some elements with the Adobe Analytics API 2.0.
   Delete a single dateRange definition.
   Argument:
   * dateRangeId : REQUIRED : date range ID to be deleted
+
+* deleteAnnotation
+  Delete a specific annotation definition.
+  Arguments:
+  * annotationId : REQUIRED : The annotation ID to be deleted
 
 ## UPDATE methods
 
@@ -400,6 +443,12 @@ On each method docstring, I tried to tell if it is a PUT or a PATCH method.
   Arguments:
   * dateRangeId : REQUIRED : date range ID to be updated
   * data : REQUIRED : dictionary holding the new definition
+
+* updateAnnotation
+  Update an annotation based on its ID. PUT method.
+  Arguments:
+  * annotationId : REQUIRED : The annotation ID to be updated
+  * annotationObj : REQUIRED : The object to replace the annotation.
 
 ## Other methods
 

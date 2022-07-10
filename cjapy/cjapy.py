@@ -1304,6 +1304,162 @@ class CJA:
             raise ValueError("Require a filterMessage")
         res = self.connector.postData(self.endpoint + path, data=filterMessage)
         return res
+    
+    def getAnnotations(self,full:bool=True,includeType:str='all',limit:int=1000,page:int=0)->list:
+        """
+        Returns a list of the available annotations 
+        Arguments:
+            full : OPTIONAL : If set to True (default), returned all available information of the annotation.
+            includeType : OPTIONAL : use to return only "shared" or "all"(default) annotation available.
+            limit : OPTIONAL : number of result per page (default 1000)
+            page : OPTIONAL : page used for pagination
+        """
+        params = {"includeType":includeType,"page":page}
+        if full:
+            params['expansion'] = "name,description,dateRange,color,applyToAllReports,scope,createdDate,modifiedDate,modifiedById,tags,shares,approved,favorite,owner,usageSummary,companyId,dataId"
+        path = f"/annotations"
+        lastPage = False
+        data = []
+        while lastPage == False:
+            res = self.connector.getData(self.endpoint + path,params=params)
+            data += res.get('content',[])
+            lastPage = res.get('lastPage',True)
+            params['page'] += 1
+        return data
+    
+    def getAnnotation(self,annotationId:str=None)->dict:
+        """
+        Return a specific annotation definition.
+        Arguments:
+            annotationId : REQUIRED : The annotation ID
+        """
+        if annotationId is None:
+            raise ValueError("Require an annotation ID")
+        path = f"/annotations/{annotationId}"
+        params ={
+            "expansion" : "name,description,dateRange,color,applyToAllReports,scope,createdDate,modifiedDate,modifiedById,tags,shares,approved,favorite,owner,usageSummary,companyId,dataId"
+        }
+        res = self.connector.getData(self.endpoint + path,params=params)
+        return res
+    
+    def deleteAnnotation(self,annotationId:str=None)->dict:
+        """
+        Delete a specific annotation definition.
+        Arguments:
+            annotationId : REQUIRED : The annotation ID to be deleted
+        """
+        if annotationId is None:
+            raise ValueError("Require an annotation ID")
+        path = f"/annotations/{annotationId}"
+        res = self.connector.deleteData(self.endpoint + path)
+        return res
+
+    def createAnnotation(self,
+                        name:str=None,
+                        dateRange:str=None,
+                        dataViewId:str=None,
+                        metricIds:list=None,
+                        dimensionObj:list=None,
+                        description:str=None,
+                        filterIds:list=None,
+                        applyToAllReports:bool=False,
+                        **kwargs)->dict:
+
+        """
+        Create an Annotation.
+        Arguments:
+            name : REQUIRED : Name of the annotation
+            dateRange : REQUIRED : Date range of the annotation to be used. 
+                Example: 2022-04-19T00:00:00/2022-04-19T23:59:59
+            dataViewId : REQUIRED : Data View ID 
+            metricIds : OPTIONAL : List of metrics ID to be annotated
+            filterIds : OPTIONAL : List of filters ID to apply for annotation for context.
+            dimensionObj : OPTIONAL : List of dimensions object specification:
+                {
+                    componentType: "dimension"
+                    dimensionType: "string"
+                    id: "variables/product"
+                    operator: "streq"
+                    terms: ["unknown"]
+                }
+            applyToAllReports : OPTIONAL : If the annotation apply to all ReportSuites.
+        possible kwargs:
+            colors: Color to be used, examples: "STANDARD1"
+            shares: List of userId for sharing the annotation
+            tags: List of tagIds to be applied
+            favorite: boolean to set the annotation as favorite (false by default)
+            approved: boolean to set the annotation as approved (false by default)
+        """
+        path = f"/annotations"
+        if name is None:
+            raise ValueError("A name must be specified")
+        if dateRange is None:
+            raise ValueError("A dateRange must be specified")
+        if dataViewId is None:
+            raise ValueError("a master dataViewId must be specified")
+        description = description or "api generated"
+
+        data = {
+            "name": name,
+            "description": description,
+            "dateRange": dateRange,
+            "color": kwargs.get('colors',"STANDARD1"),
+            "applyToAllReports": applyToAllReports,
+            "scope": {
+                "metrics":[],
+                "filters":[]
+            },
+            "tags": [],
+            "approved": kwargs.get('approved',False),
+            "favorite": kwargs.get('favorite',False),
+            "dataId": dataViewId
+        }
+        if metricIds is not None and type(metricIds) == list:
+            for metric in metricIds:
+                data['scopes']['metrics'].append({
+                    "id" : metric,
+                    "componentType":"metric"
+                })
+        if filterIds is None and type(filterIds) == list:
+            for filter in filterIds:
+                data['scopes']['filters'].append({
+                    "id" : filter,
+                    "componentType":"segment"
+                })
+        if dimensionObj is not None and type(dimensionObj) == list:
+            for obj in dimensionObj:
+                data['scopes']['filters'].append(obj)
+        if kwargs.get("shares",None) is not None:
+            data['shares'] = []
+            for user in kwargs.get("shares",[]):
+                data['shares'].append({
+                    "shareToId" : user,
+                    "shareToType":"user"
+                })
+        if kwargs.get('tags',None) is not None:
+            for tag in kwargs.get('tags'):
+                res = self.getTag(tag)
+                data['tags'].append({
+                    "id":tag,
+                    "name":res['name']
+                })
+        res = self.connector.postData(self.endpoint + path,data=data)
+        return res       
+
+    def updateAnnotation(self,annotationId:str=None,annotationObj:dict=None)->dict:
+        """
+        Update an annotation based on its ID. PUT method.
+        Arguments:
+            annotationId : REQUIRED : The annotation ID to be updated
+            annotationObj : REQUIRED : The object to replace the annotation.
+        """
+        if annotationObj is None or type(annotationObj) != dict:
+            raise ValueError('Require a dictionary representing the annotation definition')
+        if annotationId is None:
+            raise ValueError('Require the annotation ID')
+        path = f"/annotations/{annotationId}"
+        res = self.connector.putData(self.endpoint+path,data=annotationObj)
+        return res
 
     def getProjects(
         self,
