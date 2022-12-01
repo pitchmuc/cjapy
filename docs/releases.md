@@ -12,4 +12,7 @@ Realease information:
 * Adding `Workspace` module and class to read report result [documentaton](./workspace.md)
 * Adding Project methods and advanced use-cases [documentation](./projects.md)
 * Adding a [getting started documentation](./getting_started.md)
-* Adding a logging capability [documentation](./logging.md)
+* Adding a logging capability [documentation](./logging.md)\
+Patch:
+* Adding more information when retrieving the Projects
+* Fixing reporting issue with dynamic filters in Workspaces. 
