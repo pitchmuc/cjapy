@@ -715,7 +715,7 @@ class CJA:
         if self.loggingEnabled:
             self.logger.debug(f"getDimensions start")
         path = f"/datagroups/data/{dataviewId}/dimensions"
-        params = {}
+        params = {"page":0}
         if full:
             params[
                 "expansion"
@@ -726,13 +726,23 @@ class CJA:
             self.endpoint + path, params=params, verbose=verbose
         )
         dimensions = res.get("content", [])
+        lastPage = res.get('lastPage',True)
+        while lastPage == False:
+            params["page"] += 1
+            res = self.connector.getData(
+            self.endpoint + path, params=params, verbose=verbose
+            )
+            dimensions += res.get('content',[])
+            lastPage = res.get('lastPage',True)
         if output == "df":
             df = pd.DataFrame(dimensions)
             return df
         return dimensions
 
     def getDimension(
-        self, dataviewId: str = None, dimensionId: str = None, full: bool = True
+        self, dataviewId: str = None, 
+        dimensionId: str = None, 
+        full: bool = True
     ):
         """
         Return a specific dimension based on the dataview ID and dimension ID passed.
@@ -752,7 +762,7 @@ class CJA:
         if full:
             params[
                 "expansion"
-            ] = "approved,favorite,tags,usageSummary,usageSummaryWithRelevancyScore,description,sourceFieldId,segmentable,required,hideFromReporting,hidden,includeExcludeSetting,fieldDefinition,bucketingSetting,noValueOptionsSetting,defaultDimensionSort,persistenceSetting,storageId,tableName,dataSetIds,dataSetType,type,schemaPath,hasData,sourceFieldName,schemaType,sourceFieldType,fromGlobalLookup,multiValued,precision"
+            ] = "approved,favorite,tags,usageSummary,usageSummaryWithRelevancyScore,description,sourceFieldId,segmentable,required,hideFromReporting,hidden,includeExcludeSetting,fieldDefinition,storageId,tableName,dataSetIds,dataSetType,type,schemaPath,hasData,sourceFieldName,schemaType,sourceFieldType,fromGlobalLookup,multiValued,precision"
         res = self.connector.getData(self.endpoint + path, params=params)
         return res
 
@@ -762,6 +772,7 @@ class CJA:
         full: bool = False,
         inclType: str = None,
         verbose: bool = False,
+                output: str = "df",
     ) -> dict:
         """
         Used to retrieve metrics for a dataview
@@ -769,22 +780,35 @@ class CJA:
             dataviewId : REQUIRED : the Data View ID to retrieve data from.
             full : OPTIONAL : To add additional elements (default False)
             inclType : OPTIONAL : Possibility to add "hidden" values
+            output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
         """
         if dataviewId is None:
             raise ValueError("Require a Data View ID")
         if self.loggingEnabled:
             self.logger.debug(f"getMetrics start")
         path = f"/datagroups/data/{dataviewId}/metrics"
-        params = {}
+        params = {"page":0}
         if full:
             params[
                 "expansion"
-            ] = "approved,favorite,tags,usageSummary,usageSummaryWithRelevancyScore,description,sourceFieldId,segmentable,required,hideFromReporting,hidden,includeExcludeSetting,fieldDefinition,bucketingSetting,noValueOptionsSetting,defaultDimensionSort,persistenceSetting,storageId,tableName,dataSetIds,dataSetType,type,schemaPath,hasData,sourceFieldName,schemaType,sourceFieldType,fromGlobalLookup,multiValued,precision"
+            ] = "approved,favorite,tags,usageSummary,usageSummaryWithRelevancyScore,description,sourceFieldId,segmentable,required,hideFromReporting,hidden,includeExcludeSetting,fieldDefinition,storageId,tableName,dataSetIds,dataSetType,type,schemaPath,hasData,sourceFieldName,schemaType,sourceFieldType,fromGlobalLookup,multiValued,precision"
         if inclType == "hidden":
             params["includeType"] = "hidden"
         res = self.connector.getData(
             self.endpoint + path, params=params, verbose=verbose
         )
+        metrics = res.get('content',[])
+        lastPage = res.get('lastPage',True)
+        while lastPage == False:
+            params["page"] += 1
+            res = self.connector.getData(
+            self.endpoint + path, params=params, verbose=verbose
+            )
+            metrics += res.get('content',[])
+            lastPage = res.get('lastPage',True)
+        if output =='df':
+            df = pd.DataFrame(metrics)
+            return df
         return res
 
     def getMetric(
@@ -899,6 +923,46 @@ class CJA:
         if save:
             with open(f"{dataViewId}_{int(time.time())}.json", "w") as f:
                 f.write(json.dumps(res, indent=4))
+        return res
+
+    def getConnections(self,limit:int=1000,full:bool=True,output:str='df')-> JsonListOrDataFrameType:
+        """
+        Retrieve the connections associated to that company.
+        Arguments:
+            limit : OPTIONAL : number of results per request (default 100)
+            full : OPTIONAL : define if all possible information are returned (default True).
+            output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
+        """
+        if self.loggingEnabled:
+            self.logger.debug(f"getConnections start")
+        path = f"/datagroups/connections"
+        params = {"limit":limit,"page":0}
+        if full:
+            params["expansion"] ="granularBackfills,granularStreaming,backfillsSummaryConnection,name,description,isDeleted,isDisabled,dataSets,createdDate,modified,sandboxName,organization,backfillEnabled,modifiedBy,ownerFullName"
+        res = self.connector.getData(self.endpoint + path,params=params)
+        data = res.get('content',[])
+        lastpage = res.get('lastPage',True)
+        while lastpage != True:
+            params['page'] += 1
+            res = self.connector.getData(self.endpoint + path,params=params)
+            data += res.get('content',[])
+            lastpage = res.get('lastPage',True)
+        if output == "df":
+            df = pd.DataFrame(data)
+            return df
+        return data
+    
+    def getConnection(self,connectionId:str=None)->dict:
+        """
+        Returns the dictionary of a single connection based on its ID, without prefix.
+        Arguments:
+            connectionId : REQUIRED : The ID of the connection without prefix.
+        """
+        if connectionId is None:
+            raise ValueError("Require a connection ID")
+        path = f"/datagroups/connections/{connectionId}"
+        params = {'expansion':"granularBackfills,granularStreaming,backfillsSummaryConnection,name,description,isDeleted,isDisabled,dataSets,createdDate,modified,sandboxName,organization,backfillEnabled,modifiedBy,ownerFullName"}
+        res = self.connector.getData(self.endpoint + path,params=params)
         return res
 
     def validateDataView(self, data: Union[dict, IO]) -> dict:

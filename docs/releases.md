@@ -3,6 +3,11 @@
 This page will give you the change that are occuring when a new version has been published on pypi.
 The changes have been tracked starting version 0.1.0
 
+## 0.1.1
+
+* adding the `getConnections` and `getConnection` methods
+* fixing the `getMetrics` and `getMetric` methods.
+
 ## 0.1.0
 
 Release of the beta state for the API wrapper.

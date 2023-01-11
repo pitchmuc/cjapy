@@ -146,6 +146,7 @@ List of GET methods:
   * dataviewId : REQUIRED : the Data View ID to retrieve data from.
   * full : OPTIONAL : To add additional elements (default False)
   * inclType : OPTIONAL : Possibility to add "hidden" values
+  * output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
 
 * getDimension
   Return a specific dimension based on the dataview ID and dimension ID passed.
@@ -160,6 +161,7 @@ List of GET methods:
   * dataviewId : REQUIRED : the Data View ID to retrieve data from.
   * full : OPTIONAL : To add additional elements (default False)
   * inclType : OPTIONAL : Possibility to add "hidden" values
+  * output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
 
 * getMetric
   Return a specific metric based on the dataview ID and dimension ID passed.
@@ -257,6 +259,19 @@ List of GET methods:
   * includeType : OPTIONAL : use to return only "shared" or "all"(default) annotation available.
   * limit : OPTIONAL : number of result per page (default 1000)
   * page : OPTIONAL : page used for pagination
+
+* getConnections
+  Returns a list of the connections for this company id. Returns either a list of a dataframe.
+  Arguments:
+  * limit : OPTIONAL : number of results per request (default 100)
+  * full : OPTIONAL : define if all possible information are returned (default True).
+  * output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
+
+* getConnection
+  Return a connection detail based on its ID (without prefix).
+  Arguments:
+  * connectionId : REQUIRED : the connection ID (without prefix)
+
 
 ## Create methods
 
