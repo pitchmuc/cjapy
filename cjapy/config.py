@@ -6,7 +6,10 @@ config_object = {
     "secret": "",
     "date_limit": 0,
     "token": "",
-    "tokenEndpoint": "https://ims-na1.adobelogin.com/ims/exchange/jwt"
+    "scopes":"",
+    "imsEndpoint":"https://ims-na1.adobelogin.com",
+    "oauthTokenEndpointV2": "",
+    "jwtTokenEndpoint": "https://ims-na1.adobelogin.com/ims/exchange/jwt"
 }
 header = {"Accept": "application/json",
           "Content-Type": "application/json",

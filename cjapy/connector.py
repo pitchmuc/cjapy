@@ -47,16 +47,25 @@ class AdobeRequest:
         self.restTime = 30
         self.retry = retry
         if self.config["token"] == "" or time.time() > self.config["date_limit"]:
-            token_and_expiry = token_provider.get_token_and_expiry_for_config(
-                config=self.config, verbose=verbose
-            )
+            if self.config["private_key"] is not None or self.config["pathToKey"] is not None:
+                self.connectionType = 'jwt'
+                token_and_expiry = token_provider.get_jwt_token_and_expiry_for_config(
+                    config=self.config, verbose=verbose
+                )
+                
+            elif self.config["scopes"] is not None:
+                self.connectionType = 'oauthV2'
+                token_and_expiry = token_provider.get_oauth_token_and_expiry_for_config(
+                    config=self.config,
+                    verbose=verbose
+                )
             token = token_and_expiry["token"]
             expiry = token_and_expiry["expiry"]
             if self.loggingEnabled:
-                self.logger.info(f"token retrieved : {token}")
+                self.logger.info(f"token retrieved: {token}")
             self.token = token
             self.config["token"] = token
-            self.config["date_limit"] = time.time() + expiry / 1000 - 500
+            self.config["date_limit"] = time.time() + expiry - 500
             self.header.update({"Authorization": f"Bearer {token}"})
 
     def _checkingDate(self) -> None:
@@ -67,18 +76,24 @@ class AdobeRequest:
         if now > self.config["date_limit"]:
             if self.loggingEnabled:
                 self.logger.warning("token expired. Trying to retrieve a new token")
-            token_with_expiry = token_provider.get_token_and_expiry_for_config(
-                config=self.config
-            )
+            if self.connectionType == 'jwt':
+                token_with_expiry = token_provider.get_jwt_token_and_expiry_for_config(
+                    config=self.config)
+            elif self.connectionType == 'oauthV2':
+                token_with_expiry = token_provider.get_oauth_token_and_expiry_for_config(
+                    config=self.config,
+                    connectionType=self.connectionType)
             token = token_with_expiry["token"]
+            expiry = token_with_expiry["expiry"]
             if self.loggingEnabled:
                 self.logger.info("new token retrieved : {token}")
             self.config["token"] = token
-            self.config["date_limit"] = (
-                time.time() + token_with_expiry["expiry"] / 1000 - 500
-            )
+            self.config["date_limit"] = time.time() + expiry - 500
             self.header.update({"Authorization": f"Bearer {token}"})
-
+            self.config["date_limit"] = (
+                time.time() + (token_with_expiry["expiry"]) - 500
+            )
+            
     def getData(
         self,
         endpoint: str,

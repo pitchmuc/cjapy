@@ -28,18 +28,28 @@ def find_path(path: str) -> Optional[Path]:
 
 
 def createConfigFile(
-    verbose: bool = False, filename: str = "config_analytics_template.json", **kwargs
+    filename: str = "config_analytics_template.json",
+    auth_type:str = "OauthV2",
+    verbose: bool = False, 
+     **kwargs
 ) -> None:
     """Creates a `config_admin.json` file with the pre-defined configuration format
     to store the access data in under the specified `destination`.
+    Parameters: 
+        filename : OPTIONAL : : name of the config file.
+        auth_type : OPTIONAL : type of authentication, either "jwt" or "oauthV2". Default is oauthV2
+        verbose : OPTIONAL : set to true, gives you a print stateent where is the location.
     """
     json_data = {
         "org_id": "<orgID>",
         "client_id": "<APIkey>",
-        "tech_id": "<something>@techacct.adobe.com",
         "secret": "<YourSecret>",
-        "pathToKey": "<path/to/your/privatekey.key>",
     }
+    if auth_type == 'jwt':
+        json_data["tech_id"] = "<something>@techacct.adobe.com"
+        json_data["pathToKey"] = "<path/to/your/privatekey.key>"
+    elif auth_type == 'OauthV2':
+        json_data["scopes"] = "<scopes>"
     with open(filename, "w") as cf:
         cf.write(json.dumps(json_data, indent=4))
     if verbose:
@@ -48,13 +58,17 @@ def createConfigFile(
         )
 
 
-def importConfigFile(path: str) -> None:
+def importConfigFile(
+        path: str = None,
+        auth_type: str = None,
+        )-> None:
     """Reads the file denoted by the supplied `path` and retrieves the configuration information
     from it.
 
     Arguments:
         path: REQUIRED : path to the configuration file. Can be either a fully-qualified or relative.
-
+        auth_type : OPTIONAL : type of authentication, either "jwt" or "oauthV2". Detected based on keys present in config file.
+    
     Example of path value.
     "config.json"
     "./config.json"
@@ -78,13 +92,22 @@ def importConfigFile(path: str) -> None:
             raise RuntimeError(
                 f"Either an `api_key` or a `client_id` should be provided."
             )
-        configure(
-            org_id=provided_config["org_id"],
-            tech_id=provided_config["tech_id"],
-            secret=provided_config["secret"],
-            path_to_key=provided_config["pathToKey"],
-            client_id=client_id,
-        )
+        if auth_type is None:
+            if 'scopes' in provided_keys:
+                auth_type = 'oauthV2'
+            elif 'tech_id' in provided_keys and "pathToKey" in provided_keys:
+                auth_type = 'jwt'
+        args = {
+            "org_id": provided_config["org_id"],
+            "client_id": client_id,
+            "secret": provided_config["secret"],
+        }
+        if auth_type == "jwt":
+            args["tech_id"] = provided_config["tech_id"]
+            args["path_to_key"] = provided_config["pathToKey"]
+        elif auth_type == "oauthV2":
+            args["scopes"] = provided_config["scopes"].replace(' ','')
+        configure(**args)
 
 
 def configure(
@@ -94,6 +117,7 @@ def configure(
     client_id: str = None,
     path_to_key: str = None,
     private_key: str = None,
+    scopes: str = None
 ):
     """Performs programmatic configuration of the API using provided values.
     Arguments:
@@ -103,19 +127,16 @@ def configure(
         client_id : REQUIRED : The client_id (old api_key) provided by the JWT connection.
         path_to_key : REQUIRED : If you have a file containing your private key value.
         private_key : REQUIRED : If you do not use a file but pass a variable directly.
+        scopes : OPTIONAL : The scope define in your project for your API connection. Oauth V2, for clients and customers.
     """
     if not org_id:
         raise ValueError("`org_id` must be specified in the configuration.")
     if not client_id:
         raise ValueError("`client_id` must be specified in the configuration.")
-    if not tech_id:
-        raise ValueError("`tech_id` must be specified in the configuration.")
+    if tech_id is None and (path_to_key is None and private_key is None) and scopes is None:
+        raise ValueError("either `scopes` needs to be specified or one of `private_key` or `path_to_key` with tech_id")
     if not secret:
         raise ValueError("`secret` must be specified in the configuration.")
-    if not path_to_key and not private_key:
-        raise ValueError(
-            "`pathToKey` or `private_key` must be specified in the configuration."
-        )
     config_object["org_id"] = org_id
     config_object["client_id"] = client_id
     header["x-api-key"] = client_id
@@ -124,6 +145,10 @@ def configure(
     config_object["secret"] = secret
     config_object["pathToKey"] = path_to_key
     config_object["private_key"] = private_key
+    config_object["scopes"] = scopes
+    config_object["jwtTokenEndpoint"] = f"{config_object['imsEndpoint']}/ims/exchange/jwt"
+    config_object["oauthTokenEndpointV2"] = f"{config_object['imsEndpoint']}/ims/token/v2"
+
     # ensure the reset of the state by overwriting possible values from previous import.
     config_object["date_limit"] = 0
     config_object["token"] = ""
@@ -146,7 +171,7 @@ def get_private_key_from_config(config: dict) -> str:
     return private_key
 
 
-def generateLoggingObject() -> dict:
+def generateLoggingObject(level:str="WARNING",filename:str="cjapy.log") -> dict:
     """
     Generates a dictionary for the logging object with basic configuration.
     You can find the information for the different possible values on the logging documentation.
@@ -159,10 +184,10 @@ def generateLoggingObject() -> dict:
         format : format of the logs
     """
     myObject = {
-        "level": "WARNING",
+        "level": level,
         "stream": True,
         "file": False,
         "format": "%(asctime)s::%(name)s::%(funcName)s::%(levelname)s::%(message)s::%(lineno)d",
-        "filename": "cjapy.log",
+        "filename": filename,
     }
     return myObject

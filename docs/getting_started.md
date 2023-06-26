@@ -45,6 +45,8 @@ cjapy.createConfigFile()
 
 This will create a JSON and you will need to fill it with the information available in your adobe io account.
 
+**NOTE**: Starting version 0.2.0 the `createConfigFile` will by default generate a config file supporting Oauth Server to Server integration. 
+
 ## 4. Import the configuration file
 
 Once this is done, you can import the configuration file.
@@ -54,6 +56,8 @@ I would recommend to store the config file and the key in the folder that you ar
 import cjapy
 cjapy.importConfigFile('myconfig.json')
 ```
+
+**NOTE**: Starting version 0.2.0 the `importConfigFile` will detect the type of authentication based on the parameter. If `scopes` is provided, Oauth Server to Server will be used.
 
 ### Alternative : Using the configure method
 
