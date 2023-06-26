@@ -3,6 +3,13 @@
 This page will give you the change that are occuring when a new version has been published on pypi.
 The changes have been tracked starting version 0.1.0
 
+## 0.2.0
+
+* adding support for Oauth Server to Server configuration file
+  * adding support for `createConfigFile`
+  * adding support for `importConfigFile` and `configure`
+* moving to pyproject.toml release
+
 ## 0.1.1
 
 * adding the `getConnections` and `getConnection` methods
