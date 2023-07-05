@@ -209,6 +209,23 @@ class RequestCreator:
         """
         self.__request["settings"]["limit"] = limit
 
+    def setSearch(self,itemIds:list=None)-> None:
+        """
+        Set the items ID search in the specified dimension
+        Arguments :
+            itemIds : REQUIRED : The list of itemId to be searched in the dimension
+        """
+        if type(itemIds) != list:
+            raise TypeError("itemIds should be a list of values")
+        self.__request["search"]["itemIds"] = itemIds
+    
+    def removeSearch(self)->None:
+        """
+        Remove the search capability in the request.
+        """
+        del self.__request["search"]
+
+
     def setRepeatInstance(self, repeat: bool = True) -> None:
         """
         Specify if repeated instances should be counted.

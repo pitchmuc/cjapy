@@ -1966,11 +1966,11 @@ class CJA:
         else:
             tableSegmentsRows = {
                 obj["id"]: obj["segmentId"]
-                for obj in dataRequest["metricContainer"]["metricFilters"]
+                for obj in dataRequest["metricContainer"].get("metricFilters",[])
             }
         ## retrieve place and segmentID
         segmentApplied = {}
-        for obj in dataRequest["metricContainer"]["metricFilters"]:
+        for obj in dataRequest["metricContainer"].get("metricFilters",[]):
             if obj["id"].startswith("STATIC_ROW") == False:
                 if obj["type"] == "breakdown":
                     segmentApplied[obj["id"]] = f"{obj['dimension']}:::{obj['itemId']}"
@@ -2067,7 +2067,7 @@ class CJA:
             "includePlatformPredictiveObjects": includePredictiveObjects,
         }
         if type(request) == dict:
-            dataRequest = request
+            dataRequest = deepcopy(request)
         elif type(request) == RequestCreator:
             dataRequest = request.to_dict()
         elif ".json" in request:
@@ -2157,6 +2157,8 @@ class CJA:
                 for element in filterRelations.get(colId, []):
                     metricColumns[colId] += f":::{metricFilterTranslation[element]}"
         else:
+            if 'error-504' in res.keys():
+                raise TimeoutError(res['error-504'])
             if returnClass == False:
                 return res
             reportType = "static"

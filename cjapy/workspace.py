@@ -44,7 +44,8 @@ class Workspace:
             if filter["type"] == "dateRange":
                 self.startDate = filter["dateRange"].split("/")[0]
                 self.endDate = filter["dateRange"].split("/")[1]
-        self.dataRequest = RequestCreator(dataRequest)
+        dataRequestCopy = deepcopy(dataRequest)
+        self.dataRequest = RequestCreator(dataRequestCopy)
         self.requestSize = dataRequest["settings"]["limit"]
         self.settings = dataRequest["settings"]
         self.pageRequested = dataRequest["settings"]["page"] + 1

@@ -210,7 +210,10 @@ class AdobeRequest:
                             f"POST method failed: {res.status}, {res.text}"
                         )
                     return res.text
-            res_json = {"error": "Request Error"}
+            if res.status_code == '504':
+                res_json = {"error-504": "504 Gateway Time-out"}
+            else:
+                res_json = {"error": f"Request Error, status: {res.status_code}"}
         return res_json
 
     def patchData(
