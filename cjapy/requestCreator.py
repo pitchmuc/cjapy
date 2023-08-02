@@ -42,6 +42,9 @@ class RequestCreator:
             self.__request["metricContainer"].get("metricFilters", [])
         )
         self.__globalFiltersCount = len(self.__request["globalFilters"])
+        self.search = False ## defining if search is being used.
+        if 'search' in self.__request.keys():
+            self.search = True
         ### Preparing some time statement.
         today = datetime.datetime.now()
         today_date_iso = today.isoformat().split("T")[0]
@@ -218,12 +221,14 @@ class RequestCreator:
         if type(itemIds) != list:
             raise TypeError("itemIds should be a list of values")
         self.__request["search"]["itemIds"] = itemIds
+        self.search = True
     
     def removeSearch(self)->None:
         """
         Remove the search capability in the request.
         """
         del self.__request["search"]
+        self.search = False
 
 
     def setRepeatInstance(self, repeat: bool = True) -> None:

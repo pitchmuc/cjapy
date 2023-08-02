@@ -200,6 +200,8 @@ class Workspace:
         breakdown = f"{breadown_dimension}:::{itemValue}"
         new_request = RequestCreator(self.dataRequest.to_dict())
         new_request.setDimension(dimension)
+        if new_request.search:
+            new_request.removeSearch()
         metrics = new_request.getMetrics()
         for metric in metrics:
             new_request.addMetricFilter(metricId=metric, filterId=breakdown)

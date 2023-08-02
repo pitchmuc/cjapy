@@ -108,6 +108,15 @@ We will review the different methods available via the object.
   Arguments:
   * limit : OPTIONAL : number of elements to return
 
+* `setSearch()`
+  Set a search for specific value in the dimensions.
+  Arguments:
+  * itemIds : REQUIRED : list of value to search for.
+
+* `removeSearch()`
+  Remove the search attribute for the search capabilities.
+  No arguments.
+
 * `addMetricFilter()`
   Add a filter to a metric.
   Arguments:
@@ -155,3 +164,7 @@ The different timeframe available through the `dates` attributes are the followi
 
 `today`attribute is a datetime object, with today timestamp.\
 This can help you derive other dates if needed.
+
+### search
+
+`search` attribute is a boolean defining if search has been set for the dimension.

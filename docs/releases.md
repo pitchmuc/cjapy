@@ -8,7 +8,9 @@ The changes have been tracked starting version 0.1.0
 * requestCreator can now set `setSearch` and `removeSearch`
 * avoiding modifying initial request from `getReport` 
 * fixing report output decryption from `getReport`
-* adding throwing an `TimeoutError` when API Gateway of CJA is not responding.
+* adding throwing an `TimeoutError` when API Gateway of CJA is not responding.\
+Patch : 
+* Fixing `breakdown` method in `Workspace` class to support when result is coming from search.
 
 ## 0.2.0
 
