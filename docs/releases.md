@@ -11,6 +11,7 @@ The changes have been tracked starting version 0.1.0
 * adding throwing an `TimeoutError` when API Gateway of CJA is not responding.\
 Patch : 
 * Fixing `breakdown` method in `Workspace` class to support when result is coming from search.
+* Adding the `isIn` parameter for projects.
 
 ## 0.2.0
 

@@ -1554,7 +1554,7 @@ class CJA:
         if full:
             params[
                 "expansion"
-            ] = "shares,tags,accessLevel,modified,externalReferences,definition,ownerFullName,sharesFullName,complexity,usageSummary"
+            ] = "shares,tags,accessLevel,modified,externalReferences,definition,ownerFullName,sharesFullName,complexity,usedIn,lastRecordedAccess,usageSummary"
         if filterByIds:
             params["filterByIds"] = filterByIds
         if ownerId:
