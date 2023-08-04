@@ -1531,6 +1531,8 @@ class CJA:
         includeType: str = "all",
         filterByIds: str = None,
         ownerId: str = None,
+        limit : int = None,
+        usedIn : bool = False,
         save: bool = False,
         output: str = "df",
         cache: bool = True,
@@ -1543,6 +1545,8 @@ class CJA:
             includeType : OPTIONAL : Include additional segments not owned by user. ("all" or "shared")
             filterByIds : OPTIONAL : Filter list to only include projects in the specified list (comma-delimited list of IDs)
             ownerId : OPTIONAL : Filter list to only include projects owned by the specified imsUserId
+            limit : OPTIONAL : To limit the number of resutls returned per page.
+            usedIn : OPTIONAL : Additional parameter to compute some usage of the projects. Recommended to be used with limit
             save : OPTIONAL : if you want to save the result
             cache : OPTIONAL : if you want to save the project in a local Variable.
             output : OPTIONAL : the type of output to return "df" or "raw"
@@ -1551,10 +1555,16 @@ class CJA:
             self.logger.debug(f"getProjects start")
         path = "/projects"
         params = {"includeType": includeType}
+        if limit is not None:
+            params["limit"] = limit
+            params["page"] = 0
+            params["pagination"] = True
         if full:
             params[
                 "expansion"
-            ] = "shares,tags,accessLevel,modified,externalReferences,definition,ownerFullName,sharesFullName,complexity,usedIn,lastRecordedAccess,usageSummary"
+            ] = "shares,tags,accessLevel,modified,externalReferences,definition,ownerFullName,sharesFullName,complexity,lastRecordedAccess,usageSummary"
+        if usedIn:
+            params['expansion'] += ',usedIn'
         if filterByIds:
             params["filterByIds"] = filterByIds
         if ownerId:

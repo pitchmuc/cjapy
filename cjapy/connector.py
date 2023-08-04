@@ -120,6 +120,7 @@ class AdobeRequest:
             res = requests.get(endpoint, headers=headers, params=params, data=data)
         if self.loggingEnabled:
             self.logger.debug(f"request_URL : {res.request.url}")
+            self.logger.debug(f"header used: {json.dumps(headers)}")
             self.logger.debug(f"status_code: {res.status_code}")
             self.logger.debug(f"parameters used: {json.dumps(params)}")
         try:
