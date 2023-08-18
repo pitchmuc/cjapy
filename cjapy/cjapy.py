@@ -1533,6 +1533,7 @@ class CJA:
         ownerId: str = None,
         limit : int = None,
         usedIn : bool = False,
+        n_results : int = 'inf',
         save: bool = False,
         output: str = "df",
         cache: bool = True,
@@ -1546,10 +1547,13 @@ class CJA:
             filterByIds : OPTIONAL : Filter list to only include projects in the specified list (comma-delimited list of IDs)
             ownerId : OPTIONAL : Filter list to only include projects owned by the specified imsUserId
             limit : OPTIONAL : To limit the number of resutls returned per page.
+            n_results : OPTIONAL : If you want to restrict to a certain number of requests (default: "inf" loop through all)
             usedIn : OPTIONAL : Additional parameter to compute some usage of the projects. Recommended to be used with limit
             save : OPTIONAL : if you want to save the result
             cache : OPTIONAL : if you want to save the project in a local Variable.
             output : OPTIONAL : the type of output to return "df" or "raw"
+        Possible kwargs:
+            page : the page number to reach.
         """
         if self.loggingEnabled:
             self.logger.debug(f"getProjects start")
@@ -1557,8 +1561,8 @@ class CJA:
         params = {"includeType": includeType}
         if limit is not None:
             params["limit"] = limit
-            params["page"] = 0
-            params["pagination"] = True
+            params["page"] = kwargs.get('page',0)
+            params["pagination"] = "true"
         if full:
             params[
                 "expansion"
@@ -1570,7 +1574,18 @@ class CJA:
         if ownerId:
             params["ownerId"] = ownerId
         res = self.connector.getData(self.endpoint + path, params=params)
-        data = res
+        if params.get('pagination','false') != 'true':
+            data = res
+        else:
+            lastPage = res.get('lastPage',False)
+            data = res["content"]
+            while float(len(data)) < float(n_results) and lastPage == False:
+                params["page"] +=1
+                res = self.connector.getData(self.endpoint + path, params=params)
+                data += res["content"]
+                lastPage = res.get('lastPage',False)
+                if float(len(data)) >= float(n_results):
+                    lastPage=True
         if output == "raw":
             if save:
                 with open(f"projects_{int(time.time())}.json", "w") as f:
@@ -1578,7 +1593,7 @@ class CJA:
             return data
         if cache:
             self.listProjectIds = data
-        data = pd.DataFrame(res)
+        data = pd.DataFrame(data)
         if save:
             data.to_csv(f"projects_{int(time.time())}", index=False)
         return data
