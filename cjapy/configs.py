@@ -61,6 +61,7 @@ def createConfigFile(
 def importConfigFile(
         path: str = None,
         auth_type: str = None,
+        client_secret_index: int = 0,
         )-> None:
     """Reads the file denoted by the supplied `path` and retrieves the configuration information
     from it.
@@ -68,6 +69,7 @@ def importConfigFile(
     Arguments:
         path: REQUIRED : path to the configuration file. Can be either a fully-qualified or relative.
         auth_type : OPTIONAL : type of authentication, either "jwt" or "oauthV2". Detected based on keys present in config file.
+        client_secret_index : OPTIONAL : choose which of your client secrets that you want to use, specify the index, default 0.
     
     Example of path value.
     "config.json"
@@ -87,26 +89,53 @@ def importConfigFile(
             ## old naming for client_id
             client_id = provided_config["api_key"]
         elif "client_id" in provided_keys:
+            ## old lowercase naming for client_id
             client_id = provided_config["client_id"]
+        elif "CLIENT_ID" in provided_keys:
+            client_id = provided_config["CLIENT_ID"]
         else:
             raise RuntimeError(
-                f"Either an `api_key` or a `client_id` should be provided."
+                f"Either an `api_key` or a `client_id` or a `CLIENT_ID` should be provided."
             )
+        
+        if "secret" in provided_keys:
+            ## old naming for client_secret
+            client_secret = provided_config["secret"]
+        elif "CLIENT_SECRETS" in provided_keys:
+            client_secret = provided_config["CLIENT_SECRETS"]
+        else:
+            raise RuntimeError(
+                f"Either an `secret` or a `CLIENT_SECRETS` should be provided."
+            )
+        
+        if "scopes" in provided_keys:
+            ## old naming for client_secret
+            scopes = provided_config["scopes"]
+        elif "SCOPES" in provided_keys:
+            scopes = provided_config["SCOPES"]
+        else:
+            raise RuntimeError(
+                f"Either an `scopes` or a `SCOPES` should be provided."
+            )
+
+        client_secret = client_secret[client_secret_index] if type(client_secret) == list else client_secret
+        scopes = ",".join(scopes) if type(scopes) == list else scopes
         if auth_type is None:
             if 'scopes' in provided_keys:
                 auth_type = 'oauthV2'
             elif 'tech_id' in provided_keys and "pathToKey" in provided_keys:
                 auth_type = 'jwt'
+        
         args = {
-            "org_id": provided_config["org_id"],
+            "org_id": provided_config["org_id"] if provided_config.get("org_id") is not None else provided_config["ORG_ID"],
             "client_id": client_id,
-            "secret": provided_config["secret"],
+            "secret": client_secret,
         }
         if auth_type == "jwt":
             args["tech_id"] = provided_config["tech_id"]
             args["path_to_key"] = provided_config["pathToKey"]
         elif auth_type == "oauthV2":
-            args["scopes"] = provided_config["scopes"].replace(' ','')
+            args["scopes"] = scopes.replace(' ','')
         configure(**args)
 
 
@@ -147,7 +176,7 @@ def configure(
     config_object["private_key"] = private_key
     config_object["scopes"] = scopes
     config_object["jwtTokenEndpoint"] = f"{config_object['imsEndpoint']}/ims/exchange/jwt"
-    config_object["oauthTokenEndpointV2"] = f"{config_object['imsEndpoint']}/ims/token/v2"
+    config_object["oauthTokenEndpointV2"] = f"{config_object['imsEndpoint']}/ims/token/v3"
 
     # ensure the reset of the state by overwriting possible values from previous import.
     config_object["date_limit"] = 0
