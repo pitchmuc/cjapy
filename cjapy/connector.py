@@ -107,6 +107,9 @@ class AdobeRequest:
         Abstraction for getting data
         """
         internRetry = kwargs.get("retry", self.retry)
+        expansion = kwargs.get("expansion")
+        if expansion:
+            params["expansion"] = expansion
         self._checkingDate()
         if headers is None:
             headers = self.header
@@ -175,6 +178,9 @@ class AdobeRequest:
         """
         Abstraction for posting data
         """
+        expansion = kwargs.get("expansion")
+        if expansion:
+            params["expansion"] = expansion
         self._checkingDate()
         if headers is None:
             headers = self.header
@@ -270,6 +276,9 @@ class AdobeRequest:
         """
         Abstraction for putting data
         """
+        expansion = kwargs.get("expansion")
+        if expansion:
+            params["expansion"] = expansion
         self._checkingDate()
         if headers is None:
             headers = self.header
