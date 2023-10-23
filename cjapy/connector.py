@@ -290,6 +290,10 @@ class AdobeRequest:
             res = requests.put(
                 endpoint, headers=headers, params=params, data=json.dumps(data)
             )
+        elif params is None and data is None:
+            res = requests.put(
+                endpoint, headers=headers
+            )
         if self.loggingEnabled:
             self.logger.debug(f"request_URL : {res.request.url}")
             self.logger.debug(f"status_code: {res.status_code}")
