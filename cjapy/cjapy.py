@@ -69,7 +69,7 @@ class CJA:
         self.filters = []
         self.calculatedMetrics: JsonListOrDataFrameType = []
 
-    def getCurrentUser(self, admin: bool = False, useCache: bool = True) -> dict:
+    def getCurrentUser(self, admin: bool = False, useCache: bool = True, **kwargs) -> dict:
         """
         return the current user
         """
@@ -79,7 +79,7 @@ class CJA:
         params = {"useCache": useCache}
         if admin:
             params["expansion"] = "admin"
-        res = self.connector.getData(self.endpoint + path, params=params)
+        res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
 
     def getCalculatedMetrics(
@@ -94,6 +94,7 @@ class CJA:
         approved: bool = False,
         cache: bool = True,
         output: str = "df",
+        **kwargs
     ) -> JsonListOrDataFrameType:
         """
         Returns a dataframe or the list of calculated Metrics.
@@ -139,12 +140,12 @@ class CJA:
             params["favorite"] = favorite
         if approved:
             params["approved"] = approved
-        res = self.connector.getData(self.endpoint + path, params=params)
+        res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         data = res["content"]
         lastPage = res.get("lastPage", True)
         while lastPage != True:
             params["page"] += 1
-            res = self.connector.getData(self.endpoint + path, params=params)
+            res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
             data += res["content"]
             lastPage = res.get("lastPage", True)
         if output == "df":
@@ -173,7 +174,7 @@ class CJA:
             return df
         return res
 
-    def getCalculatedMetric(self, calcId: str = None, full: bool = True) -> dict:
+    def getCalculatedMetric(self, calcId: str = None, full: bool = True, **kwargs) -> dict:
         """
         Return a single calculated metrics based on its ID.
         Arguments:
@@ -190,7 +191,7 @@ class CJA:
             params[
                 "expansion"
             ] = "approved,favorite,shares,tags,sharesFullName,usageSummary,usageSummaryWithRelevancyScore,reportSuiteName,siteTitle,ownerFullName,modified,migratedIds,isDeleted,definition,authorization,compatibility,legacyId,internal,dataGroup,categories"
-        res = self.connector.getData(self.endpoint + path, params=params)
+        res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
 
     def createCalculatedMetric(self, data: dict = None) -> dict:
@@ -235,7 +236,7 @@ class CJA:
         res = self.connector.deleteData(self.endpoint + path)
         return res
 
-    def updateCalculatedMetrics(self, calcId: str = None, data: dict = None) -> dict:
+    def updateCalculatedMetrics(self, calcId: str = None, data: dict = None, **kwargs) -> dict:
         """
         Will overwrite the calculated metrics object with the new object (PUT method)
         Arguments:
@@ -249,7 +250,7 @@ class CJA:
         if self.loggingEnabled:
             self.logger.debug(f"updateCalculatedMetrics start, id: {calcId}")
         path = f"/calculatedmetrics/{calcId}"
-        res = self.connector.putData(self.endpoint + path, data=data)
+        res = self.connector.putData(self.endpoint + path, data=data, **kwargs)
         return res
 
     def getShares(
@@ -258,6 +259,7 @@ class CJA:
         inclType: str = "sharedTo",
         limit: int = 100,
         useCache: bool = True,
+        **kwargs
     ) -> dict:
         """
         Returns the elements shared.
@@ -273,7 +275,7 @@ class CJA:
         path = "/componentmetadata/shares"
         if userId is not None:
             params["userId"] = userId
-        res = self.connector.getData(self.endpoint + path, params=params)
+        res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
 
     def getShare(self, shareId: str = None, useCache: bool = True) -> dict:
@@ -372,6 +374,7 @@ class CJA:
         full: bool = True,
         includeType: str = "all",
         output: str = "df",
+        **kwargs
     ) -> JsonListOrDataFrameType:
         """
         Return daterange information in a list or in a dataframe
@@ -395,14 +398,14 @@ class CJA:
             ] = "definition,modified,ownerFullName,sharesFullName,shares,tags"
         if includeType is not None:
             params["includeType"] = includeType
-        res = self.connector.getData(self.endpoint + path, params=params)
+        res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         data = res.get("content", [])
         if output == "df":
             df = pd.DataFrame(data)
             return df
         return data
 
-    def getDateRange(self, dateRangeId: str = None) -> dict:
+    def getDateRange(self, dateRangeId: str = None, **kwargs) -> dict:
         """
         Return a single dateRange definition.
         Argument:
@@ -416,7 +419,7 @@ class CJA:
         params = {
             "expansion": "definition,modified,ownerFullName,sharesFullName,shares,tags"
         }
-        res = self.connector.getData(self.endpoint + path, params=params)
+        res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
 
     def deleteDateRange(self, dateRangeId: str = None) -> dict:
@@ -450,7 +453,7 @@ class CJA:
         res = self.connector.putData(self.endpoint + path, data=data)
         return res
 
-    def createDateRange(self, dateRangeData: dict = None) -> dict:
+    def createDateRange(self, dateRangeData: dict = None, **kwargs) -> dict:
         """
         Create a single dateRange with the dictionary passed
         Argument:
@@ -461,7 +464,7 @@ class CJA:
         if self.loggingEnabled:
             self.logger.debug(f"createDateRange start")
         path = f"/dateranges/"
-        res = self.connector.putData(self.endpoint + path, data=dateRangeData)
+        res = self.connector.putData(self.endpoint + path, data=dateRangeData, **kwargs)
         return res
 
     def getTags(self, limit: int = 100) -> dict:
@@ -691,7 +694,7 @@ class CJA:
             params["includeOberonXml"] = True
         if noneValues == False:
             params["lookupNoneValues"] = False
-        res = self.connector.getData(self.endpoint + path, params=params)
+        res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
 
     def getDimensions(
@@ -701,6 +704,7 @@ class CJA:
         inclType: str = None,
         verbose: bool = False,
         output: str = "df",
+        **kwargs
     ) -> dict:
         """
         Used to retrieve dimensions for a dataview
@@ -723,14 +727,14 @@ class CJA:
         if inclType == "hidden":
             params["includeType"] = "hidden"
         res = self.connector.getData(
-            self.endpoint + path, params=params, verbose=verbose
+            self.endpoint + path, params=params, verbose=verbose, **kwargs
         )
         dimensions = res.get("content", [])
         lastPage = res.get('lastPage',True)
         while lastPage == False:
             params["page"] += 1
             res = self.connector.getData(
-            self.endpoint + path, params=params, verbose=verbose
+            self.endpoint + path, params=params, verbose=verbose, **kwargs
             )
             dimensions += res.get('content',[])
             lastPage = res.get('lastPage',True)
@@ -742,7 +746,8 @@ class CJA:
     def getDimension(
         self, dataviewId: str = None, 
         dimensionId: str = None, 
-        full: bool = True
+        full: bool = True,
+        **kwargs
     ):
         """
         Return a specific dimension based on the dataview ID and dimension ID passed.
@@ -763,7 +768,7 @@ class CJA:
             params[
                 "expansion"
             ] = "approved,favorite,tags,usageSummary,usageSummaryWithRelevancyScore,description,sourceFieldId,segmentable,required,hideFromReporting,hidden,includeExcludeSetting,fieldDefinition,storageId,tableName,dataSetIds,dataSetType,type,schemaPath,hasData,sourceFieldName,schemaType,sourceFieldType,fromGlobalLookup,multiValued,precision"
-        res = self.connector.getData(self.endpoint + path, params=params)
+        res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
 
     def getMetrics(
@@ -773,6 +778,7 @@ class CJA:
         inclType: str = None,
         verbose: bool = False,
                 output: str = "df",
+        **kwargs
     ) -> dict:
         """
         Used to retrieve metrics for a dataview
@@ -795,14 +801,14 @@ class CJA:
         if inclType == "hidden":
             params["includeType"] = "hidden"
         res = self.connector.getData(
-            self.endpoint + path, params=params, verbose=verbose
+            self.endpoint + path, params=params, verbose=verbose, **kwargs
         )
         metrics = res.get('content',[])
         lastPage = res.get('lastPage',True)
         while lastPage == False:
             params["page"] += 1
             res = self.connector.getData(
-            self.endpoint + path, params=params, verbose=verbose
+            self.endpoint + path, params=params, verbose=verbose, **kwargs
             )
             metrics += res.get('content',[])
             lastPage = res.get('lastPage',True)
@@ -812,7 +818,7 @@ class CJA:
         return res
 
     def getMetric(
-        self, dataviewId: str = None, metricId: str = None, full: bool = True
+        self, dataviewId: str = None, metricId: str = None, full: bool = True, **kwargs
     ):
         """
         Return a specific metric based on the dataview ID and dimension ID passed.
@@ -833,7 +839,7 @@ class CJA:
             params[
                 "expansion"
             ] = "approved,favorite,tags,usageSummary,usageSummaryWithRelevancyScore,description,sourceFieldId,segmentable,required,hideFromReporting,hidden,includeExcludeSetting,fieldDefinition,bucketingSetting,noValueOptionsSetting,defaultDimensionSort,persistenceSetting,storageId,tableName,dataSetIds,dataSetType,type,schemaPath,hasData,sourceFieldName,schemaType,sourceFieldType,fromGlobalLookup,multiValued,precision"
-        res = self.connector.getData(self.endpoint + path, params=params)
+        res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
 
     def getDataViews(
@@ -883,14 +889,14 @@ class CJA:
         if externalParentIds:
             params["externalParentIds"] = externalParentIds
         res = self.connector.getData(
-            self.endpoint + path, params=params, verbose=verbose
+            self.endpoint + path, params=params, verbose=verbose, **kwargs
         )
         data = res["content"]
         last = res.get("last", True)
         while last != True:
             params["page"] += 1
             res = self.connector.getData(
-                self.endpoint + path, params=params, verbose=verbose
+                self.endpoint + path, params=params, verbose=verbose, **kwargs
             )
             data += res["content"]
             last = res.get("last", True)
@@ -900,7 +906,7 @@ class CJA:
         return data
 
     def getDataView(
-        self, dataViewId: str = None, full: bool = True, save: bool = False
+        self, dataViewId: str = None, full: bool = True, save: bool = False, **kwargs
     ) -> dict:
         """
         Returns a specific Data View configuration from Configuration ID.
@@ -919,13 +925,13 @@ class CJA:
             params[
                 "expansion"
             ] = "name,description,owner,isDeleted,parentDataGroupId,segmentList,currentTimezoneOffset,timezoneDesignator,modified,createdDate,organization,curationEnabled,recentRecordedAccess,sessionDefinition,curatedComponents,externalData,containerNames"
-        res = self.connector.getData(self.endpoint + path, params=params)
+        res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         if save:
             with open(f"{dataViewId}_{int(time.time())}.json", "w") as f:
                 f.write(json.dumps(res, indent=4))
         return res
 
-    def getConnections(self,limit:int=1000,full:bool=True,output:str='df')-> JsonListOrDataFrameType:
+    def getConnections(self,limit:int=1000,full:bool=True,output:str='df',**kwargs)-> JsonListOrDataFrameType:
         """
         Retrieve the connections associated to that company.
         Arguments:
@@ -939,12 +945,12 @@ class CJA:
         params = {"limit":limit,"page":0}
         if full:
             params["expansion"] ="granularBackfills,granularStreaming,backfillsSummaryConnection,name,description,isDeleted,isDisabled,dataSets,createdDate,modified,sandboxName,organization,backfillEnabled,modifiedBy,ownerFullName"
-        res = self.connector.getData(self.endpoint + path,params=params)
+        res = self.connector.getData(self.endpoint + path,params=params, **kwargs)
         data = res.get('content',[])
         lastpage = res.get('lastPage',True)
         while lastpage != True:
             params['page'] += 1
-            res = self.connector.getData(self.endpoint + path,params=params)
+            res = self.connector.getData(self.endpoint + path,params=params, **kwargs)
             data += res.get('content',[])
             lastpage = res.get('lastPage',True)
         if output == "df":
@@ -952,7 +958,7 @@ class CJA:
             return df
         return data
     
-    def getConnection(self,connectionId:str=None)->dict:
+    def getConnection(self,connectionId:str=None,**kwargs)->dict:
         """
         Returns the dictionary of a single connection based on its ID, without prefix.
         Arguments:
@@ -962,7 +968,7 @@ class CJA:
             raise ValueError("Require a connection ID")
         path = f"/datagroups/connections/{connectionId}"
         params = {'expansion':"granularBackfills,granularStreaming,backfillsSummaryConnection,name,description,isDeleted,isDisabled,dataSets,createdDate,modified,sandboxName,organization,backfillEnabled,modifiedBy,ownerFullName"}
-        res = self.connector.getData(self.endpoint + path,params=params)
+        res = self.connector.getData(self.endpoint + path,params=params, **kwargs)
         return res
 
     def validateDataView(self, data: Union[dict, IO]) -> dict:
@@ -996,7 +1002,7 @@ class CJA:
                 data = json.load(f)
         if self.loggingEnabled:
             self.logger.debug(f"createDataView start")
-        res = self.connector.postData(self.endpoint + path, data=data)
+        res = self.connector.postData(self.endpoint + path, data=data, **kwargs)
         return res
 
     def deleteDataView(self, dataViewId: str = None) -> str:
@@ -1037,7 +1043,7 @@ class CJA:
         res = self.connector.putData(self.endpoint + path, data=data)
         return res
 
-    def copyDataView(self, dataViewId: str = None) -> dict:
+    def copyDataView(self, dataViewId: str = None, **kwargs) -> dict:
         """
         Copy the setting of a specific data view.
         Arguments:
@@ -1048,7 +1054,7 @@ class CJA:
         if self.loggingEnabled:
             self.logger.debug(f"copyDataView start, id: {dataViewId}")
         path = f"/datagroups/dataviews/copy/{dataViewId}"
-        res = self.connector.putData(self.endpoint + path)
+        res = self.connector.putData(self.endpoint + path, **kwargs)
         return res
 
     def getFilters(
@@ -1064,6 +1070,7 @@ class CJA:
         cached: bool = True,
         cache: bool = True,
         verbose: bool = False,
+        **kwargs
     ) -> JsonListOrDataFrameType:
         """
         Returns a list of filters used in CJA.
@@ -1103,14 +1110,14 @@ class CJA:
         if filterByIds is not None:
             params["filterByIds"] = filterByIds
         res = self.connector.getData(
-            self.endpoint + path, params=params, verbose=verbose
+            self.endpoint + path, params=params, verbose=verbose, **kwargs
         )
         lastPage = res.get("lastPage", True)
         data = res["content"]
         while lastPage == False:
             params["page"] += 1
             res = self.connector.getData(
-                self.endpoint + path, params=params, verbose=verbose
+                self.endpoint + path, params=params, verbose=verbose, **kwargs
             )
             data += res["content"]
             lastPage = res.get("lastPage", True)
@@ -1125,6 +1132,7 @@ class CJA:
         self,
         filterId: str = None,
         full: bool = False,
+        **kwargs
     ) -> dict:
         """
         Returns a single filter definition by its ID.
@@ -1142,7 +1150,7 @@ class CJA:
             params[
                 "expansion"
             ] = "compatibility,definition,internal,modified,isDeleted,definitionLastModified,createdDate,recentRecordedAccess,performanceScore,owner,dataId,ownerFullName,dataName,sharesFullName,approved,favorite,shares,tags,usageSummary,usageSummaryWithRelevancyScore"
-        res = self.connector.getData(self.endpoint + path, params=params)
+        res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
 
     def deleteFilter(self, filterId: str = None) -> str:
@@ -1218,7 +1226,7 @@ class CJA:
         if ".json" in data:
             with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
                 data = json.load(f.read())
-        res = self.connector.putData(self.endpoint + path, data=data)
+        res = self.connector.putData(self.endpoint + path, data=data, **kwargs)
         return res
 
     def getAuditLogs(
@@ -1573,7 +1581,7 @@ class CJA:
             params["filterByIds"] = filterByIds
         if ownerId:
             params["ownerId"] = ownerId
-        res = self.connector.getData(self.endpoint + path, params=params)
+        res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         if params.get('pagination','false') != 'true':
             data = res
         else:
@@ -1581,7 +1589,7 @@ class CJA:
             data = res["content"]
             while float(len(data)) < float(n_results) and lastPage == False:
                 params["page"] +=1
-                res = self.connector.getData(self.endpoint + path, params=params)
+                res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
                 data += res["content"]
                 lastPage = res.get('lastPage',False)
                 if float(len(data)) >= float(n_results):
@@ -1622,7 +1630,7 @@ class CJA:
         params = {
             "expansion": "shares,tags,accessLevel,modified,externalReferences,definition"
         }
-        res = self.connector.getData(self.endpoint + path, params=params)
+        res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         if projectClass:
             return Project(res, dvIdSuffix=dvIdSuffix)
         if cache:
@@ -1726,7 +1734,7 @@ class CJA:
         res = self.connector.deleteData(self.endpoint + path)
         return res
 
-    def createProject(self, projectDefinition: dict = None) -> dict:
+    def createProject(self, projectDefinition: dict = None, **kwargs) -> dict:
         """
         Create a project based on the definition provided in the argument.
         Argument:
@@ -1737,7 +1745,7 @@ class CJA:
         if self.loggingEnabled:
             self.logger.debug(f"createProject start")
         path = "/projects"
-        res = self.connector.postData(self.endpoint + path, data=projectDefinition)
+        res = self.connector.postData(self.endpoint + path, data=projectDefinition, **kwargs)
         return res
 
     def validateProject(self, projectDefinition: dict = None) -> dict:
@@ -1756,7 +1764,7 @@ class CJA:
         return res
 
     def updateProject(
-        self, projectId: str = None, projectDefinition: dict = None
+        self, projectId: str = None, projectDefinition: dict = None, **kwargs
     ) -> dict:
         """
         Update a project based on the definition provided in the argument. (PUT Method)
@@ -1775,7 +1783,7 @@ class CJA:
             "expansion": "shares,tags,accessLevel,modified,externalReferences,definition"
         }
         res = self.connector.putData(
-            self.endpoint + path, data=projectDefinition, params=params
+            self.endpoint + path, data=projectDefinition, params=params, **kwargs
         )
         return res
 
