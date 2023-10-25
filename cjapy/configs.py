@@ -113,19 +113,13 @@ def importConfigFile(
             scopes = provided_config["scopes"]
         elif "SCOPES" in provided_keys:
             scopes = provided_config["SCOPES"]
-        else:
-            raise RuntimeError(
-                f"Either an `scopes` or a `SCOPES` should be provided."
-            )
-
+        
         client_secret = client_secret[client_secret_index] if type(client_secret) == list else client_secret
-        scopes = ",".join(scopes) if type(scopes) == list else scopes
         if auth_type is None:
             if 'scopes' in provided_keys:
                 auth_type = 'oauthV2'
             elif 'tech_id' in provided_keys and "pathToKey" in provided_keys:
                 auth_type = 'jwt'
-        
         args = {
             "org_id": provided_config["org_id"] if provided_config.get("org_id") is not None else provided_config["ORG_ID"],
             "client_id": client_id,
@@ -135,6 +129,7 @@ def importConfigFile(
             args["tech_id"] = provided_config["tech_id"]
             args["path_to_key"] = provided_config["pathToKey"]
         elif auth_type == "oauthV2":
+            scopes = ",".join(scopes) if type(scopes) == list else scopes
             args["scopes"] = scopes.replace(' ','')
         configure(**args)
 

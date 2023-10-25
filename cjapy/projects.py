@@ -25,8 +25,9 @@ class Project:
         self.ownerId: int = projectDict["owner"].get("imsUserId", "")
         self.ownerEmail: int = projectDict["owner"].get("login", "")
         self.template: bool = projectDict.get("companyTemplate", False)
+        self.type: str = projectDict.get('type',None)
         self.version: str = None
-        if "definition" in projectDict.keys():
+        if "definition" in projectDict.keys() and projectDict.get('type') == "project":
             definition: dict = projectDict["definition"]
             self.version: str = definition.get("version", None)
             self.curation: bool = definition.get("isCurated", False)
@@ -50,6 +51,29 @@ class Project:
                 )
             else:
                 self.reportType = "mobile"
+        elif "definition" in projectDict.keys() and projectDict.get('type') == "guidedAnalysis":
+            self.reportType = "guidedAnalysis"
+            definition: dict = projectDict["definition"]
+            self.version: str = definition.get("version", None)
+            self.curation: bool = definition.get("isCurated", False)
+            self.nbPanels: int = 1
+            self.nbSubPanels: int = 1
+            self.subPanelsTypes: list = ["Guided Analysis"]
+            self.elementsUsed:dict = {
+                "metrics" : [met.get('metricId') for met in definition['events']]
+            }
+            self.elementsUsed['dimensions'] = [dim.get('dimensionId') for met in definition.get('events',[]) for dim in met.get('filters',[])]
+            self.elementsUsed['dimensionsItems'] = [dim.get('dimensionItems') for met in definition.get('events',[]) for dim in met.get('filters',[])]
+            self.elementsUsed['filters'] = [fil.get('id') for fil in definition['peopleSegments']]
+            self.elementsUsed['calculatedMetrics'] = []
+            self.elementsUsed["dataViewIds"] = []
+            self.elementsUsed["dataViewNames"] = []
+            self.nbElementsUsed: int = (
+                    len(self.elementsUsed["dimensions"])
+                    + len(self.elementsUsed["metrics"])
+                    + len(self.elementsUsed["filters"])
+                    + len(self.elementsUsed["calculatedMetrics"])
+                )
 
     def __str__(self) -> str:
         return json.dumps(self.to_dict(), indent=4)
@@ -106,8 +130,12 @@ class Project:
             filters: list = panel.get("segmentGroups", [])
             if len(filters) > 0:
                 for element in filters:
-                    typeElement = element["componentOptions"][0]["component"]["type"]
-                    idElement = element["componentOptions"][0]["component"]["id"]
+                    if 'dynamicDimension' in element.keys():
+                        typeElement = element["dynamicDimension"]["type"]
+                        idElement = element["dynamicDimension"]["id"]
+                    else:
+                        typeElement = element["componentOptions"][0]["component"]["type"]
+                        idElement = element["componentOptions"][0]["component"]["id"]
                     if typeElement == "Segment":
                         dict_elements["filters"].append(idElement)
                     if typeElement == "DimensionItem":
@@ -115,6 +143,8 @@ class Project:
                             : idElement.find("::")
                         ]  ## cleaning this type of element : 'variables/evar7.6::3000623228'
                         dict_elements["dimensions"].append(clean_id)
+                    if typeElement == "Dimension":
+                        dict_elements["dimensions"].append(idElement)
             for subPanel in panel["subPanels"]:
                 if subPanel["reportlet"]["type"] == "FreeformReportlet":
                     reportlet = subPanel["reportlet"]

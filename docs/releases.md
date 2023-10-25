@@ -3,6 +3,14 @@
 This page will give you the change that are occuring when a new version has been published on pypi.
 The changes have been tracked starting version 0.1.0
 
+## 0.2.2
+
+* fixing issue on `Project` class for specific project with dynamic filtering
+* supporting Guided Analysis on `Project` class\
+Patch:
+* Changing Oauth V2 to V3
+* Accepting more elements as credentials
+
 ## 0.2.1
 
 * requestCreator can now set `setSearch` and `removeSearch`
