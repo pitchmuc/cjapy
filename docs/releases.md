@@ -10,6 +10,8 @@ The changes have been tracked starting version 0.1.0
 Patch:
 * Changing Oauth V2 to V3
 * Accepting more elements as credentials
+* Fixing some edge cases of `findComponentUsage`
+* adding more parameters for `createDataView` methods
 
 ## 0.2.1
 

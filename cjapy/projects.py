@@ -27,6 +27,8 @@ class Project:
         self.template: bool = projectDict.get("companyTemplate", False)
         self.type: str = projectDict.get('type',None)
         self.version: str = None
+        self.curation: bool = False
+        self.reportType:str = None
         if "definition" in projectDict.keys() and projectDict.get('type') == "project":
             definition: dict = projectDict["definition"]
             self.version: str = definition.get("version", None)
@@ -51,6 +53,7 @@ class Project:
                 )
             else:
                 self.reportType = "mobile"
+                self.version: str = projectDict.get("definition",{}).get("version", None)
         elif "definition" in projectDict.keys() and projectDict.get('type') == "guidedAnalysis":
             self.reportType = "guidedAnalysis"
             definition: dict = projectDict["definition"]
@@ -74,7 +77,8 @@ class Project:
                     + len(self.elementsUsed["filters"])
                     + len(self.elementsUsed["calculatedMetrics"])
                 )
-
+        else:
+            self.reportType = projectDict.get('type','unknown')
     def __str__(self) -> str:
         return json.dumps(self.to_dict(), indent=4)
 

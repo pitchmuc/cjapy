@@ -988,18 +988,54 @@ class CJA:
         res = self.connector.postData(self.endpoint + path, data=data)
         return res
 
-    def createDataView(self, data: Union[dict, IO] = None, **kwargs) -> dict:
+    def createDataView(self, 
+                       data: Union[dict, IO] = None,
+                       name:str=None,
+                       connectionId:str=None,
+                       description:str="power by cjapy",
+                       timeZone:str="US/Mountain",
+                       minuteInactivity:int=30,
+                       **kwargs) -> dict:
         """
         Create and stores the given Data View in the db.
         Arguments:
             data : REQUIRED : The dictionary or json file that holds the definition for the dataview to be created.
+            name : OPTIONAL : If you want to pass the name of the data View (and not pass the whole definition)
+            connectionId : OPTIONAL : If you want to pass the connectionId of the data View (and not pass the whole definition)
+            timezone : OPTIONAL : The timezone to use in the data View (see here: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
+                common timezone: US/Montain, US/Pacific, US/Michigan, US/Central, Europe/London, Europe/Paris, Asia/Tokyo, Australia/Sydney
+            minuteInactivity : OPTIONAL : number of minutes of inactivity before closing a session
         """
         path = "/datagroups/dataviews/"
-        if data is None:
+        if data is None and name is None and connectionId is None:
             raise ValueError("Require information to be passed for data view creation")
-        if ".json" in data:
-            with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
-                data = json.load(f)
+        if data is not None:
+            if ".json" in data:
+                with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
+                    data = json.load(f)
+            data = data
+        if data is None and name is not None and connectionId is not None:
+            data = {
+                "name": name,
+                "description": description,
+                "parentDataGroupId": connectionId,
+                "timezoneDesignator": timeZone,
+                "sessionDefinition": [
+                    {
+                    "numPeriods": minuteInactivity,
+                    "granularity": "MINUTE",
+                    "func": "INACTIVITY",
+                    "events": [
+                        "string"
+                    ]
+                    }
+                ],
+                "organization": self.connector.config['org_id'],
+                "externalData": {
+                    "externalParentId": connectionId
+                }
+
+            }
         if self.loggingEnabled:
             self.logger.debug(f"createDataView start")
         res = self.connector.postData(self.endpoint + path, data=data, **kwargs)
