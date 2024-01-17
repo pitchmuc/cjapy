@@ -13,14 +13,18 @@ The methods available directly from the module are the following:
 ### createConfigFile
 
 This methods allows you to create JSON file that will host the different information required for your connection to Adobe IO and to retrieve the token.\
-It usually is like this.
+It has 2 possible parameters:
+* filename : OPTIONAL : If you want to create your config file from a specific name
+* auth_type : OPTIONAL : By default using OauthV2 (Server-to-Server) but can be changed to `jwt`. JWT will be discontinue in 2025.
+
+It usually looks like this.
 
 ```python
 import aanalytics2 as api2
 api2.createConfigFile()
 ```
 
-As you can see, it takes no argument and the output of the file will look like this :
+As you can see, it no arguments are required and the output of the file will look like this :
 
 ```JavaScript
 {
@@ -28,11 +32,12 @@ As you can see, it takes no argument and the output of the file will look like t
     'client_id': "<clientId>",
     'tech_id': "<something>@techacct.adobe.com",
     'secret': "<YourSecret>",
-    'pathToKey': '<path/to/your/privatekey.key>',
+    'scopes': '<scopesServerToServer>',
 }
 ```
 
 You update the information from the Adobe IO account that you have setup.
+
 
 ### importConfigFile
 
@@ -63,8 +68,11 @@ The different arguments are:
 * tech_id : REQUIRED : Technical Account ID
 * secret : REQUIRED : secret generated for your connection
 * client_id : REQUIRED : The client_id (old api_key) provided by the JWT connection.
-* path_to_key : REQUIRED : If you have a file containing your private key value.
-* private_key : REQUIRED : If you do not use a file but pass a variable directly.
+* scopes : REQUIRED : Require if using the oauth Server to Server
+* path_to_key : REQUIRED : If you have a file containing your private key value. If using jwt.
+* private_key : REQUIRED : If you do not use a file but pass a variable directly. If using jwt.
+
+**Note**: JWT integration will be discontinue in 2025. Hence we do not recommend starting a new integration using the `path_to_key` and `private_key` parameters.
 
 ### CJA class
 
