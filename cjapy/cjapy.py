@@ -245,7 +245,7 @@ class CJA:
         """
         if calcId is None:
             raise ValueError("Require a calculated metrics")
-        if data is None or type(data) == dict:
+        if data is None or type(data) != dict:
             raise ValueError("Require a dictionary to create the calculated metrics")
         if self.loggingEnabled:
             self.logger.debug(f"updateCalculatedMetrics start, id: {calcId}")

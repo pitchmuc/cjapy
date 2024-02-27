@@ -11,7 +11,8 @@ Patch:
 * Changing Oauth V2 to V3
 * Accepting more elements as credentials
 * Fixing some edge cases of `findComponentUsage`
-* adding more parameters for `createDataView` methods
+* Adding more parameters for `createDataView` methods
+* Fixing `updateCalculatedMetric`
 
 ## 0.2.1
 
