@@ -212,17 +212,39 @@ class RequestCreator:
         """
         self.__request["settings"]["limit"] = limit
 
-    def setSearch(self,itemIds:list=None)-> None:
+    def setSearch(self,itemIds:list=None,clause:str=None,reset:bool=True)-> None:
         """
         Set the items ID search in the specified dimension
         Arguments :
-            itemIds : REQUIRED : The list of itemId to be searched in the dimension
+            itemIds : OPTIONAL : The list of itemId to be searched in the dimension
+            clause : OPTIONAL : If you want to set a specific clause such as:
+                "( CONTAINS 'Python' ) AND ( CONTAINS 'Platform' )"
+                "( CONTAINS 'Python' ) OR ( CONTAINS 'Platform' )"
+                "( MATCH 'Python' )" : Equals
+                "( BEGINS-WITH 'Python' )"
+                "( NOT CONTAINS 'Python' )"
+            reset : OPTIONAL : automatically reset the search from your request
         """
-        if type(itemIds) != list:
-            raise TypeError("itemIds should be a list of values")
-        self.__request["search"]["itemIds"] = itemIds
+        if reset:
+            self.__request['search']={}
+        if itemIds is not None:
+            self.__request["search"]["itemIds"] = itemIds
+        elif clause is not None:
+            self.__request["search"]["clause"] = clause
         self.search = True
-    
+
+    # def addDimensions(self,dimensionIds:list=None)->None:
+    #     """
+    #     In case you want to pass a list of dimensions to the report API.
+    #     Arguments:
+    #         dimensionIds : REQUIRED : The list of dimensions IDs you want to use
+    #     """
+    #     if dimensionIds is None:
+    #         raise ValueError("dimensionIds parameters should be used")
+    #     if type(dimensionIds) != list:
+    #         raise TypeError("dimensionIds should be a list")
+    #     self.__request["dimension"] = dimensionIds
+
     def removeSearch(self)->None:
         """
         Remove the search capability in the request.

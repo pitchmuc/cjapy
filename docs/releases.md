@@ -13,6 +13,7 @@ Patch:
 * Fixing some edge cases of `findComponentUsage`
 * Adding more parameters for `createDataView` methods
 * Fixing `updateCalculatedMetric`
+* Fixing the `setSearch`
 
 ## 0.2.1
 
