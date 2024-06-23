@@ -21,6 +21,8 @@ class RequestCreator:
             "limit": 20000,
             "page": 0,
             "nonesBehavior": "exclude-nones",
+            "sampling": None,
+            "samplingUpSample": None
         },
         "statistics": {"functions": ["col-max", "col-min"]},
         "dataId": "",
@@ -252,6 +254,20 @@ class RequestCreator:
         del self.__request["search"]
         self.search = False
 
+    def setSampling(self, sample: float = None, upsample: bool = False) -> None:
+        """
+        Set the sampling parameters. Sampling happens at the person level, 
+        not at the event level to ensure all events for a person are included.
+        Upsampling will multiply the sample results to the full scale of the
+        original dataset (assuming the sample is representative).
+        Arguments:
+            sample : OPTIONAL : A float between 0 and 1 indicating the sample rate.
+            upsample : OPTIONAL : A boolean indicating whether to upsample (default is False).
+        """
+        if sample is not None and (sample < 0 or sample > 1):
+            raise ValueError("Sample rate must be between 0 and 1.")
+        self.__request["settings"]["sampling"] = sample
+        self.__request["settings"]["samplingUpSample"] = upsample
 
     def setRepeatInstance(self, repeat: bool = True) -> None:
         """
