@@ -26,6 +26,14 @@ class RequestCreator:
         },
         "statistics": {"functions": ["col-max", "col-min"]},
         "dataId": "",
+        "capacityMetadata":{
+            "associations": [
+                {
+                    "name": "applicationName",
+                    "value": "cjapy Python Library"
+                }
+            ]
+        }
     }
 
     def __init__(self, request: dict = None) -> None:
