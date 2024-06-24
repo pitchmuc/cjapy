@@ -306,6 +306,16 @@ class RequestCreator:
             raise ValueError("A dimension must be passed")
         self.__request["dimension"] = dimension
 
+    def setIdentityOverrides(self,identity_overrides: dict) -> None:
+        """
+        Set the dictionary to be used for identityOverrides. Make sure the id
+        is then added via setMetric or setDimensiom to have it appear in your report.
+        Arguments:
+            identity_overrides : REQUIRED : the identityOverrides definition as a dictionary
+        """
+        if not isinstance(identity_overrides, dict):
+            raise ValueError("identity_overrides must be a dictionary")
+
     def setDataViewId(self, dataViewId: str = None) -> None:
         """
         Set the dataView ID to be used for the reporting.
