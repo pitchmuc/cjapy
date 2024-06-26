@@ -26,6 +26,7 @@ class RequestCreator:
         },
         "statistics": {"functions": ["col-max", "col-min"]},
         "dataId": "",
+        "identityOverrides": [],
         "capacityMetadata":{
             "associations": [
                 {
@@ -306,6 +307,19 @@ class RequestCreator:
             raise ValueError("A dimension must be passed")
         self.__request["dimension"] = dimension
 
+    def setIdentityOverrides(self, identity_overrides: list) -> None:
+        """
+        Set the identityOverrides for the request.
+        Arguments:
+            identity_overrides : REQUIRED : the identityOverrides definition as a list of dictionaries
+        """
+        if not isinstance(identity_overrides, list):
+            raise ValueError("identity_overrides must be a list of dictionaries")
+        if not all(isinstance(item, dict) for item in identity_overrides):
+            raise ValueError("All items in identity_overrides must be dictionaries")
+        
+        self.__request["identityOverrides"] = identity_overrides
+    
     def setDataViewId(self, dataViewId: str = None) -> None:
         """
         Set the dataView ID to be used for the reporting.
