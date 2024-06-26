@@ -2459,13 +2459,13 @@ class CJA:
 
     def getFreeformTable(
         self,
-        dimension: str,
-        metrics: List[str],
-        data_view_id: str,
+        dimension: str = None,
+        metrics: List[str] = None,
+        dataviewId: str = None,
         start_date: Union[str, datetime] = None,
         end_date: Union[str, datetime] = None,
         top_n: int = 400,
-        segment_id: str = None,
+        filterId: str = None,
         search: Union[str, List[str]] = None,
         search_operator: str = "OR",
     ) -> pd.DataFrame:
@@ -2475,27 +2475,31 @@ class CJA:
         Arguments:
             dimension : REQUIRED : The dimension to include in the report.
             metrics : REQUIRED : List of metrics to include in the report.
-            data_view_id : REQUIRED : The dataView ID to use for your report.
+            dataviewId : REQUIRED : The dataView ID to use for your report.
             start_date : OPTIONAL : The start date for the report in 'YYYY-MM-DD' format or datetime object (defaults to 30 days ago).
             end_date : OPTIONAL : The end date for the report in 'YYYY-MM-DD' format or datetime object (defaults to today).
             top_n : OPTIONAL : Number of top results to return (default 400).
-            segment_id : OPTIONAL : The segment ID to filter the report.
+            filterId : OPTIONAL : The segment ID to filter the report.
             search : OPTIONAL : A search parameter (string or list of strings) to filter the dimension values.
             search_operator : OPTIONAL : The logical operator to combine search terms (default is OR).
         
         Returns:
             A pandas DataFrame containing the report data.
         """
+        if dimension is None:
+            raise ValueError("Require at least a dimension")
+        if metrics is None:
+            raise ValueError("Require at least a metric")
+        if dataviewId is None:
+            raise ValueError("Require a Data View ID")
         def ensure_dimension_prefix(dimension: str) -> str:
             if not dimension.startswith("variables/"):
                 return f"variables/{dimension}"
             return dimension
-
         def ensure_metric_prefix(metric: str) -> str:
             if not metric.startswith("metrics/"):
                 return f"metrics/{metric}"
             return metric
-
         def ensure_datetime_format(date: Union[str, datetime], is_start: bool) -> str:
             if isinstance(date, str):
                 date = datetime.fromisoformat(date)
@@ -2505,53 +2509,39 @@ class CJA:
                 else:
                     return date.strftime('%Y-%m-%dT23:59:59.999')
             return date.strftime('%Y-%m-%dT%H:%M:%S.000')
-
         if search_operator not in ["OR", "AND"]:
             raise ValueError("search_operator must be 'OR' or 'AND'")
-        
         if start_date is None:
             start_date = datetime.today() - timedelta(days=30)
         if end_date is None:
             end_date = datetime.today()
-
         start_date_str = ensure_datetime_format(start_date, is_start=True)
         end_date_str = ensure_datetime_format(end_date, is_start=False)
-
         date_range = f"{start_date_str}/{end_date_str}"
-        
         dimension = ensure_dimension_prefix(dimension)
         metrics = [ensure_metric_prefix(metric) for metric in metrics]
-
         template = RequestCreator()
-        template.setDataViewId(data_view_id)
+        template.setDataViewId(dataviewId)
         template.setDimension(dimension)
-        
         for metric in metrics:
             template.addMetric(metric)
-
-        if segment_id:
-            template.addGlobalFilter(segment_id)
-        
+        if filterId:
+            template.addGlobalFilter(filterId)
         template.addGlobalFilter(date_range)
-
         if search:
             if isinstance(search, str):
                 search = [search]
             search_clause = f" {search_operator} ".join([f"CONTAINS '{term}'" for term in search])
             template.setSearch(clause=search_clause)
-        
         if top_n < 50000:
             limit = top_n
             n_results = top_n
         else:
             limit = 50000
             n_results = 20
-
         request = template.to_dict()
         response = self.getReport(request=request, limit=limit, n_results=n_results)
-        
         df = response.dataframe
-        
         # Drop the itemId column if it exists
         if 'itemId' in df.columns:
             df = df.drop(columns=['itemId'])
@@ -2569,5 +2559,4 @@ class CJA:
             return col
         
         df.columns = [clean_column_name(col) for col in df.columns]
-
         return df

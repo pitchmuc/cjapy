@@ -254,7 +254,11 @@ class RequestCreator:
     #         raise ValueError("dimensionIds parameters should be used")
     #     if type(dimensionIds) != list:
     #         raise TypeError("dimensionIds should be a list")
-    #     self.__request["dimension"] = dimensionIds
+    #     if len(dimensionIds)>5:
+    #         raise ValueError("dimensionIds should not countain more than 5 elements")
+    #     if 'dimension' in self.__request.keys():
+    #         del self.__request["dimension"]
+    #     self.__request["dimensions"] = dimensionIds
 
     def removeSearch(self)->None:
         """
@@ -305,6 +309,8 @@ class RequestCreator:
         """
         if dimension is None:
             raise ValueError("A dimension must be passed")
+        if 'dimensions' in self.__request.keys():
+            del self.__request["dimensions"]
         self.__request["dimension"] = dimension
 
     def setIdentityOverrides(self, identity_overrides: list) -> None:
