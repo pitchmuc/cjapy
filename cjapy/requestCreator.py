@@ -377,6 +377,39 @@ class RequestCreator:
         ### adding to the globalFilter list
         self.__request["globalFilters"].append(filter)
 
+    def setDateRange(self, start_date: Union[str, datetime], end_date: Union[str, datetime]) -> None:
+        """
+        Set the date range for the request.
+        Arguments:
+            start_date : REQUIRED : The start date for the report in 'YYYY-MM-DD' format or datetime object.
+            end_date : REQUIRED : The end date for the report in 'YYYY-MM-DD' format or datetime object.
+        """
+        def ensure_datetime_format(date: Union[str, datetime], is_start: bool) -> str:
+            if isinstance(date, str):
+                date = datetime.datetime.fromisoformat(date)
+            if date.time() == datetime.datetime.min.time():
+                if is_start:
+                    return date.strftime('%Y-%m-%dT00:00:00.000')
+                else:
+                    return date.strftime('%Y-%m-%dT23:59:59.999')
+            return date.strftime('%Y-%m-%dT%H:%M:%S.000')
+
+        start_date_str = ensure_datetime_format(start_date, is_start=True)
+        end_date_str = ensure_datetime_format(end_date, is_start=False)
+        date_range = f"{start_date_str}/{end_date_str}"
+
+        # Update global filters with the new date range
+        date_range_filter = {
+            "type": "dateRange",
+            "dateRange": date_range
+        }
+        
+        # Remove any existing dateRange filters before adding the new one
+        self.__request["globalFilters"] = [
+            f for f in self.__request["globalFilters"] if f["type"] != "dateRange"
+        ]
+        self.__request["globalFilters"].append(date_range_filter)
+    
     def updateDateRange(
         self,
         dateRange: str = None,
