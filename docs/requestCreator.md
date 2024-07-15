@@ -75,6 +75,44 @@ We will review the different methods available via the object.
 
 * `addMetric()`
   Add a metric to the Request.
+  Arguments:
+  * metricId : REQUIRED : The metric to add
+  * attributionModel : OPTIONAL : The attribution model to use (e.g., "lastTouch", "firstTouch", "linear", "participation", "sameTouch", "uShaped", "jShaped", "reverseJShaped", "timeDecay", "positionBased", "algorithmic")
+  * lookbackWindow : OPTIONAL : The lookback window (number of minutes, hours, days, weeks, months, quarters, "session", or "person"). Assumes 30 if not specified.
+  * lookbackGranularity : OPTIONAL : The granularity of the lookback window (minute, hour, day, week, month, quarter). Defaults to "day".
+  * **kwargs : Additional model-specific parameters. For "timeDecay" (assumes 1 week): halfLifeNumPeriods, halfLifeGranularity; for "positionBased": firstWeight, middleWeight, lastWeight.
+
+  The `addMetric` method also supports various attribution models. For example, the `sameTouch` model is defined without a lookback window, while other models like `lastTouch` and `firstTouch` can have lookback windows and expiration settings. The `timeDecay` model allows specifying half-life periods and granularity, with defaults to 1 week if not provided.
+
+  Examples:
+  ```python
+  # Adding a simple metric
+  myRequest.addMetric("metrics/orders")
+
+  # Adding a metric with an attribution model
+  myRequest.addMetric("metrics/orders", attributionModel="lastTouch", lookbackWindow=30)
+
+  # Adding a metric with a custom attribution model
+  myRequest.addMetric(
+      "metrics/orders",
+      attributionModel="timeDecay",
+      lookbackWindow=60,
+      halfLifeNumPeriods=1,
+      halfLifeGranularity="week"
+  )
+
+  # Adding a metric with position-based attribution model
+  myRequest.addMetric(
+      "metrics/orders",
+      attributionModel="positionBased",
+      lookbackWindow=30,
+      firstWeight=30,
+      middleWeight=20,
+      lastWeight=50
+  )
+
+  # Adding a metric with sameTouch attribution model
+  myRequest.addMetric("metrics/orders", attributionModel="sameTouch")
 
 * `addGlobalFilter()`
   Add a global filter to the report.
