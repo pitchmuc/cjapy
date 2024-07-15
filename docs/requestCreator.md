@@ -131,6 +131,12 @@ We will review the different methods available via the object.
   * filterId : REQUIRED : The filter to add.
         when breakdown, use the following format for the value "dimension:::itemId"
 
+* `setDateRange()`
+  Set the date range for the request.
+  Arguments:
+  * start_date : REQUIRED : The start date for the report in 'YYYY-MM-DD' format or datetime object.
+  * end_date : REQUIRED : The end date for the report in 'YYYY-MM-DD' format or datetime object.
+
 * `updateDateRange()`
   Update the dateRange filter on the globalFilter list
   One of the 3 elements specified below is required.
