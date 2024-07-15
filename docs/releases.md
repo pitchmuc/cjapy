@@ -13,7 +13,11 @@ Patch:
 * Fixing some edge cases of `findComponentUsage`
 * Adding more parameters for `createDataView` methods
 * Fixing `updateCalculatedMetric`
-* Fixing the `setSearch`
+* Fixing the `setSearch`\
+Patch:
+* adding attribution model possibility to addMetric in `RequestCreator`
+* adding `setDateRange` method in `RequestCreator`
+* supporting adhoc filter in `RequestCreator`
 
 ## 0.2.1
 

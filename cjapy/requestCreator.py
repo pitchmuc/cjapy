@@ -500,14 +500,14 @@ class RequestCreator:
         ### adding to the globalFilter list
         self.__request["globalFilters"].append(filter)
 
-    def setDateRange(self, start_date: Union[str, datetime], end_date: Union[str, datetime]) -> None:
+    def setDateRange(self, start_date: Union[str], end_date: Union[str]) -> None:
         """
         Set the date range for the request.
         Arguments:
             start_date : REQUIRED : The start date for the report in 'YYYY-MM-DD' format or datetime object.
             end_date : REQUIRED : The end date for the report in 'YYYY-MM-DD' format or datetime object.
         """
-        def ensure_datetime_format(date: Union[str, datetime], is_start: bool) -> str:
+        def ensure_datetime_format(date: Union[str], is_start: bool) -> str:
             if isinstance(date, str):
                 date = datetime.datetime.fromisoformat(date)
             if date.time() == datetime.datetime.min.time():
