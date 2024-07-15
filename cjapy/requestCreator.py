@@ -2,6 +2,7 @@ from copy import deepcopy
 import datetime
 import json
 from time import time
+from typing import Union
 
 
 class RequestCreator:
@@ -99,18 +100,130 @@ class RequestCreator:
     def __str__(self):
         return json.dumps(self.__request, indent=4)
 
-    def addMetric(self, metricId: str = None) -> None:
+    def addMetric(
+        self,
+        metricId: str = None,
+        attributionModel: str = None,
+        lookbackWindow: Union[int, str] = 30,
+        lookbackGranularity: str = "day",
+        **kwargs
+    ) -> None:
         """
         Add a metric to the template.
         Arguments:
             metricId : REQUIRED : The metric to add
+            attributionModel : OPTIONAL : The attribution model to use (e.g., "lastTouch", "firstTouch", "linear", "participation", "sameTouch", "uShaped", "jShaped", "reverseJShaped", "timeDecay", "positionBased", "algorithmic")
+            lookbackWindow : OPTIONAL : The lookback window (number of minutes, hours, days, weeks, months, quarters, "session", or "person"). Assumes 30 if not specified.
+            lookbackGranularity : OPTIONAL : The granularity of the lookback window (minute, hour, day, week, month, quarter). Defaults to "day".
+            **kwargs : Additional model-specific parameters. For "timeDecay" (assumes 1 week): halfLifeNumPeriods, halfLifeGranularity, for "positionBased": firstWeight, middleWeight, lastWeight.
         """
         if metricId is None:
             raise ValueError("Require a metric ID")
+        
+        if attributionModel and attributionModel not in ["lastTouch", "firstTouch", "linear", "participation", "sameTouch", "uShaped", "jShaped", "reverseJShaped", "timeDecay", "positionBased", "algorithmic"]:
+            raise ValueError("Invalid attribution model")
+              
+        if attributionModel and lookbackGranularity not in ["minute", "hour", "day", "week", "month", "quarter"]:
+            raise ValueError("Invalid lookbackGranularity. Valid values are: 'minute', 'hour', 'day', 'week', 'month', 'quarter'")
+        
         columnId = self.__metricCount
         addMetric = {"columnId": str(columnId), "id": metricId}
         if columnId == 0:
             addMetric["sort"] = "desc"
+
+        if attributionModel:
+            # Handle sameTouch separately
+            if attributionModel == "sameTouch":
+                allocationModel = {
+                    "func": "allocation-instance"
+                }
+            else:
+                allocationModel = {
+                    "func": f"allocation-{attributionModel}"
+                }
+
+            # Validate lookback window
+            if lookbackWindow is not None and attributionModel != "sameTouch":
+                if isinstance(lookbackWindow, int):
+                    if lookbackWindow <= 0:
+                        raise ValueError("lookbackWindow must be positive")
+
+                    # Default lookback granularity to days if not specified
+                    lookbackGranularity = kwargs.get('lookbackGranularity', lookbackGranularity)
+
+                    max_lookback = {
+                        'minute': 129600,
+                        'hour': 2160,
+                        'day': 90,
+                        'week': 12,
+                        'month': 3,
+                        'quarter': 1
+                    }.get(lookbackGranularity, 90)
+
+                    if lookbackWindow > max_lookback:
+                        raise ValueError(f"lookbackWindow of {lookbackWindow} exceeds maximum for {lookbackGranularity} granularity")
+
+                    if attributionModel not in ["lastTouch", "firstTouch"] or lookbackWindow != "session":
+                        allocationModel["lookbackExpiration"] = {
+                            "func": "allocation-lookbackPeriod",
+                            "granularity": lookbackGranularity,
+                            "numPeriods": lookbackWindow
+                        }
+
+                        addMetric["lookback"] = {
+                            "func": "min-months",
+                            "granularity": lookbackGranularity,
+                            "numPeriods": lookbackWindow
+                        }
+
+                    if attributionModel in ["lastTouch", "firstTouch"]:
+                        allocationModel["expiration"] = {
+                            "context": "visitors",
+                            "func": "allocation-container"
+                        }
+                    else:
+                        allocationModel["context"] = "visitors"
+                    
+                elif lookbackWindow == "session":
+                    if attributionModel in ["lastTouch", "firstTouch"]:
+                        allocationModel["expiration"] = {
+                            "context": "sessions",
+                            "func": "allocation-container"
+                        }
+                    else:
+                        allocationModel["context"] = "sessions"
+                elif lookbackWindow == "person":
+                    if attributionModel not in ["lastTouch", "firstTouch"]:
+                        allocationModel["context"] = "visitors"
+                else:
+                    raise ValueError("lookbackWindow must be a positive integer or 'session' or 'person'")
+
+            if attributionModel in ["lastTouch", "firstTouch"]:
+                allocationModel["expiration"] = {
+                    "context": allocationModel.get("expiration", {}).get("context", "visitors"),
+                    "func": "allocation-container"
+                }
+
+            if attributionModel == "timeDecay":
+                halfLifeNumPeriods = kwargs.get("halfLifeNumPeriods", 1)
+                halfLifeGranularity = kwargs.get("halfLifeGranularity", "week")
+                if halfLifeNumPeriods is None or halfLifeGranularity not in ["minute", "hour", "day", "week", "month"]:
+                    raise ValueError("For 'timeDecay', both 'halfLifeNumPeriods' and 'halfLifeGranularity' are required and granularity must be 'minute', 'hour', 'day', 'week', or 'month'")
+                allocationModel["halfLifeGranularity"] = halfLifeGranularity
+                allocationModel["halfLifeNumPeriods"] = halfLifeNumPeriods
+            
+            if attributionModel == "positionBased":
+                firstWeight = kwargs.get("firstWeight")
+                middleWeight = kwargs.get("middleWeight")
+                lastWeight = kwargs.get("lastWeight")
+                if firstWeight is None or middleWeight is None or lastWeight is None:
+                    raise ValueError("For 'positionBased', 'firstWeight', 'middleWeight', and 'lastWeight' are required")
+                allocationModel["firstWeight"] = firstWeight
+                allocationModel["middleWeight"] = middleWeight
+                allocationModel["lastWeight"] = lastWeight
+
+            addMetric["allocationModel"] = allocationModel
+        
         self.__request["metricContainer"]["metrics"].append(addMetric)
         self.__metricCount += 1
 
