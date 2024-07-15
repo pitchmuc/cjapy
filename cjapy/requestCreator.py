@@ -336,42 +336,52 @@ class RequestCreator:
             raise ValueError("A dataView ID must be passed")
         self.__request["dataId"] = dataViewId
 
-    def addGlobalFilter(self, filterId: str = None) -> None:
+    def addGlobalFilter(self, filterId: str = None, adHocFilter: dict = None) -> None:
         """
         Add a global filter to the report.
-        NOTE : You need to have a dateRange filter at least in the global report.
+        NOTE: You need to have a dateRange filter at least in the global report.
+        
         Arguments:
-            filterId : REQUIRED : The filter to add to the global filter.
-                example :
+            filterId : OPTIONAL : The filter to add to the global filter.
+                Example :
                 "s2120430124uf03102jd8021" -> segment
                 "2020-01-01T00:00:00.000/2020-02-01T00:00:00.000" -> dateRange
+            adHocFilter : OPTIONAL : A dictionary representing the ad-hoc filter.
         """
-        if filterId.startswith("s") and "@AdobeOrg" in filterId:
-            filterType = "segment"
+        if not filterId and not adHocFilter:
+            raise ValueError("You must supply either a filterId or an adHocFilter.")
+        if filterId and adHocFilter:
+            raise ValueError("You cannot supply both a filterId and an adHocFilter.")
+        
+        if filterId:
+            if filterId.startswith("s") and "@AdobeOrg" in filterId:
+                filter = {
+                    "type": "segment",
+                    "segmentId": filterId,
+                }
+            elif filterId.startswith("20") and "/20" in filterId:
+                filter = {
+                    "type": "dateRange",
+                    "dateRange": filterId,
+                }
+            elif ":::" in filterId:
+                dimension, itemId = filterId.split(":::")
+                filter = {
+                    "type": "breakdown",
+                    "dimension": dimension,
+                    "itemId": itemId,
+                }
+            else:
+                filter = {
+                    "type": "segment",
+                    "segmentId": filterId,
+                }
+        else:
             filter = {
-                "type": filterType,
-                "segmentId": filterId,
+                "type": "segment",
+                "segmentDefinition": adHocFilter
             }
-        elif filterId.startswith("20") and "/20" in filterId:
-            filterType = "dateRange"
-            filter = {
-                "type": filterType,
-                "dateRange": filterId,
-            }
-        elif ":::" in filterId:
-            filterType = "breakdown"
-            dimension, itemId = filterId.split(":::")
-            filter = {
-                "type": filterType,
-                "dimension": dimension,
-                "itemId": itemId,
-            }
-        else:  ### case when it is predefined segments like "All_Visits"
-            filterType = "segment"
-            filter = {
-                "type": filterType,
-                "segmentId": filterId,
-            }
+        
         ### incrementing the count for globalFilter
         self.__globalFiltersCount += 1
         ### adding to the globalFilter list
