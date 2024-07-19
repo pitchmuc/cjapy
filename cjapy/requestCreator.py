@@ -128,7 +128,9 @@ class RequestCreator:
         
         columnId = self.__metricCount
         addMetric = {"columnId": str(columnId), "id": metricId}
-        if columnId == 0:
+        
+        # Only add sorting to the first metric if no dimension sort is specified
+        if columnId == 0 and "dimensionSort" not in self.__request["settings"]:
             addMetric["sort"] = "desc"
 
         if attributionModel:
@@ -414,17 +416,39 @@ class RequestCreator:
         else:
             self.__request["settings"]["nonesBehavior"] = "exclude-nones"
 
-    def setDimension(self, dimension: str = None) -> None:
+    def setDimensionSort(self, order: str = "dsc") -> None:
+        """
+        Set sorting based on a dimension value.
+        Arguments:
+            order : OPTIONAL : The sort order, either "asc" or "dsc" (default is "dsc").
+        """
+        if order not in ["asc", "dsc"]:
+            raise ValueError("Sort order must be 'asc' or 'dsc'")
+
+        self.__request["settings"]["dimensionSort"] = order
+        
+        # Remove sort from all metrics if dimension sort is set
+        for metric in self.__request["metricContainer"]["metrics"]:
+            if "sort" in metric:
+                del metric["sort"]
+    
+    def setDimension(self, dimension: str = None, sort_order: str = None) -> None:
         """
         Set the dimension to be used for reporting.
         Arguments:
             dimension : REQUIRED : the dimension to build your report on
+            sort_order : OPTIONAL : The sort order, either "asc" or "desc".
         """
         if dimension is None:
             raise ValueError("A dimension must be passed")
+
         if 'dimensions' in self.__request.keys():
             del self.__request["dimensions"]
+        
         self.__request["dimension"] = dimension
+        
+        if sort_order:
+            self.setDimensionSort(sort_order)
 
     def setIdentityOverrides(self, identity_overrides: list) -> None:
         """
