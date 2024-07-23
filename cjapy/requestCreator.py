@@ -119,6 +119,10 @@ class RequestCreator:
         """
         if metricId is None:
             raise ValueError("Require a metric ID")
+
+        # Check if the metricId is a calculated metric
+        if metricId.startswith("cm") and "@AdobeOrg" in metricId:
+            raise ValueError("For calculated metrics, please use the 'addCalcMetric' function")
         
         if attributionModel and attributionModel not in ["lastTouch", "firstTouch", "linear", "participation", "sameTouch", "uShaped", "jShaped", "reverseJShaped", "timeDecay", "positionBased", "algorithmic"]:
             raise ValueError("Invalid attribution model")
@@ -225,6 +229,42 @@ class RequestCreator:
             addMetric["allocationModel"] = allocationModel
         
         self.__request["metricContainer"]["metrics"].append(addMetric)
+        self.__metricCount += 1
+
+    def addCalcMetric(self, metricId: str = None, metricDefinition: dict = None) -> None:
+        """
+        Add a calculated metric to the template.
+        Arguments:
+            metricId : OPTIONAL : The calculated metric ID to add
+            metricDefinition : OPTIONAL : The definition of the calculated metric
+        """
+        if not metricId and not metricDefinition:
+            raise ValueError("You must supply either a metricId or a metricDefinition.")
+        
+        if metricId and metricDefinition:
+            raise ValueError("You cannot supply both a metricId and a metricDefinition.")
+        
+        columnId = self.__metricCount
+        
+        if metricId:
+            calcMetric = {
+                "id": metricId,
+                "columnId": str(columnId)
+            }
+        elif metricDefinition:
+            if not isinstance(metricDefinition, dict):
+                raise ValueError("metricDefinition must be a dictionary")
+            calcMetric = {
+                "id": f"ad_hoc_cm_{str(columnId)}",
+                "metricDefinition": metricDefinition,
+                "columnId": str(columnId)
+            }
+
+        # Only add sorting to the first metric if no dimension sort is specified
+        if columnId == 0 and "dimensionSort" not in self.__request["settings"]:
+            calcMetric["sort"] = "desc"
+
+        self.__request["metricContainer"]["metrics"].append(calcMetric)
         self.__metricCount += 1
 
     def getMetrics(self) -> list:
