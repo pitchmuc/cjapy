@@ -601,4 +601,43 @@ The following arguments are possible with this method:
 * countRepeatInstances : OPTIONAL : set to count repeatInstances values (or not). True by default.
 * returnNones : OPTIONAL : Set the behavior of the None values in that request. (True by default)
 
+
+## getPersonProfiles
+
+The `getPersonProfiles` method retrieves a dataset where each row represents a person profile. This is particularly useful for extracting feature metrics and target metrics for supervised learning applications or customer segmentation analysis.
+
+### Arguments:
+- `dataviewId`: **REQUIRED**. The Data View ID to use for your report.
+- `personId`: **OPTIONAL**. The dimension to use as your person ID. Defaults to `variables/adobe_identitynamespace_personid`.
+- `featureMetrics`: **REQUIRED**. A list of metrics to include in the customer profiles.
+- `targetMetric`: **OPTIONAL**. A target metric for supervised learning algorithms.
+- `binaryTargetMetric`: **OPTIONAL**. If set to `True`, sets the target metric to 1 if the metric sum for a person is greater than 0, otherwise sets it to 0.
+- `startDate`: **OPTIONAL**. The start date for the report in 'YYYY-MM-DD' format or as a datetime object. Defaults to 90 days ago.
+- `endDate`: **OPTIONAL**. The end date for the report in 'YYYY-MM-DD' format or as a datetime object. Defaults to today.
+- `sampleSize`: **OPTIONAL**. The number of sampled person profiles to return. Defaults to 50,000. If the sample size exceeds the total population, all profiles are returned.
+- `sampleSeed`: **OPTIONAL**. A seed value for random sampling of person profiles. Defaults to 0.
+- `fullPersonHistoryOnly`: **OPTIONAL**. If set to `True`, filters the sample to only people whose entire history is present in the date range. Defaults to `False`.
+- `removeSingleEventPeople`: **OPTIONAL**. If set to `True`, removes people that had only a single event in the date range.
+- `filterId`: **OPTIONAL**. The segment ID to filter the report with.
+
+### Returns:
+A `pandas.DataFrame` containing the person profile data.
+
+### Example usage:
+
+```python
+# Assuming `cja` is an instance of the CJA class
+feature_metrics = ["metric1", "metric2", "metric3"]
+df_profiles = cja.getPersonProfiles(
+    dataviewId="your_data_view_id",
+    featureMetrics=feature_metrics,
+    targetMetric="target_metric",
+    startDate="2023-01-01",
+    endDate="2023-03-31",
+    sampleSize=10000,
+    binaryTargetMetric=True
+)
+print(df_profiles.head())
+```
+
 [Back to README](../README.md)
