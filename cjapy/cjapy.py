@@ -2560,3 +2560,257 @@ class CJA:
         
         df.columns = [clean_column_name(col) for col in df.columns]
         return df
+
+    def getPersonProfiles(
+        self,
+        dataviewId: str = None,
+        personId: str = "variables/adobe_identitynamespace_personid",
+        featureMetrics: List[str] = None,
+        targetMetric: str = None,
+        binaryTargetMetric: bool = False,
+        startDate: Union[str, datetime] = None,
+        endDate: Union[str, datetime] = None,
+        sampleSize: int = 50000,
+        sampleSeed: int = 0,
+        fullPersonHistoryOnly: bool = False,
+        removeSingleEventPeople: bool = False,
+        filterId: str = None
+    ) -> pd.DataFrame:
+        """
+        Retrieves a dataset where every row is a person profile.
+        
+        Arguments:
+            dataviewId : REQUIRED : The dataView ID to use for your report.
+            personId : OPTIONAL : The dimension to use as your person ID. Defaults to adobe_identitynamespace_personid.
+            featureMetrics : REQUIRED : List of metrics to include in the customer profiles.
+            targetMetric : OPTIONAL : A target metric for supervised learning algorithms.
+            TODO: featureDimensions (only supported when "flat view" is supported)
+            binaryTargetMetric : OPTIONAL: Sets the target metric to 1 if the metric sum for a person is > 0 otherwise sets it to 0
+            startDate : OPTIONAL : The start date for the report in 'YYYY-MM-DD' format or datetime object (defaults to 90 days ago).
+            endDate : OPTIONAL : The end date for the report in 'YYYY-MM-DD' format or datetime object (defaults to today).
+            sampleSize : OPTIONAL : Number of sampled person profiles to return (default 50000). All person profiles are returned if sample is greater than the total population.
+            sampleSeed: OPTIONAL : A seed value for the random sampling of person profiles (default 0).
+            fullPersonHistoryOnly : OPTIONAL : Filters the sample to only people whose entire history is present in the date range. Defaults to false.
+            removeSingleEventPeople : OPTIONAL : Removes people that had only a single event in the date range.
+            filterId : OPTIONAL : The segment ID to filter the report with.
+        
+        Returns:
+            A pandas DataFrame containing the person profile data.
+        """
+
+        if featureMetrics is None:
+            raise ValueError("Require at least one feature metric")
+        if dataviewId is None:
+            raise ValueError("Require a Data View ID")
+        def ensure_dimension_prefix(dimension: str) -> str:
+            if not dimension.startswith("variables/"):
+                return f"variables/{dimension}"
+            return dimension
+        def ensure_metric_prefix(metric: str) -> str:
+            if not metric.startswith("metrics/"):
+                return f"metrics/{metric}"
+            return metric
+        def ensure_datetime_format(date: Union[str, datetime], is_start: bool) -> str:
+            if isinstance(date, str):
+                date = datetime.fromisoformat(date)
+            if date.time() == datetime.min.time():
+                if is_start:
+                    return date.strftime('%Y-%m-%dT00:00:00.000')
+                else:
+                    return date.strftime('%Y-%m-%dT23:59:59.999')
+            return date.strftime('%Y-%m-%dT%H:%M:%S.000')
+        if startDate is None:
+            startDate = datetime.today() - timedelta(days=90)
+        if endDate is None:
+            endDate = datetime.today()
+        start_date_str = ensure_datetime_format(startDate, is_start=True)
+        end_date_str = ensure_datetime_format(endDate, is_start=False)
+        date_range = f"{start_date_str}/{end_date_str}"
+        personId = ensure_dimension_prefix(personId)
+        metrics = [ensure_metric_prefix(metric) for metric in featureMetrics]
+        targetMetric = ensure_metric_prefix(targetMetric)
+        
+        dataRequest = RequestCreator()
+        dataRequest.setDataViewId(dataviewId)
+
+        sampling_metric_definition = {
+            "func": "calc-metric",
+            "formula": {
+                "func": "add",
+                "col1": {
+                "func": "modulo",
+                "description": "Modulo",
+                "col1": {
+                    "func": "add",
+                    "col1": {
+                    "func": "multiply",
+                    "col1": {
+                        "func": "visualization-group",
+                        "col": {
+                        "func": "add",
+                        "col1": {
+                            "func": "cumul",
+                            "description": "Cumulative",
+                            "n": 0,
+                            "col": 1
+                        },
+                        "col2": sampleSeed
+                        }
+                    },
+                    "col2": 1664525
+                    },
+                    "col2": 1013904223
+                },
+                "col2": {
+                    "func": "pow",
+                    "description": "Power operator",
+                    "col1": 2,
+                    "col2": 32
+                }
+                },
+                "col2": {
+                "func": "visualization-group",
+                "col": {
+                    "func": "multiply",
+                    "col1": {
+                    "func": "metric",
+                    "name": "metrics/occurrences",
+                    "description": "Events"
+                    },
+                    "col2": 0
+                }
+                }
+            },
+            "version": [
+                1,
+                0,
+                0
+            ]
+            }
+
+        dataRequest.addMetric(metricDefinition=sampling_metric_definition)
+
+        for metric in metrics:
+            dataRequest.addMetric(metric)
+
+        if binaryTargetMetric:
+            binary_metric_definition = {
+                "func": "calc-metric",
+                "formula": {
+                    "func": "if",
+                    "description": "If",
+                    "cond": {
+                    "func": "gt",
+                    "description": "Greater Than",
+                    "col1": {
+                        "func": "metric",
+                        "name": f"{targetMetric}",
+                        "description": "Binary Target Metric"
+                    },
+                    "col2": 0
+                    },
+                    "then": 1,
+                    "else": 0
+                },
+                "version": [
+                    1,
+                    0,
+                    0
+                ]
+            }
+            dataRequest.addMetric(metricDefinition=binary_metric_definition)
+        else:
+            dataRequest.addMetric(targetMetric)
+
+        dataRequest.setDimension(personId)
+        dataRequest.setNoneBehavior(returnNones=False)
+        
+        if filterId:
+            dataRequest.addGlobalFilter(filterId)
+        dataRequest.addGlobalFilter(date_range)
+
+        if fullPersonHistoryOnly:
+            fullHistoryFilter = {
+                "container": {
+                    "func": "container",
+                    "context": "visitors",
+                    "pred": {
+                        "func": "eq",
+                        "num": 1,
+                        "val": {
+                            "func": "attr",
+                            "name": "variables/adobe_firstvreturn_sessiontype"
+                        },
+                        "description": "Session Type"
+                    }
+                },
+                "func": "segment",
+                "version": [
+                    1,
+                    0,
+                    0
+                ]
+            }
+            dataRequest.addGlobalFilter(adHocFilter=fullHistoryFilter)
+
+        if removeSingleEventPeople:
+            excludeSingleEventPeopleFilter = {
+                "container": {
+                    "func": "container",
+                    "context": "visitors",
+                    "pred": {
+                        "func": "without",
+                        "pred": {
+                            "func": "eq",
+                            "num": 1,
+                            "val": {
+                                "func": "total",
+                                "evt": {
+                                    "func": "event",
+                                    "name": "metrics/occurrences"
+                                }
+                            },
+                            "description": "Events"
+                        }
+                    }
+                },
+                "func": "segment",
+                "version": [
+                    1,
+                    0,
+                    0
+                ]
+            }
+            dataRequest.addGlobalFilter(adHocFilter=excludeSingleEventPeopleFilter)
+
+        response = self.getReport(request=dataRequest, n_results=sampleSize)
+
+        df = response.dataframe
+        
+        # Drop the itemId column if it exists
+        if 'itemId' in df.columns:
+            df = df.drop(columns=['itemId'])
+        
+        # Drop the sampling metric
+        if 'ad_hoc_cm_0' in df.columns:
+            df = df.drop(columns=['ad_hoc_cm_0'])
+
+        # Remove any rows that exceed the requested top_n
+        if len(df) > sampleSize:
+            df = df.head(sampleSize)
+        
+        # Clean the column names to remove prefixes
+        def clean_column_name(col):
+            if col.startswith("variables/"):
+                return col.replace("variables/", "")
+            elif col.startswith("metrics/"):
+                return col.replace("metrics/", "")
+            return col
+        
+        df.columns = [clean_column_name(col) for col in df.columns]
+
+        # Randomize the rows
+        df_randomized = df.sample(frac=1).reset_index(drop=True)
+        
+        return df_randomized
+
