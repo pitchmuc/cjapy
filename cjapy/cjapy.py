@@ -2460,13 +2460,13 @@ class CJA:
     def getFreeformTable(
         self,
         dimension: str = None,
-        metrics: List[str] = None,
+        metrics: Union[str] = None,
         dataviewId: str = None,
         start_date: Union[str, datetime] = None,
         end_date: Union[str, datetime] = None,
         top_n: int = 400,
         filterId: str = None,
-        search: Union[str, List[str]] = None,
+        search: Union[str, list] = None,
         search_operator: str = "OR",
     ) -> pd.DataFrame:
         """
@@ -2565,7 +2565,7 @@ class CJA:
         self,
         dataviewId: str = None,
         personId: str = "variables/adobe_identitynamespace_personid",
-        featureMetrics: List[str] = None,
+        featureMetrics: list = None,
         targetMetric: str = None,
         binaryTargetMetric: bool = False,
         startDate: Union[str, datetime] = None,
