@@ -103,6 +103,7 @@ class RequestCreator:
     def addMetric(
         self,
         metricId: str = None,
+        metricDefinition: dict = None,
         attributionModel: str = None,
         lookbackWindow: Union[int, str] = 30,
         lookbackGranularity: str = "day",
@@ -111,14 +112,25 @@ class RequestCreator:
         """
         Add a metric to the template.
         Arguments:
-            metricId : REQUIRED : The metric to add
-            attributionModel : OPTIONAL : The attribution model to use (e.g., "lastTouch", "firstTouch", "linear", "participation", "sameTouch", "uShaped", "jShaped", "reverseJShaped", "timeDecay", "positionBased", "algorithmic")
-            lookbackWindow : OPTIONAL : The lookback window (number of minutes, hours, days, weeks, months, quarters, "session", or "person"). Assumes 30 if not specified.
-            lookbackGranularity : OPTIONAL : The granularity of the lookback window (minute, hour, day, week, month, quarter). Defaults to "day".
-            **kwargs : Additional model-specific parameters. For "timeDecay" (assumes 1 week): halfLifeNumPeriods, halfLifeGranularity, for "positionBased": firstWeight, middleWeight, lastWeight.
+            metricId : OPTIONAL : The metric to add (or the calculated metric ID)
+            metricDefinition : OPTIONAL : The definition of an ad-hoc calculated metric
+            attributionModel : OPTIONAL : The attribution model to use (e.g., "lastTouch", "firstTouch", "linear", etc.)
+            lookbackWindow : OPTIONAL : The lookback window (e.g., number of minutes, hours, days, weeks, etc.)
+            lookbackGranularity : OPTIONAL : The granularity of the lookback window (minute, hour, day, week, etc.). Defaults to "day".
+            **kwargs : Additional model-specific parameters (e.g., half-life for "timeDecay", weights for "positionBased").
         """
-        if metricId is None:
-            raise ValueError("Require a metric ID")
+        if not metricId and not metricDefinition:
+            raise ValueError("You must supply either a metricId or a metricDefinition.")
+        
+        if metricId and metricDefinition:
+            raise ValueError("You cannot supply both a metricId and a metricDefinition.")
+
+        # Check if the metricId is a calculated metric (starts with "cm" and contains "@AdobeOrg")
+        is_calculated_metric = metricId and metricId.startswith("cm") and "@AdobeOrg" in metricId
+
+        # Check if attribution model is provided for a calculated metric
+        if (is_calculated_metric or metricDefinition is not None) and attributionModel:
+            raise ValueError("Attribution is not supported on calculated metrics.")
         
         if attributionModel and attributionModel not in ["lastTouch", "firstTouch", "linear", "participation", "sameTouch", "uShaped", "jShaped", "reverseJShaped", "timeDecay", "positionBased", "algorithmic"]:
             raise ValueError("Invalid attribution model")
@@ -127,11 +139,19 @@ class RequestCreator:
             raise ValueError("Invalid lookbackGranularity. Valid values are: 'minute', 'hour', 'day', 'week', 'month', 'quarter'")
         
         columnId = self.__metricCount
-        addMetric = {"columnId": str(columnId), "id": metricId}
-        
+        metric = {"columnId": str(columnId)}
+
+        if metricId:
+            metric["id"] = metricId
+        elif metricDefinition:
+            if not isinstance(metricDefinition, dict):
+                raise ValueError("metricDefinition must be a dictionary")
+            metric["id"] = f"ad_hoc_cm_{str(columnId)}"
+            metric["metricDefinition"] = metricDefinition
+
         # Only add sorting to the first metric if no dimension sort is specified
         if columnId == 0 and "dimensionSort" not in self.__request["settings"]:
-            addMetric["sort"] = "desc"
+            metric["sort"] = "desc"
 
         if attributionModel:
             # Handle sameTouch separately
@@ -172,7 +192,7 @@ class RequestCreator:
                             "numPeriods": lookbackWindow
                         }
 
-                        addMetric["lookback"] = {
+                        metric["lookback"] = {
                             "func": "min-months",
                             "granularity": lookbackGranularity,
                             "numPeriods": lookbackWindow
@@ -224,9 +244,9 @@ class RequestCreator:
                 allocationModel["middleWeight"] = middleWeight
                 allocationModel["lastWeight"] = lastWeight
 
-            addMetric["allocationModel"] = allocationModel
+            metric["allocationModel"] = allocationModel
         
-        self.__request["metricContainer"]["metrics"].append(addMetric)
+        self.__request["metricContainer"]["metrics"].append(metric)
         self.__metricCount += 1
 
     def getMetrics(self) -> list:
