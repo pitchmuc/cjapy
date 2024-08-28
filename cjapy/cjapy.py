@@ -2809,6 +2809,11 @@ class CJA:
         
         df.columns = [clean_column_name(col) for col in df.columns]
 
+        # Rename the last column if binaryTargetMetric is True and targetMetric is provided
+        if binaryTargetMetric and targetMetric:
+            # Ensure the last column is renamed
+            df.columns.values[-1] = f"{clean_column_name(targetMetric)}_binary"
+
         # Randomize the rows
         df_randomized = df.sample(frac=1).reset_index(drop=True)
         
