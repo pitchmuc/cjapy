@@ -46,13 +46,13 @@ class AdobeRequest:
         self.logger = logger
         self.restTime = 30
         self.retry = retry
+        self.connectionType = 'oauthV2'
         if self.config["token"] == "" or time.time() > self.config["date_limit"]:
             if self.config["private_key"] is not None or self.config["pathToKey"] is not None:
                 self.connectionType = 'jwt'
                 token_and_expiry = token_provider.get_jwt_token_and_expiry_for_config(
                     config=self.config, verbose=verbose
                 )
-                
             elif self.config["scopes"] is not None:
                 self.connectionType = 'oauthV2'
                 token_and_expiry = token_provider.get_oauth_token_and_expiry_for_config(
@@ -81,8 +81,7 @@ class AdobeRequest:
                     config=self.config)
             elif self.connectionType == 'oauthV2':
                 token_with_expiry = token_provider.get_oauth_token_and_expiry_for_config(
-                    config=self.config,
-                    connectionType=self.connectionType)
+                    config=self.config)
             token = token_with_expiry["token"]
             expiry = token_with_expiry["expiry"]
             if self.loggingEnabled:
