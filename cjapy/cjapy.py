@@ -2176,6 +2176,7 @@ class CJA:
             dataRows = res.get("rows")
             columns = res.get("columns")
             summaryData = res.get("summaryData")
+            resultsTruncated = res.get("resultsTruncated")
             totalElements = res.get("numberOfElements")
             lastPage = res.get("lastPage", True)
             if float(len(dataRows)) >= float(n_results):
@@ -2237,6 +2238,7 @@ class CJA:
                 self.logger.debug(f"reportType: {reportType}")
             columns = None  ## no "columns" key in response
             summaryData = res.get("summaryData")
+            resultsTruncated = res.get("resultsTruncated")
             (
                 nb_columns,
                 tableColumnIds,
@@ -2279,6 +2281,7 @@ class CJA:
                 dataRequest=dataRequest,
                 columns=columns,
                 summaryData=summaryData,
+                resultsTruncated=resultsTruncated,
                 cjaConnector=self,
                 reportType=reportType,
                 metrics=metricColumns,  ## for normal type   ## for staticReport
