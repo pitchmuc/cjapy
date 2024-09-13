@@ -720,7 +720,7 @@ class CJA:
             raise ValueError("Require a Data View ID")
         if self.loggingEnabled:
             self.logger.debug(f"getDimensions start")
-        path = f"/datagroups/data/{dataviewId}/dimensions"
+        path = f"/data/dataviews/{dataviewId}/dimensions"
         params = {"page":0}
         if full:
             params[
@@ -764,7 +764,7 @@ class CJA:
             raise ValueError("Require a Dimension ID")
         if self.loggingEnabled:
             self.logger.debug(f"getDimension start, id: {dimensionId}")
-        path = f"/datagroups/data/{dataviewId}/dimensions/{dimensionId}"
+        path = f"/data/dataviews/{dataviewId}/dimensions/{dimensionId}"
         params = {}
         if full:
             params[
@@ -794,7 +794,7 @@ class CJA:
             raise ValueError("Require a Data View ID")
         if self.loggingEnabled:
             self.logger.debug(f"getMetrics start")
-        path = f"/datagroups/data/{dataviewId}/metrics"
+        path = f"/data/dataviews/{dataviewId}/metrics"
         params = {"page":0}
         if full:
             params[
@@ -835,7 +835,7 @@ class CJA:
             raise ValueError("Require a Dimension ID")
         if self.loggingEnabled:
             self.logger.debug(f"getMetric start, id: {metricId}")
-        path = f"/datagroups/data/{dataviewId}/metrics/{metricId}"
+        path = f"/data/dataviews/{dataviewId}/metrics/{metricId}"
         params = {}
         if full:
             params[
@@ -873,7 +873,7 @@ class CJA:
         """
         if self.loggingEnabled:
             self.logger.debug(f"getDataViews start, output: {output}")
-        path = "/datagroups/dataviews"
+        path = "/data/dataviews"
         params = {
             "limit": limit,
             "includeType": includeType,
@@ -921,7 +921,7 @@ class CJA:
             raise ValueError("dataViewId is required")
         if self.loggingEnabled:
             self.logger.debug(f"getDataView start")
-        path = f"/datagroups/dataviews/{dataViewId}"
+        path = f"/data/dataviews/{dataViewId}"
         params = {}
         if full:
             params[
@@ -943,7 +943,7 @@ class CJA:
         """
         if self.loggingEnabled:
             self.logger.debug(f"getConnections start")
-        path = f"/datagroups/connections"
+        path = f"/data/connections"
         params = {"limit":limit,"page":0}
         if full:
             params["expansion"] ="granularBackfills,granularStreaming,backfillsSummaryConnection,name,description,isDeleted,isDisabled,dataSets,createdDate,modified,sandboxName,organization,backfillEnabled,modifiedBy,ownerFullName"
@@ -968,7 +968,7 @@ class CJA:
         """
         if connectionId is None:
             raise ValueError("Require a connection ID")
-        path = f"/datagroups/connections/{connectionId}"
+        path = f"/data/connections/{connectionId}"
         params = {'expansion':"granularBackfills,granularStreaming,backfillsSummaryConnection,name,description,isDeleted,isDisabled,dataSets,createdDate,modified,sandboxName,organization,backfillEnabled,modifiedBy,ownerFullName"}
         res = self.connector.getData(self.endpoint + path,params=params, **kwargs)
         return res
@@ -983,7 +983,7 @@ class CJA:
             raise ValueError("Require information to be passed for data view creation")
         if self.loggingEnabled:
             self.logger.debug(f"validateDataView start")
-        path = "/datagroups/dataviews/validate"
+        path = "/data/dataviews/validate"
         if ".json" in data:
             with open(data, "r") as f:
                 data = json.load(f)
@@ -1008,7 +1008,7 @@ class CJA:
                 common timezone: US/Montain, US/Pacific, US/Michigan, US/Central, Europe/London, Europe/Paris, Asia/Tokyo, Australia/Sydney
             minuteInactivity : OPTIONAL : number of minutes of inactivity before closing a session
         """
-        path = "/datagroups/dataviews/"
+        path = "/data/dataviews/"
         if data is None and name is None and connectionId is None:
             raise ValueError("Require information to be passed for data view creation")
         if data is not None:
@@ -1053,7 +1053,7 @@ class CJA:
             raise ValueError("Require a data view ID")
         if self.loggingEnabled:
             self.logger.debug(f"deleteDataView start, id: {dataViewId}")
-        path = f"/datagroups/dataviews/{dataViewId}"
+        path = f"/data/dataviews/{dataViewId}"
         res = self.connector.deleteData(self.endpoint + path)
         return res
 
@@ -1074,7 +1074,7 @@ class CJA:
             raise ValueError("Require data to be passed for the update")
         if self.loggingEnabled:
             self.logger.debug(f"updateDataView start, id: {dataViewId}")
-        path = f"/datagroups/dataviews/{dataViewId}"
+        path = f"/data/dataviews/{dataViewId}"
         if ".json" in data:
             with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
                 data = json.load(f.read())
@@ -1091,7 +1091,7 @@ class CJA:
             raise ValueError("Require a data view ID")
         if self.loggingEnabled:
             self.logger.debug(f"copyDataView start, id: {dataViewId}")
-        path = f"/datagroups/dataviews/copy/{dataViewId}"
+        path = f"/data/dataviews/copy/{dataViewId}"
         res = self.connector.putData(self.endpoint + path, **kwargs)
         return res
 
