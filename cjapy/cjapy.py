@@ -2051,7 +2051,7 @@ class CJA:
                     segmentApplied[obj["id"]] = obj["dateRange"]
         ### table columnIds and StaticRow IDs
         tableColumnIds = {
-            obj["columnId"]: obj["filters"][0]
+            obj["columnId"]: obj.get("filters",[])[0]
             for obj in dataRequest["metricContainer"]["metrics"]
         }
         ### create relations for metrics with Filter on top
