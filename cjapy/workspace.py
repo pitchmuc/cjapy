@@ -21,6 +21,7 @@ class Workspace:
         dataRequest: dict = None,
         columns: dict = None,
         summaryData: dict = None,
+        resultsTruncated: bool = False,
         cjaConnector: object = None,
         reportType: str = "normal",
         metrics: Union[dict, list] = None,  ## for normal type, static report
@@ -34,6 +35,7 @@ class Workspace:
             dataRequest : REQUIRED : dataRequest containing the request
             columns : REQUIRED : the columns element of the response.
             summaryData : REQUIRED : summary data containing total calculated by CJA
+            resultsTruncated : OPTIONAL : whether or not the results returned were truncated
             cjaConnector : REQUIRED : cja connector.
             reportType : OPTIONAL : define type of report retrieved.(normal, static, multi)
             metrics : OPTIONAL : dictionary of the columns Id for normal report and list of columns name for Static report
@@ -50,6 +52,7 @@ class Workspace:
         self.settings = dataRequest["settings"]
         self.pageRequested = dataRequest["settings"]["page"] + 1
         self.summaryData = summaryData
+        self.resultsTruncated = resultsTruncated
         self.reportType = reportType
         self.cjaConnector = cjaConnector
         ## global filters resolution
