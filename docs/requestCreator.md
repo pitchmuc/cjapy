@@ -4,9 +4,17 @@ The `cjapy` module provide a way for you to create request dictionary to CJA ser
 This class will provide you an instance that contains methods to modify your request definition.\
 In this documentation, we will review the different methods available.
 
+## Menu
+- [RequestCreator instanciation](#requestCreator-instanciation)
+  - [Creating an empty request](#creating-an-empty-request)
+  - [Uploading a template request](#uploading-a-template-request)
+- [Methods availables on RequestCreator](#methods-availables-on-requestCreator-instance)
+- [RequestCreator Instance attributes](#requestCreator-instance-attributes)
+
 ## RequestCreator instanciation
 
 In order to generate an instance of the `RequestCreator`, once you have loaded the cjapy module, you can either directly call the class or pass an existing request definition.\
+
 
 ### Creating an empty request
 
@@ -83,6 +91,8 @@ We will review the different methods available via the object.
   * **kwargs : Additional model-specific parameters. For "timeDecay" (assumes 1 week): halfLifeNumPeriods, halfLifeGranularity; for "positionBased": firstWeight, middleWeight, lastWeight.
 
   The `addMetric` method also supports various attribution models. For example, the `sameTouch` model is defined without a lookback window, while other models like `lastTouch` and `firstTouch` can have lookback windows and expiration settings. The `timeDecay` model allows specifying half-life periods and granularity, with defaults to 1 week if not provided.
+
+  The `addMetric` will automatically set the new metric pass to a static row report as Static metric row. 
 
   Examples:
   ```python
@@ -187,7 +197,7 @@ We will review the different methods available via the object.
   * shiftingDaysStart : OPTIONAL : An integer, if you want to add or remove days from the last first part of the current dateRange. Apply only to beginning of the dateRange.
       So 2020-01-01T00:00:00.000/2020-02-01T00:00:00.000 with +2 will give 2020-01-03T00:00:00.000/2020-02-01T00:00:00.000
 
-## Instance attributes
+## RequestCreator Instance attributes
 
 At the moment, there are only limited attributes available on the instance of the `RequestCreator` class.
 
@@ -212,3 +222,11 @@ This can help you derive other dates if needed.
 ### search
 
 `search` attribute is a boolean defining if search has been set for the dimension.
+
+### STATIC_ROW_REPORT
+
+Defines if the report has been built for STATIC ROW Report.\
+Static row report means that metrics are being used with filters, without the usage of any dimensions.\
+Once a report has been setup as STATIC ROW REPORT (value turns to `True`), you cannot add a dimension.\
+Create a new instance of RequestCreator to create a report with a dimension.
+

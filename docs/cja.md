@@ -46,6 +46,9 @@ List of GET methods:
 * getCurrentUser
   return the current user
 
+* getUsers
+  returns a list of all users with their IMS ID.
+
 * getCalculatedMetrics
   Returns a dataframe or the list of calculated Metrics.
   Arguments
@@ -272,6 +275,11 @@ List of GET methods:
   Arguments:
   * connectionId : REQUIRED : the connection ID (without prefix)
 
+* getAssetCount
+  Get the assets own by a specific user.
+  Arguments:
+  * imsUserId : REQUIRED : The user ID owning the assets.
+
 
 ## Create methods
 
@@ -397,42 +405,48 @@ On each method docstring, I tried to tell if it is a PUT or a PATCH method.
   For each component object in the passed list, the given shares will replace the current set of shares for each component.
   Arguments:
   * data : REQUIRED : list of dictionary containing the component to share.
-      Example  [
+      Example
+      ```py
+      [
+        {
+          "componentType": "string",
+          "componentId": "string",
+          "shares": [
           {
-              "componentType": "string",
-              "componentId": "string",
-              "shares": [
-              {
-                  "shareToId": 0,
-                  "shareToImsId": "string",
-                  "shareToType": "string",
-                  "accessLevel": "string"
-              }
-              ]
+              "shareToId": 0,
+              "shareToImsId": "string",
+              "shareToType": "string",
+              "accessLevel": "string"
           }
+          ]
+        }
       ]
+      ```
   * useCache : OPTIONAL : Boolean to use caching. Default is True.
 
 * updateTags: This endpoint allows many tags at once to be created/deleted. PUT method.
   Any tags passed to this endpoint will become the only tags for that componentId (all other tags will be removed).
   Arguments:
   * data : REQUIRED : List of tags and component to be tagged.
-    Example [
-              {
-                "componentType": "string",
-                "componentId": "string",
-                "tags": [
-                    {
-                      "id": 0,
-                      "name": "string",
-                      "description": "string",
-                      "components": [
-                      null
-                      ]
-                    }
-                ]
-              }
-            ]
+    Example 
+    ```py
+    [
+      {
+        "componentType": "string",
+        "componentId": "string",
+        "tags": [
+            {
+              "id": 0,
+              "name": "string",
+              "description": "string",
+              "components": [
+              null
+              ]
+            }
+        ]
+      }
+    ]
+    ```
 
 * updateDataView: Update the Data View definition (PUT method)
   Arguments:
@@ -474,13 +488,16 @@ On each method docstring, I tried to tell if it is a PUT or a PATCH method.
 * searchShares: Search for multiple shares on component based on the data passed.
   Arguments:
   * data : REQUIRED : dictionary specifying the search.
-    example: {
+    example: 
+    ```py
+    {
         "componentType": "string",
         "componentIds": [
             "string"
         ],
         "dataId": "string"
     }
+    ```
   * full : OPTIONAL : add additional data in the results.(Default False)
   * limit : OPTIONAL : number of result per page (10 per default)
 
@@ -509,6 +526,22 @@ On each method docstring, I tried to tell if it is a PUT or a PATCH method.
 * validateProject: Validates a Project definition.
   Arguments:
   * projectDefinition : REQUIRED : the project dictionary defining the creation.
+
+* transferAssets: Transfer the assets to a specific user.
+  Arguments:
+  * imsUserId : REQUIRED : The user ID to transfer the assets to.
+  * assets : REQUIRED : The list of assets to be transfered.
+    Example:
+    ```py
+      [
+        {
+          "componentType": "string",
+          "componentIds": [
+          "string"
+          ]
+      }
+      ]
+    ```
 
 ### Get report
 

@@ -77,12 +77,31 @@ class CJA:
         """
         if self.loggingEnabled:
             self.logger.debug("getCurrentUser start")
-        path = "/aresconfig/users/me"
+        path = "/configuration/users/me"
         params = {"useCache": useCache}
         if admin:
             params["expansion"] = "admin"
         res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
+    
+    def getUsers(self,limit:int=100,page:int=0)->list:
+        """
+        Get all the users in an organization.
+        Arguments:
+            limit : OPTIONAL : Number of result per request.
+            page : OPTIONAL : page used to request
+        """
+        path = "/configuration/org/users"
+        params = {'limit': limit,"page":page}
+        res = self.connector.getData(self.endpoint+path,params=params)
+        data = res.get('content',[])
+        last_page = res.get('lastPage',True)
+        while last_page == False:
+            params["page"] += 1
+            res = self.connector.getData(self.endpoint+path,params=params)
+            data += res.get('content',[])
+            last_page = res.get('lastPage',True)          
+        return data
 
     def getCalculatedMetrics(
         self,
@@ -308,6 +327,40 @@ class CJA:
             self.logger.debug(f"deleteShare start, id: {shareId}")
         path = f"/componentmetadata/shares/{shareId}"
         res = self.connector.deleteData(self.endpoint + path)
+        return res
+    
+    def getAssetCount(self, imsUserId:str=None)->list:
+        """
+        Get the assets own by a specific user.
+        Arguments:
+            imsUserId : REQUIRED : The user ID owning the assets.
+        """
+        if imsUserId is None:
+            raise ValueError("Require an IMS user ID")
+        path = f"/componentmetadata/assets/{imsUserId}/counts"
+        res = self.connector.getData(self.endpoint+path)
+        return res
+    
+    def transferAssets(self,imsUserId:str=None,assets:list=None)->list:
+        """
+        Transfer the assets own by a specific user.
+        Arguments:
+            imsUserId : REQUIRED : The user ID to transfer the assets to.
+            assets : REQUIRED : The list of assets to be transfered.
+                Example:
+                [
+                    {
+                        "componentType": "string",
+                        "componentIds": [
+                        "string"
+                        ]
+                    }
+                ]
+        """
+        if imsUserId is None:
+            raise ValueError("Require an IMS user ID")
+        path = f"/componentmetadata/assets/{imsUserId}/transfer"
+        res = self.connector.putData(self.endpoint+path,data=assets)
         return res
 
     def searchShares(
@@ -2052,7 +2105,8 @@ class CJA:
         ### table columnIds and StaticRow IDs
         tableColumnIds = {
             obj["columnId"]: obj.get("filters",[])[0]
-            for obj in dataRequest["metricContainer"]["metrics"]
+            for obj 
+            in dataRequest["metricContainer"]["metrics"]
         }
         ### create relations for metrics with Filter on top
         filterRelations = {

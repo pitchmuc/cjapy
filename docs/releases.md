@@ -3,6 +3,18 @@
 This page will give you the change that are occuring when a new version has been published on pypi.
 The changes have been tracked starting version 0.1.0
 
+## 0.2.4
+* adding the `getUsers` method
+* adding the `getAssetCount` method
+* better support for STATIC_ROW in `RequestCreator`  
+
+## 0.2.3
+* adding the `getPersonProfiles` method
+* adding the `getFreeformTable` method
+* adding attribution model possibility to addMetric in `RequestCreator`
+* adding `setDateRange` method in `RequestCreator`
+* supporting adhoc filter in `RequestCreator`
+
 ## 0.2.2
 
 * fixing issue on `Project` class for specific project with dynamic filtering
@@ -14,10 +26,6 @@ Patch:
 * Adding more parameters for `createDataView` methods
 * Fixing `updateCalculatedMetric`
 * Fixing the `setSearch`\
-Patch:
-* adding attribution model possibility to addMetric in `RequestCreator`
-* adding `setDateRange` method in `RequestCreator`
-* supporting adhoc filter in `RequestCreator`
 
 ## 0.2.1
 

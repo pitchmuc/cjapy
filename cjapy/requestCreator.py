@@ -93,13 +93,26 @@ class RequestCreator:
             "last7daysTodayIncluded": f"{seven_days_prior_iso}/{endToday_iso}",
         }
         self.today = today
+        self.__static_row_nb = 1
+        self.STATIC_ROW_REPORT = False
 
     def __repr__(self):
+        if 'dimensions' in self.__request.keys() or 'dimension' in self.__request.keys():
+            if self.__request.get('dimension',None) == "":
+                del self.__request['dimension']
+            if self.__request.get('dimensions',None) == "":
+                del self.__request['dimensions']
+
         return json.dumps(self.__request, indent=4)
 
     def __str__(self):
+        if 'dimensions' in self.__request.keys() or 'dimension' in self.__request.keys():
+            if self.__request.get('dimension',None) == "":
+                del self.__request['dimension']
+            if self.__request.get('dimensions',None) == "":
+                del self.__request['dimensions']
         return json.dumps(self.__request, indent=4)
-
+    
     def addMetric(
         self,
         metricId: str = None,
@@ -245,9 +258,37 @@ class RequestCreator:
                 allocationModel["lastWeight"] = lastWeight
 
             metric["allocationModel"] = allocationModel
-        
-        self.__request["metricContainer"]["metrics"].append(metric)
-        self.__metricCount += 1
+        if self.STATIC_ROW_REPORT:
+            ## filter only the static row to add
+            list_static_rows = [comp for comp in self.__request["metricContainer"]["metricFilters"] if 'STATIC_ROW_COMPONENT' in comp['id']]
+            unique_static_row_ids = set()
+            list_comp_add = []
+            for static_row in list_static_rows:
+                if static_row['type'] == 'segment':
+                    if static_row['segmentId'] not in unique_static_row_ids:
+                        list_comp_add.append({'segmentId' : static_row['segmentId'],'type':'segment'})
+                    unique_static_row_ids.add(static_row['segmentId'])
+                elif static_row['type'] == 'daterange':
+                    if static_row['dateRangeId'] not in unique_static_row_ids:
+                        list_comp_add.append({'dateRangeId' : static_row['dateRangeId'],'type':'dateRange'})
+                    unique_static_row_ids.add(static_row['dateRangeId'])
+            list_metrics = []
+            list_metricFilters = []
+            staticRowCount = self.__static_row_nb
+            for static_row in list_comp_add:
+                filterRow = deepcopy(static_row)
+                filterRow['id'] = f"STATIC_ROW_COMPONENT_{deepcopy(staticRowCount)}"
+                list_metricFilters.append(filterRow)
+                new_metric = deepcopy(metric)
+                new_metric['columnId'] = f"{metric['id']}:::{deepcopy(staticRowCount)-1}"
+                new_metric["filters"] = [ f"STATIC_ROW_COMPONENT_{deepcopy(staticRowCount)}"]
+                list_metrics.append(new_metric)
+                staticRowCount +=2
+            self.__request["metricContainer"]["metrics"] += list_metrics
+            self.__request["metricContainer"]["metricFilters"] += list_metricFilters
+        else:
+            self.__request["metricContainer"]["metrics"].append(metric)
+            self.__metricCount += 1
 
     def getMetrics(self) -> list:
         """
@@ -256,63 +297,120 @@ class RequestCreator:
         return [metric["id"] for metric in self.__request["metricContainer"]["metrics"]]
 
     def addMetricFilter(
-        self, metricId: str = None, filterId: str = None, metricIndex: int = None
+        self, metricId: str = None, filterId: str = None, metricIndex: int = None, staticRow:bool=False
     ) -> None:
         """
         Add a filter to a metric.
         Arguments:
-            metricId : REQUIRED : metric where the filter is added
+            metricId : REQUIRED : metric where the filter is added. For breakdown, use "all".
             filterId : REQUIRED : The filter to add.
                 when breakdown, use the following format for the value "dimension:::itemId"
             metricIndex : OPTIONAL : If used, set the filter to the metric located on that index.
+            staticRow : OPTIONAL : If you wish to add this as a static row (bool, default False)
         """
         if metricId is None:
             raise ValueError("Require a metric ID")
         if filterId is None:
             raise ValueError("Require a filter ID")
         filterIdCount = self.__metricFilterCount
-        if filterId.startswith("s") and "@AdobeOrg" in filterId:
-            filterType = "segment"
-            filter = {
-                "id": str(filterIdCount),
-                "type": filterType,
-                "segmentId": filterId,
-            }
-        elif filterId.startswith("20") and "/20" in filterId:
-            filterType = "dateRange"
-            filter = {
-                "id": str(filterIdCount),
-                "type": filterType,
-                "dateRange": filterId,
-            }
-        elif ":::" in filterId:
-            filterType = "breakdown"
-            dimension, itemId = filterId.split(":::")
-            filter = {
-                "id": str(filterIdCount),
-                "type": filterType,
-                "dimension": dimension,
-                "itemId": itemId,
-            }
-        else:  ### case when it is predefined segments like "All_Visits"
-            filterType = "segment"
-            filter = {
-                "id": str(filterIdCount),
-                "type": filterType,
-                "segmentId": filterId,
-            }
+        staticRowCount = self.__static_row_nb
+        filters = []
+        staticRowCreated = []
+        if staticRow:
+            self.STATIC_ROW_REPORT = True
+            if filterId.startswith("s") and "@AdobeOrg" in filterId:
+                filterType = "segment"
+                elementKey = "segmentId"
+            elif filterId.startswith("20") and "/20" in filterId:
+                filterType = "dateRange"
+                elementKey = "dateRangeId"
+            else:
+                filterType = "segment"
+                elementKey = "segmentId"
+            for i in range(len(self.__request['metricContainer']['metrics'])):
+                staticRowName = f"STATIC_ROW_COMPONENT_{staticRowCount}"
+                filter = deepcopy({
+                    "id": staticRowName,
+                    "type": filterType,
+                    elementKey: filterId,
+                })
+                staticRowCreated.append(staticRowName)
+                filters.append(filter)
+                staticRowCount +=2             
+            self.__static_row_nb = staticRowCount
+        else:## not static row
+            if filterId.startswith("s") and "@AdobeOrg" in filterId:
+                filterType = "segment"
+                idFilter = str(filterIdCount)
+                filter = {
+                    "id": idFilter,
+                    "type": filterType,
+                    "segmentId": filterId,
+                }
+                filters.append(filter)
+            elif filterId.startswith("20") and "/20" in filterId:
+                filterType = "dateRange"
+                idFilter = str(filterIdCount)
+                filter = {
+                    "id": idFilter,
+                    "type": filterType,
+                    "dateRange": filterId,
+                }
+                filters.append(filter)
+            elif ":::" in filterId:
+                filterType = "breakdown"
+                dimension, itemId = filterId.split(":::")
+                filter = {
+                    "id": str(filterIdCount),
+                    "type": filterType,
+                    "dimension": dimension,
+                    "itemId": itemId,
+                }
+                filters.append(filter)
+            else:  ### case when it is predefined segments like "All_Visits"
+                filterType = "segment"
+                idFilter = str(filterIdCount)
+                filter = {
+                    "id": idFilter,
+                    "type": filterType,
+                    "segmentId": filterId,
+                }
+                filters.append(filter)
         if filterIdCount == 0:
-            self.__request["metricContainer"]["metricFilters"] = [filter]
+            self.__request["metricContainer"]["metricFilters"] = filters
         else:
-            self.__request["metricContainer"]["metricFilters"].append(filter)
+            self.__request["metricContainer"]["metricFilters"] += filters
         ### adding filter to the metric
         if metricIndex is None:
-            for metric in self.__request["metricContainer"]["metrics"]:
-                if metric["id"] == metricId:
+            replicateMetric = []
+            for index, metric in enumerate(self.__request["metricContainer"]["metrics"]):
+                if metricId == "all":
+                    staticRowName = staticRowCreated[index]
+                    row_index = int(deepcopy(staticRowName).split('_').pop())-1
+                    columnId = metric['id']+f":::{row_index}"
+                    if "filters" in metric.keys():
+                        filtersCheck = [True if "STATIC_ROW_COMPONENT" in el else False for el in metric['filters']]
+                        if any(filtersCheck): ## check if already a static row
+                            replicateMetric.append(
+                                {
+                                    "columnId" : columnId,
+                                    "id" : metric['id'],
+                                    "filters":[staticRowName]
+                                }
+                            )
+                        else:
+                            metric["filters"].append(staticRowName)
+                            metric['columnId'] = columnId        
+                    else:
+                        metric["filters"] = [staticRowName]
+                        metric['columnId'] = columnId
+                elif metric["id"] == metricId:
                     if "filters" in metric.keys():
                         metric["filters"].append(str(filterIdCount))
                     else:
                         metric["filters"] = [str(filterIdCount)]
+            if len(replicateMetric)>0:
+                self.__request["metricContainer"]["metrics"] += replicateMetric
         else:
             metric = self.__request["metricContainer"]["metrics"][metricIndex]
             if "filters" in metric.keys():
@@ -320,7 +418,10 @@ class RequestCreator:
             else:
                 metric["filters"] = [str(filterIdCount)]
         ### incrementing the filter counter
-        self.__metricFilterCount += 1
+        if staticRow:
+            self.__metricFilterCount += len(staticRowCreated)
+        else:
+            self.__metricFilterCount += 1
 
     def removeMetricFilter(self, filterId: str = None) -> None:
         """
@@ -444,9 +545,7 @@ class RequestCreator:
         """
         if order not in ["asc", "dsc"]:
             raise ValueError("Sort order must be 'asc' or 'dsc'")
-
         self.__request["settings"]["dimensionSort"] = order
-        
         # Remove sort from all metrics if dimension sort is set
         for metric in self.__request["metricContainer"]["metrics"]:
             if "sort" in metric:
@@ -459,14 +558,13 @@ class RequestCreator:
             dimension : REQUIRED : the dimension to build your report on
             sort_order : OPTIONAL : The sort order, either "asc" or "desc".
         """
+        if self.STATIC_ROW_REPORT:
+            raise Exception('This Request has been started as STATIC ROW REQUEST.\nCreate another RequestCreator instance for building it via dimension.')
         if dimension is None:
             raise ValueError("A dimension must be passed")
-
         if 'dimensions' in self.__request.keys():
             del self.__request["dimensions"]
-        
         self.__request["dimension"] = dimension
-        
         if sort_order:
             self.setDimensionSort(sort_order)
 
@@ -669,6 +767,11 @@ class RequestCreator:
         """
         Return the request definition
         """
+        if 'dimensions' in self.__request.keys() or 'dimension' in self.__request.keys():
+            if self.__request.get('dimension',None) == "":
+                del self.__request['dimension']
+            if self.__request.get('dimensions',None) == "":
+                del self.__request['dimensions']
         return deepcopy(self.__request)
 
     def save(self, fileName: str = None) -> None:
