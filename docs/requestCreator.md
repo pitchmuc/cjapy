@@ -172,6 +172,7 @@ We will review the different methods available via the object.
   * filterId : REQUIRED : The filter to add.
     When breakdown, use the following format for the value "dimension:::itemId"
   * metricIndex : OPTIONAL : If used, set the filter to the metric located on that index.
+  * staticRow : OPTIONAL : When trying to set a filter as STATIC ROW for reporting. Boolean. Default `False`.
 
 * `removeMetricFilter()`
   remove a filter from a metric
@@ -226,7 +227,7 @@ This can help you derive other dates if needed.
 ### STATIC_ROW_REPORT
 
 Defines if the report has been built for STATIC ROW Report.\
-Static row report means that metrics are being used with filters, without the usage of any dimensions.\
-Once a report has been setup as STATIC ROW REPORT (value turns to `True`), you cannot add a dimension.\
+Static row report means that metrics are being used with filters or date ranges, without the usage of any dimensions.\
+Once a report has been setup as STATIC ROW REPORT (attribute value returns `True`), you cannot add a dimension.\
 Create a new instance of RequestCreator to create a report with a dimension.
 
