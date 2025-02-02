@@ -6,7 +6,9 @@ The changes have been tracked starting version 0.1.0
 ## 0.2.4
 * adding the `getUsers` method
 * adding the `getAssetCount` method
-* better support for STATIC_ROW in `RequestCreator`  
+* better support for STATIC_ROW in `RequestCreator`\
+Patch:
+* Fixing multi static row issue in `RequestCreator`. 
 
 ## 0.2.3
 * adding the `getPersonProfiles` method

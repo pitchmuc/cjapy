@@ -383,32 +383,35 @@ class RequestCreator:
         ### adding filter to the metric
         if metricIndex is None:
             replicateMetric = []
+            metricId_done = set() ## avoid duplicationof metrics
             for index, metric in enumerate(self.__request["metricContainer"]["metrics"]):
-                if metricId == "all":
-                    staticRowName = staticRowCreated[index]
-                    row_index = int(deepcopy(staticRowName).split('_').pop())-1
-                    columnId = metric['id']+f":::{row_index}"
-                    if "filters" in metric.keys():
-                        filtersCheck = [True if "STATIC_ROW_COMPONENT" in el else False for el in metric['filters']]
-                        if any(filtersCheck): ## check if already a static row
-                            replicateMetric.append(
-                                {
-                                    "columnId" : columnId,
-                                    "id" : metric['id'],
-                                    "filters":[staticRowName]
-                                }
-                            )
+                if metric['id'] not in metricId_done:
+                    metricId_done.add(metric['id'])
+                    if metricId == "all":
+                        staticRowName = staticRowCreated[index]
+                        row_index = int(deepcopy(staticRowName).split('_').pop())-1
+                        columnId = metric['id']+f":::{row_index}"
+                        if "filters" in metric.keys():
+                            filtersCheck = [True if "STATIC_ROW_COMPONENT" in el else False for el in metric['filters']]
+                            if any(filtersCheck): ## check if already a static row
+                                replicateMetric.append(
+                                    {
+                                        "columnId" : columnId,
+                                        "id" : metric['id'],
+                                        "filters":[staticRowName]
+                                    }
+                                )
+                            else:
+                                metric["filters"].append(staticRowName)
+                                metric['columnId'] = columnId        
                         else:
-                            metric["filters"].append(staticRowName)
-                            metric['columnId'] = columnId        
-                    else:
-                        metric["filters"] = [staticRowName]
-                        metric['columnId'] = columnId
-                elif metric["id"] == metricId:
-                    if "filters" in metric.keys():
-                        metric["filters"].append(str(filterIdCount))
-                    else:
-                        metric["filters"] = [str(filterIdCount)]
+                            metric["filters"] = [staticRowName]
+                            metric['columnId'] = columnId
+                    elif metric["id"] == metricId:
+                        if "filters" in metric.keys():
+                            metric["filters"].append(str(filterIdCount))
+                        else:
+                            metric["filters"] = [str(filterIdCount)]
             if len(replicateMetric)>0:
                 self.__request["metricContainer"]["metrics"] += replicateMetric
         else:
