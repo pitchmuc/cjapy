@@ -280,6 +280,12 @@ List of GET methods:
   Arguments:
   * imsUserId : REQUIRED : The user ID owning the assets.
 
+* getSharedComponentsMatrix
+  Gets all shared dimensions and metrics across all dataviews, represented in a matrix. If no dimension or metric is shared, an error message will be displayed. 
+  Arguments:
+  * include_dimensions : bool, optional (default: True)
+  * include_metrics : bool, optional (default: True)
+
 
 ## Create methods
 

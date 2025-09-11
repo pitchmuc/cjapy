@@ -798,6 +798,79 @@ class CJA:
             return df
         return dimensions
 
+    def getSharedComponentsMatrix(self, include_dimensions=True, include_metrics=True):
+        """
+        Build a matrix of shared components (dimensions and/or metrics) across dataviews.
+
+        Parameters
+        ----------
+        include_dimensions : bool, optional
+            Whether to include shared dimensions (default: True).
+        include_metrics : bool, optional
+            Whether to include shared metrics (default: True).
+
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame where rows are components (with id, type, name) 
+            and columns are dataview names, containing 1/0 for presence.
+
+        Example
+        -------
+        >>> # Get shared dimensions and metrics matrix
+        >>> df = cja.getSharedComponentsMatrix()
+        >>> df.head()
+                   type            name  Claims Dataview  Member Portal
+        id
+        d1      dimension    Customer ID               1              1
+        m1        metric         Revenue               1              0
+        """
+        print(
+            f"Shared components matrix generation started..."
+        )
+        dataviews = self.getDataViews()
+        dv_map = dict(zip(dataviews["id"], dataviews["name"]))
+
+        def build_shared_matrix(fetch_fn, comp_type):
+            results = {}
+            id_to_name = {}
+
+            for dv_id, dv_name in dv_map.items():
+                try:
+                    comps = fetch_fn(dv_id, inclType=True, full=True)
+                    shared = comps[comps["sharedComponent"] == True][["id", "name"]]
+                    results[dv_name] = set(shared["id"].tolist())
+                    id_to_name.update(dict(zip(shared["id"], shared["name"])))
+                except Exception as e:
+                    print(f"Error fetching {comp_type} for {dv_id} ({dv_name}): {e}")
+
+            all_ids = sorted(set().union(*results.values()))
+            df = pd.DataFrame(index=all_ids)
+
+            for dv_name, comp_ids in results.items():
+                df[dv_name] = df.index.isin(comp_ids).astype(int)
+
+            df.insert(0, "name", df.index.map(id_to_name))
+            df.insert(0, "type", comp_type)
+            return df
+
+        dfs = []
+        if include_dimensions:
+            dfs.append(build_shared_matrix(self.getDimensions, "dimension"))
+        if include_metrics:
+            dfs.append(build_shared_matrix(self.getMetrics, "metric"))
+
+        if not dfs:
+            raise ValueError("At least one of include_dimensions/include_metrics must be True")
+        
+        print(
+            f"Shared components matrix created"
+            "Hint: use `df.head()` to preview or `display(df)`."
+        )
+
+        return pd.concat(dfs)
+
+    
     def getDimension(
         self, dataviewId: str = None, 
         dimensionId: str = None, 
