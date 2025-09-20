@@ -934,9 +934,7 @@ class CJA:
             "page": 0,
         }
         if full:
-            params[
-                "expansion"
-            ] = "name,description,owner,isDeleted,parentDataGroupId,segmentList,currentTimezoneOffset,timezoneDesignator,modified,createdDate,organization,curationEnabled,recentRecordedAccess,sessionDefinition,curatedComponents,externalData,containerNames"
+            params["expansion"] = "name,description,owner,isDeleted,parentDataGroupId,segmentList,currentTimezoneOffset,timezoneDesignator,modified,createdDate,organization,curationEnabled,recentRecordedAccess,sessionDefinition,curatedComponents,externalData,containerNames"
         if parentDataGroupId:
             params["parentDataGroupId"] = parentDataGroupId
         if externalIds:
@@ -986,20 +984,24 @@ class CJA:
                 f.write(json.dumps(res, indent=4))
         return res
 
-    def getConnections(self,limit:int=1000,full:bool=True,output:str='df',**kwargs)-> JsonListOrDataFrameType:
+    def getConnections(self,limit:int=1000,full:bool=False,expansion:str=None,output:str='df',**kwargs)-> JsonListOrDataFrameType:
         """
         Retrieve the connections associated to that company.
         Arguments:
             limit : OPTIONAL : number of results per request (default 100)
             full : OPTIONAL : define if all possible information are returned (default True).
             output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
+            expansion : OPTIONAL : list of additional elements to be returned. (will replace the full=True option)
+                possible values: "name,primaryIdType,configuredContainers,description,owner,isDeleted,isDisabled,dataSets,createdDate,modified,caseSensitive,organization,components,numDailyEvents,externalData,backfillEnabled,granularBackfills,granularStreaming,backfillsSummaryConnection,backfillsSummaryDataSets,dataSetLastIngested,componentType,sandboxName,sandboxId,fieldsId,floatPrecision,dataRetentionMonths,validationErrors,resolveIdentityNamespace,stitchedDataSets"
         """
         if self.loggingEnabled:
             self.logger.debug(f"getConnections start")
         path = f"/data/connections"
-        params = {"limit":limit,"page":0}
-        if full:
-            params["expansion"] ="granularBackfills,granularStreaming,backfillsSummaryConnection,name,description,isDeleted,isDisabled,dataSets,createdDate,modified,sandboxName,organization,backfillEnabled,modifiedBy,ownerFullName"
+        params = {"limit":limit,"page":0,"expansion":"name,description,owner,dataSets,createdDate,modified,sandboxName,dataRetentionMonths,primaryIdType"}
+        if expansion is not None:
+            params["expansion"] = expansion
+        elif full:
+            params["expansion"] ="name,primaryIdType,configuredContainers,description,owner,isDeleted,isDisabled,dataSets,createdDate,modified,caseSensitive,organization,components,numDailyEvents,externalData,backfillEnabled,granularBackfills,granularStreaming,backfillsSummaryConnection,backfillsSummaryDataSets,dataSetLastIngested,componentType,sandboxName,sandboxId,fieldsId,floatPrecision,dataRetentionMonths,validationErrors,resolveIdentityNamespace,stitchedDataSets"
         res = self.connector.getData(self.endpoint + path,params=params, **kwargs)
         data = res.get('content',[])
         lastpage = res.get('lastPage',True)
@@ -1013,16 +1015,23 @@ class CJA:
             return df
         return data
     
-    def getConnection(self,connectionId:str=None,**kwargs)->dict:
+    def getConnection(self,connectionId:str=None,full:bool=False,expansion:str=None,**kwargs)->dict:
         """
         Returns the dictionary of a single connection based on its ID, without prefix.
         Arguments:
             connectionId : REQUIRED : The ID of the connection without prefix.
+            full : OPTIONAL : define if all possible information are returned (default True).
+            expansion : OPTIONAL : list of additional elements to be returned. (will replace the full=True option)
+                possible values: "name,primaryIdType,configuredContainers,description,owner,isDeleted,isDisabled,dataSets,createdDate,modified,caseSensitive,organization,components,numDailyEvents,externalData,backfillEnabled,granularBackfills,granularStreaming,backfillsSummaryConnection,backfillsSummaryDataSets,dataSetLastIngested,componentType,sandboxName,sandboxId,fieldsId,floatPrecision,dataRetentionMonths,validationErrors,resolveIdentityNamespace,stitchedDataSets"
         """
         if connectionId is None:
             raise ValueError("Require a connection ID")
         path = f"/data/connections/{connectionId}"
-        params = {'expansion':"granularBackfills,granularStreaming,backfillsSummaryConnection,name,description,isDeleted,isDisabled,dataSets,createdDate,modified,sandboxName,organization,backfillEnabled,modifiedBy,ownerFullName"}
+        params = {"expansion":"name,description,owner,dataSets,createdDate,modified,sandboxName,dataRetentionMonths,primaryIdType"}
+        if expansion is not None:
+            params["expansion"] = expansion
+        elif full:
+            params = {'expansion':"name,primaryIdType,configuredContainers,description,owner,isDeleted,isDisabled,dataSets,createdDate,modified,caseSensitive,organization,components,numDailyEvents,externalData,backfillEnabled,granularBackfills,granularStreaming,backfillsSummaryConnection,backfillsSummaryDataSets,dataSetLastIngested,componentType,sandboxName,sandboxId,fieldsId,floatPrecision,dataRetentionMonths,validationErrors,resolveIdentityNamespace,stitchedDataSets"}
         res = self.connector.getData(self.endpoint + path,params=params, **kwargs)
         return res
 
