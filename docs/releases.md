@@ -11,6 +11,7 @@ Patch:
 * Fixing multi static row issue in `RequestCreator`.
 * Adding more information on the the connections via updated expansion method.
 * adding the `getSharedComponentsMatrix`[documentation](./cja.md#getSharedComponentsMatrix)
+* Adding debugging information when token retrieval is failing in `token_provider.py`
 
 ## 0.2.3
 * adding the `getPersonProfiles` method

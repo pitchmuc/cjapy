@@ -88,4 +88,6 @@ def get_oauth_token_and_expiry_for_config(config: dict,
         responseJson = response.json()
         token = responseJson.get('access_token')
         expiry = responseJson.get("expires_in")
+        if token is None or expiry is None:
+            raise Exception(f"OAuth response missing required fields. Response: {responseJson}")
         return {'token': token, 'expiry': expiry}
