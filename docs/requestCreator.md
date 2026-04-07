@@ -5,11 +5,22 @@ This class will provide you an instance that contains methods to modify your req
 In this documentation, we will review the different methods available.
 
 ## Menu
-- [RequestCreator instanciation](#requestCreator-instanciation)
-  - [Creating an empty request](#creating-an-empty-request)
-  - [Uploading a template request](#uploading-a-template-request)
-- [Methods availables on RequestCreator](#methods-availables-on-requestCreator-instance)
-- [RequestCreator Instance attributes](#requestCreator-instance-attributes)
+- [cjapy : RequestCreator class](#cjapy--requestcreator-class)
+  - [Menu](#menu)
+  - [RequestCreator instanciation](#requestcreator-instanciation)
+    - [Creating an empty request](#creating-an-empty-request)
+    - [Uploading a template request](#uploading-a-template-request)
+  - [Methods availables on RequestCreator instance](#methods-availables-on-requestcreator-instance)
+- [Adding a simple metric](#adding-a-simple-metric)
+- [Adding a metric with an attribution model](#adding-a-metric-with-an-attribution-model)
+- [Adding a metric with a custom attribution model](#adding-a-metric-with-a-custom-attribution-model)
+- [Adding a metric with position-based attribution model](#adding-a-metric-with-position-based-attribution-model)
+- [Adding a metric with sameTouch attribution model](#adding-a-metric-with-sametouch-attribution-model)
+  - [RequestCreator Instance attributes](#requestcreator-instance-attributes)
+    - [dates](#dates)
+    - [today](#today)
+    - [search](#search)
+    - [STATIC\_ROW\_REPORT](#static_row_report)
 
 ## RequestCreator instanciation
 
@@ -71,10 +82,25 @@ We will review the different methods available via the object.
   Arguments:
   * filename : OPTIONAL : Name of the file. (default cjapy_request_<_timestamp_>.json)
 
-* `setDimension()`
+* `setDimension()` *(deprecated since 0.3.0 — use `setDimensions()` instead)*
   Set the dimension to be used for reporting.
   Arguments:
   * dimension : REQUIRED : the dimension to build your report on
+
+* `setDimensions()`
+  Set one or more dimensions to be used for reporting. Accepts a single dimension string or a list of dimension strings.
+  When more than one dimension is provided, `nonesBehavior` is automatically set to `return-nones`.
+  Arguments:
+  * dimensions : REQUIRED : a dimension ID string, or a list of dimension ID strings
+
+  Examples:
+  ```python
+  # Single dimension
+  myRequest.setDimensions("variables/eventType")
+
+  # Multiple dimensions
+  myRequest.setDimensions(["variables/eventType", "variables/web.webReferrer.type"])
+  ```
 
 * `setDataViewId()`
   Set the dataView ID to be used for the reporting.

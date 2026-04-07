@@ -94,4 +94,44 @@ myreport = cja.getReport('myRequest.json')
 
 You have more information on the method available on the CJA class in that documentation: [CJA class](./cja.md)
 
+## 7. Working with multiple CJA instances in parallel
+
+If you need to query data from **multiple Adobe IO clients** at the same time (e.g. to parallelise work across different companies or sandboxes), you can use `return_object=True` on `importConfigFile` or `configure` to obtain an isolated `ConfigObj` instance.\
+Each `ConfigObj` holds its own credentials and token state, so multiple `CJA` instances can run concurrently without interfering with each other.
+
+```python
+import cjapy
+from concurrent.futures import ThreadPoolExecutor
+
+# Create an isolated config object for each client
+cfg_a = cjapy.importConfigFile('config_client_a.json', return_object=True)
+cfg_b = cjapy.importConfigFile('config_client_b.json', return_object=True)
+
+# Or using configure() directly
+cfg_c = cjapy.configure(
+    org_id='ORG_C',
+    client_id='CLIENT_C',
+    secret='SECRET_C',
+    scopes='openid,AdobeID,read_organizations',
+    return_object=True,
+)
+
+# Instantiate one CJA class per config
+cja_a = cjapy.CJA(config_object=cfg_a)
+cja_b = cjapy.CJA(config_object=cfg_b)
+cja_c = cjapy.CJA(config_object=cfg_c)
+
+# Run requests in parallel
+with ThreadPoolExecutor() as pool:
+    future_a = pool.submit(cja_a.getDataViews)
+    future_b = pool.submit(cja_b.getDataViews)
+    future_c = pool.submit(cja_c.getDataViews)
+
+results_a = future_a.result()
+results_b = future_b.result()
+results_c = future_c.result()
+```
+
+> **Note**: The standard `importConfigFile` / `configure` workflow (without `return_object=True`) continues to work exactly as before and updates the shared global config.
+
 [Back to README](../README.md)

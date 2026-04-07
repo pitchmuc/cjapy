@@ -3,7 +3,7 @@ import datetime
 import json
 from time import time
 from typing import Union
-
+import deprecation
 
 class RequestCreator:
     """
@@ -16,7 +16,7 @@ class RequestCreator:
             "metrics": [],
             "metricFilters": [],
         },
-        "dimension": "",
+        "dimensions": "",
         "settings": {
             "countRepeatInstances": True,
             "limit": 20000,
@@ -483,22 +483,6 @@ class RequestCreator:
             self.__request["search"]["clause"] = clause
         self.search = True
 
-    # def addDimensions(self,dimensionIds:list=None)->None:
-    #     """
-    #     In case you want to pass a list of dimensions to the report API.
-    #     Arguments:
-    #         dimensionIds : REQUIRED : The list of dimensions IDs you want to use
-    #     """
-    #     if dimensionIds is None:
-    #         raise ValueError("dimensionIds parameters should be used")
-    #     if type(dimensionIds) != list:
-    #         raise TypeError("dimensionIds should be a list")
-    #     if len(dimensionIds)>5:
-    #         raise ValueError("dimensionIds should not countain more than 5 elements")
-    #     if 'dimension' in self.__request.keys():
-    #         del self.__request["dimension"]
-    #     self.__request["dimensions"] = dimensionIds
-
     def removeSearch(self)->None:
         """
         Remove the search capability in the request.
@@ -554,22 +538,46 @@ class RequestCreator:
             if "sort" in metric:
                 del metric["sort"]
     
-    def setDimension(self, dimension: str = None, sort_order: str = None) -> None:
+    @deprecation.deprecated(deprecated_in="0.3.0", details="Use setDimensions instead")
+    def setDimension(self, dimension: str = None) -> None:
         """
+        *** LEGACY METHOD, use setDimensions instead. ***
         Set the dimension to be used for reporting.
         Arguments:
-            dimension : REQUIRED : the dimension to build your report on
-            sort_order : OPTIONAL : The sort order, either "asc" or "desc".
+            dimension : REQUIRED : the dimension ID to build your report on
         """
         if self.STATIC_ROW_REPORT:
             raise Exception('This Request has been started as STATIC ROW REQUEST.\nCreate another RequestCreator instance for building it via dimension.')
         if dimension is None:
             raise ValueError("A dimension must be passed")
+        return self.setDimensions(dimensions=dimension)
+
+
+    def setDimensions(self, dimensions: Union[str,list] = None) -> None:
+        """
+        Set the dimension to be used for reporting.
+        Arguments:
+            dimensions : REQUIRED : the dimension ID(s) to build your report on (a list of strings or a single string)
+        """
+        if self.STATIC_ROW_REPORT:
+            raise Exception('This Request has been started as STATIC ROW REQUEST.\nCreate another RequestCreator instance for building it via dimension.')
+        if dimensions is None:
+            raise ValueError("A dimension must be passed")
+        if isinstance(dimensions, str):
+            dimensions = [dimensions]
         if 'dimensions' in self.__request.keys():
             del self.__request["dimensions"]
-        self.__request["dimension"] = dimension
-        if sort_order:
-            self.setDimensionSort(sort_order)
+        if 'dimension' in self.__request.keys():
+            del self.__request["dimension"]
+        dimension_data =    []
+        if type(dimensions) and len(dimensions) > 1:
+            self.__request["settings"]["nonesBehavior"] = "return-nones"
+        for index, dimension in enumerate(dimensions):
+            if not isinstance(dimension, str):
+                raise ValueError("All dimensions must be strings")
+            dimension_data.append({"columnId": f"col{index}","id": dimension})
+        self.__request["dimensions"] = dimension_data
+
 
     def setIdentityOverrides(self, identity_overrides: list) -> None:
         """
@@ -581,7 +589,6 @@ class RequestCreator:
             raise ValueError("identity_overrides must be a list of dictionaries")
         if not all(isinstance(item, dict) for item in identity_overrides):
             raise ValueError("All items in identity_overrides must be dictionaries")
-        
         self.__request["identityOverrides"] = identity_overrides
     
     def setDataViewId(self, dataViewId: str = None) -> None:

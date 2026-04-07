@@ -57,8 +57,6 @@ setup(
         "pathlib2",
         "pathlib",
         "requests",
-        "PyJWT[crypto]",
-        "PyJWT",
         "pytest",
     ],
     classifiers=CLASSIFIERS,

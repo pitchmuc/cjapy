@@ -8,6 +8,52 @@ This documentation will provide an overview on the different methods available i
 You can always apply the *_help()_* function to any of the method that are available in your instance.\
 Normaly a docstring is available to explain the usage of the parameters.
 
+## Instantiating the CJA class
+
+The `CJA` class accepts an optional `config_object` parameter. Three usage patterns are supported:
+
+**Standard (global config)**
+
+Call `importConfigFile` or `configure` first, then instantiate `CJA` without arguments:
+
+```python
+import cjapy
+
+cjapy.importConfigFile('config.json')
+cja = cjapy.CJA()
+```
+
+**Legacy dict**
+
+Pass a raw config dictionary directly (backwards-compatible with older code):
+
+```python
+cja = cjapy.CJA(config_object=my_dict)
+```
+
+**Isolated `ConfigObj` for parallel usage**
+
+Use `return_object=True` on `importConfigFile` or `configure` to get a `ConfigObj` instance with its own isolated credentials and token state.\
+Pass it to `CJA` to run multiple independent instances in parallel:
+
+```python
+import cjapy
+from concurrent.futures import ThreadPoolExecutor
+
+cfg_a = cjapy.importConfigFile('config_a.json', return_object=True)
+cfg_b = cjapy.importConfigFile('config_b.json', return_object=True)
+
+cja_a = cjapy.CJA(config_object=cfg_a)
+cja_b = cjapy.CJA(config_object=cfg_b)
+
+with ThreadPoolExecutor() as pool:
+    fa = pool.submit(cja_a.getDataViews)
+    fb = pool.submit(cja_b.getDataViews)
+
+print(fa.result())
+print(fb.result())
+```
+
 In the following part, I will explain the GET, DELETE and CREATE methods that are available on your instance of this class.\
 At the end, we will focus briefly on the `getReport` method available.
 

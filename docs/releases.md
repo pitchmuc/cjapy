@@ -3,6 +3,13 @@
 This page will give you the change that are occuring when a new version has been published on pypi.
 The changes have been tracked starting version 0.1.0
 
+## 0.3.0
+* changing the `setDimension` method in `RequestCreator` to `setDimensions` to support multiple dimensions at the same time
+* Adding the capability to import multiple config files and save them as different class instances.
+  * configure method can now take an optional parameter: `return_object`
+  * importConfigFile can now take an optional parameter: `return_object`
+* Removing JWT references and support for JWT configuration file.
+
 ## 0.2.4
 * adding the `getUsers` method
 * adding the `getAssetCount` method

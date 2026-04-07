@@ -76,17 +76,22 @@ class Workspace:
         if reportType == "normal" or reportType == "static":
             df_init = pd.DataFrame(responseData).T
             df_init = df_init.reset_index()
+        elif reportType == "multidimensional":
+            df_init = pd.DataFrame(responseData).T
+            df_init = df_init.reset_index(drop=True)
         elif reportType == "multi":
             df_init = responseData
         if reportType == "normal":
             columns_data = ["itemId"]
         elif reportType == "static":
             columns_data = ["FilterName"]
-        ### adding dimensions & metrics in columns names when reportType is "normal"
-        if "dimension" in dataRequest.keys() and reportType == "normal":
-            columns_data.append(dataRequest["dimension"])
+        elif reportType == "multidimensional":
+            columns_data = []
+        ### adding dimensions & metrics in columns names when reportType is "normal" or "multidimensional"
+        if ("dimension" in dataRequest.keys() or "dimensions" in dataRequest.keys()) and (reportType == "normal" or reportType == "multidimensional"):
+            columns_data += [el['id'] for el in dataRequest.get("dimensions", [])]
             ### adding metrics in columns names
-            columnIds = columns["columnIds"]
+            columnIds = columns.get("columnIds", [])
             for col in columnIds:
                 metrics: dict = metrics  ## case when dict is used
                 metricListName: list = metrics[col].split(":::")
@@ -112,7 +117,7 @@ class Workspace:
             columns_data.append("FilterId")
             columns_data += metrics
         if df_init.empty == False and (
-            reportType == "static" or reportType == "normal"
+            reportType == "static" or reportType == "normal" or reportType == "multidimensional"
         ):
             df_init.columns = columns_data
             self.columns = list(df_init.columns)

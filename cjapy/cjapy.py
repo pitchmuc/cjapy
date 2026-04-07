@@ -13,6 +13,7 @@ import string
 # Non standard libraries
 import pandas as pd
 from cjapy import config, connector
+from .configs import ConfigObj
 from .workspace import Workspace
 from .requestCreator import RequestCreator
 from .projects import Project
@@ -32,17 +33,30 @@ class CJA:
 
     def __init__(
         self,
-        config_object: dict = config.config_object,
-        header: dict = config.header,
+        config_object: Union[ConfigObj, dict, None] = None,
         loggingObject: dict = None,
     ) -> None:
         """
         Instantiate the class with the information provided.
         Arguments:
-            loggingObject : OPTIONAL :If you want to set logging capability for your actions.
-            header : REQUIRED : config header loaded (DO NOT MODIFY)
-            config_object : REQUIRED : config object loaded (DO NOT MODIFY)
+            config_object : OPTIONAL : One of:
+                - A :class:`~cjapy.ConfigObj` instance (created via ``configure(..., return_object=True)``
+                  or ``importConfigFile(..., return_object=True)``), for isolated credentials that allow
+                  multiple CJA instances to run in parallel with different client IDs.
+                - A plain ``dict`` matching the internal config_object structure (legacy usage).
+                - ``None`` (default): uses the global config set by :func:`~cjapy.configure` or
+                  :func:`~cjapy.importConfigFile`.
+            loggingObject : OPTIONAL : If you want to set logging capability for your actions.
         """
+        if isinstance(config_object, ConfigObj):
+            _config_object = config_object.config_object
+            _header = config_object.header
+        elif isinstance(config_object, dict):
+            _config_object = config_object
+            _header = config.header
+        else:
+            _config_object = config.config_object
+            _header = config.header
         if loggingObject is not None and sorted(
             ["level", "stream", "format", "filename", "file"]
         ) == sorted(list(loggingObject.keys())):
@@ -59,8 +73,8 @@ class CJA:
                 streamHandler.setFormatter(formatter)
                 self.logger.addHandler(streamHandler)
         self.connector = connector.AdobeRequest(
-            config_object=config_object,
-            header=header,
+            config_object=_config_object,
+            header=_header,
             loggingEnabled=self.loggingEnabled,
             logger=self.logger,
         )
@@ -2141,9 +2155,16 @@ class CJA:
         data_rows = deepcopy(dataRows)
         expanded_rows = {}
         if reportType == "normal":
-            for row in data_rows:
-                expanded_rows[row["itemId"]] = [row["value"]]
-                expanded_rows[row["itemId"]] += row["data"]
+            for idx, row in enumerate(data_rows):
+                if 'itemId' in row.keys():
+                    expanded_rows[row["itemId"]] = [row["value"]]
+                    expanded_rows[row["itemId"]] += row["data"]
+                elif "itemIds" in row.keys():
+                    expanded_rows[row["itemIds"][0]] = [row["values"][0]]
+                    expanded_rows[row["itemIds"][0]] += row["data"]
+        elif reportType == "multidimensional":
+            for idx, row in enumerate(data_rows):
+                expanded_rows[idx] = list(row["values"]) + row["data"]
         elif reportType == "static":
             expanded_rows = data_rows
         return expanded_rows
@@ -2186,7 +2207,7 @@ class CJA:
                     segmentApplied[obj["id"]] = obj["dateRange"]
         ### table columnIds and StaticRow IDs
         tableColumnIds = {
-            obj["columnId"]: obj.get("filters",[])[0]
+            obj.get("columnId"): obj.get("filters",[])[0]
             for obj 
             in dataRequest["metricContainer"]["metrics"]
         }
@@ -2285,7 +2306,7 @@ class CJA:
         ### Settings
         dataRequest["settings"]["page"] = 0
         dataRequest["settings"]["limit"] = limit
-        if returnsNone:
+        if returnsNone is None or len(dataRequest.get("dimensions",[])) >1 :
             dataRequest["settings"]["nonesBehavior"] = "return-nones"
         else:
             dataRequest["settings"]["nonesBehavior"] = "exclude-nones"
@@ -2405,6 +2426,8 @@ class CJA:
                 metricColumns.append(metricName)
                 ### ending with ['metric1','metric2 + segId',...]
         ### preparing data points
+        if len(dataRequest.get("dimensions",[]))>1 and reportType == "normal":
+            reportType = "multidimensional"
         if self.loggingEnabled:
             self.logger.debug(f"preparing data")
         preparedData = self._prepareData(dataRows, reportType=reportType)

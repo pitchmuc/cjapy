@@ -60,19 +60,48 @@ cja.importConfigFile(myfilePath)
 ### configure
 
 The configure method enables you to set the configuration for the `cjapy` module without importing a file.\
-It obviously takes different parameters that are providing all information required for the retrieval of the token:
-
-The different arguments are:
+It takes the following parameters:
 
 * org_id : REQUIRED : Organization ID
-* tech_id : REQUIRED : Technical Account ID
+* client_id : REQUIRED : The client ID from your Adobe IO project.
 * secret : REQUIRED : secret generated for your connection
-* client_id : REQUIRED : The client_id (old api_key) provided by the JWT connection.
-* scopes : REQUIRED : Require if using the oauth Server to Server
-* path_to_key : REQUIRED : If you have a file containing your private key value. If using jwt.
-* private_key : REQUIRED : If you do not use a file but pass a variable directly. If using jwt.
+* scopes : REQUIRED : The OAuth Server-to-Server scopes defined in your Adobe IO project.
 
-**Note**: JWT integration will be discontinue in 2025. Hence we do not recommend starting a new integration using the `path_to_key` and `private_key` parameters.
+### ConfigObj and multiple CJA instances
+
+Both `importConfigFile` and `configure` accept a `return_object=True` parameter.\
+When set, instead of updating the shared global config they return a `ConfigObj` instance that holds an **isolated** set of credentials and token state.
+
+This allows you to create **multiple independent `CJA` instances** — each connected to a different Adobe IO client — and run them in parallel:
+
+```python
+import cjapy
+from concurrent.futures import ThreadPoolExecutor
+
+# Isolated config objects — one per client
+cfg_a = cjapy.importConfigFile('config_client_a.json', return_object=True)
+cfg_b = cjapy.configure(
+    org_id='ORG_B',
+    client_id='CLIENT_B',
+    secret='SECRET_B',
+    scopes='openid,AdobeID,read_organizations',
+    return_object=True,
+)
+
+# One CJA instance per config
+cja_a = cjapy.CJA(config_object=cfg_a)
+cja_b = cjapy.CJA(config_object=cfg_b)
+
+# Parallelise requests across both clients
+with ThreadPoolExecutor() as pool:
+    fa = pool.submit(cja_a.getDataViews)
+    fb = pool.submit(cja_b.getDataViews)
+
+print(fa.result())
+print(fb.result())
+```
+
+> **Note**: The standard flow without `return_object=True` continues to work unchanged — `importConfigFile` and `configure` still update the global config used by a default `CJA()` call.
 
 ### CJA class
 

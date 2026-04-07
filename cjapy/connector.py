@@ -1,11 +1,12 @@
 import json
 import time
 from copy import deepcopy
+from typing import Dict
 
 # Non standard libraries
 import requests
 
-from cjapy import config, token_provider
+from cjapy import config
 
 
 class AdobeRequest:
@@ -48,17 +49,11 @@ class AdobeRequest:
         self.retry = retry
         self.connectionType = 'oauthV2'
         if self.config["token"] == "" or time.time() > self.config["date_limit"]:
-            if self.config["private_key"] is not None or self.config["pathToKey"] is not None:
-                self.connectionType = 'jwt'
-                token_and_expiry = token_provider.get_jwt_token_and_expiry_for_config(
-                    config=self.config, verbose=verbose
-                )
-            elif self.config["scopes"] is not None:
-                self.connectionType = 'oauthV2'
-                token_and_expiry = token_provider.get_oauth_token_and_expiry_for_config(
-                    config=self.config,
-                    verbose=verbose
-                )
+            self.connectionType = 'oauthV2'
+            token_and_expiry = self.get_oauth_token_and_expiry_for_config(
+                config=self.config,
+                verbose=verbose
+            )
             token = token_and_expiry["token"]
             expiry = token_and_expiry["expiry"]
             if self.loggingEnabled:
@@ -68,6 +63,34 @@ class AdobeRequest:
             self.config["date_limit"] = time.time() + expiry - 500
             self.header.update({"Authorization": f"Bearer {token}"})
 
+    def get_oauth_token_and_expiry_for_config(self, config: dict, 
+            verbose: bool = False,
+            save: bool = False
+        ) -> Dict[str, str]:
+            """
+            Retrieve the access token by using the OAuth information provided by the user
+            during the import importConfigFile function.
+            Arguments :
+                config : REQUIRED : Configuration object.
+                verbose : OPTIONAL : Default False. If set to True, print information.
+                save : OPTIONAL : Default False. If set to True, save the toke in the .
+            """
+            oauth_payload = {
+                "grant_type": "client_credentials",
+                "client_id": config["client_id"],
+                "client_secret": config["secret"],
+                "scope": config["scopes"]
+            }
+            response = requests.post(
+                config["oauthTokenEndpoint"], data=oauth_payload
+            )
+            responseJson = response.json()
+            token = responseJson.get('access_token')
+            expiry = responseJson.get("expires_in")
+            if token is None or expiry is None:
+                raise Exception(f"OAuth response missing required fields. Response: {responseJson}")
+            return {'token': token, 'expiry': expiry}
+
     def _checkingDate(self) -> None:
         """
         Checking if the token is still valid
@@ -76,16 +99,12 @@ class AdobeRequest:
         if now > self.config["date_limit"]:
             if self.loggingEnabled:
                 self.logger.warning("token expired. Trying to retrieve a new token")
-            if self.connectionType == 'jwt':
-                token_with_expiry = token_provider.get_jwt_token_and_expiry_for_config(
-                    config=self.config)
-            elif self.connectionType == 'oauthV2':
-                token_with_expiry = token_provider.get_oauth_token_and_expiry_for_config(
-                    config=self.config)
+            token_with_expiry = self.get_oauth_token_and_expiry_for_config(
+                config=self.config)
             token = token_with_expiry["token"]
             expiry = token_with_expiry["expiry"]
             if self.loggingEnabled:
-                self.logger.info("new token retrieved : {token}")
+                self.logger.info(f"new token retrieved : {token}")
             self.config["token"] = token
             self.config["date_limit"] = time.time() + expiry - 500
             self.header.update({"Authorization": f"Bearer {token}"})
