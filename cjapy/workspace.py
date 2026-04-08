@@ -195,6 +195,10 @@ class Workspace:
             dimension : REQUIRED : dimension to report.
             n_results : OPTIONAL : number of results you want to have on your breakdown. Default 10, can use "inf"
         """
+        if self.reportType == "multidimensional":
+            raise NotImplementedError(
+                "Breakdown is not supported for multidimensional report type."
+            )
         if index is None or dimension is None:
             raise ValueError(
                 "Require a value to use as breakdown and dimension to request"

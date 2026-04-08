@@ -5,6 +5,8 @@ from typing import Dict
 
 # Non standard libraries
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from cjapy import config
 
@@ -62,6 +64,7 @@ class AdobeRequest:
             self.config["token"] = token
             self.config["date_limit"] = time.time() + expiry - 500
             self.header.update({"Authorization": f"Bearer {token}"})
+        self.session = self._build_session(self.retry)
 
     def get_oauth_token_and_expiry_for_config(self, config: dict, 
             verbose: bool = False,
@@ -91,6 +94,29 @@ class AdobeRequest:
                 raise Exception(f"OAuth response missing required fields. Response: {responseJson}")
             return {'token': token, 'expiry': expiry}
 
+    def _build_session(self, max_retries: int) -> requests.Session:
+        """
+        Build a requests.Session with an HTTPAdapter configured for retrying
+        on 429 and common 5xx server errors with exponential back-off.
+
+        The adapter honours the ``Retry-After`` response header so the wait
+        time advertised by the server is respected automatically.
+        """
+        session = requests.Session()
+        retry_strategy = Retry(
+            total=max(max_retries, 3),
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods={"DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE"},
+            backoff_factor=1,
+            respect_retry_after_header=True,
+            raise_on_status=False,
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+        session.headers.update(self.header)
+        return session
+
     def _checkingDate(self) -> None:
         """
         Checking if the token is still valid
@@ -108,9 +134,7 @@ class AdobeRequest:
             self.config["token"] = token
             self.config["date_limit"] = time.time() + expiry - 500
             self.header.update({"Authorization": f"Bearer {token}"})
-            self.config["date_limit"] = (
-                time.time() + (token_with_expiry["expiry"]) - 500
-            )
+            self.session.headers.update({"Authorization": f"Bearer {token}"})
             
     def getData(
         self,
@@ -124,34 +148,19 @@ class AdobeRequest:
         """
         Abstraction for getting data
         """
-        internRetry = kwargs.get("retry", self.retry)
         expansion = kwargs.get("expansion")
         if expansion:
+            if params is None:
+                params = {}
             params["expansion"] = expansion
         self._checkingDate()
-        if headers is None:
-            headers = self.header
-        if params is None and data is None:
-            res = requests.get(endpoint, headers=headers)
-        elif params is not None and data is None:
-            res = requests.get(endpoint, headers=headers, params=params)
-        elif params is None and data is not None:
-            res = requests.get(endpoint, headers=headers, data=data)
-        elif params is not None and data is not None:
-            res = requests.get(endpoint, headers=headers, params=params, data=data)
+        res = self.session.get(endpoint, params=params, data=data, headers=headers)
         if self.loggingEnabled:
             self.logger.debug(f"request_URL : {res.request.url}")
-            self.logger.debug(f"header used: {json.dumps(headers)}")
+            self.logger.debug(f"header used: {json.dumps(dict(self.session.headers))}")
             self.logger.debug(f"status_code: {res.status_code}")
             self.logger.debug(f"parameters used: {json.dumps(params)}")
         try:
-            while str(res.status_code) == "429":
-                if self.loggingEnabled:
-                    self.logger.info(
-                        f"Too many requests: retrying in {self.restTime} seconds"
-                    )
-                time.sleep(self.restTime)
-                res = requests.get(endpoint, headers=headers, params=params, data=data)
             res_json = res.json()
         except:
             ## handling 1.4
@@ -161,27 +170,10 @@ class AdobeRequest:
                 except:
                     if self.loggingEnabled:
                         self.logger.error(
-                            f"GET method failed: {res.status}, {res.status}"
+                            f"GET method failed: {res.status_code}, {res.text}"
                         )
                     return res.text
             res_json = {"error": "Request Error"}
-            while internRetry > 0:
-                if self.loggingEnabled:
-                    self.logger.warning(f"Trying again with internal retry")
-                if kwargs.get("verbose", False):
-                    print("Retry parameter activated")
-                    print(f"{internRetry} retry left")
-                if "error" in res_json.keys():
-                    time.sleep(30)
-                    res_json = self.getData(
-                        endpoint,
-                        params=params,
-                        data=data,
-                        headers=headers,
-                        retry=internRetry - 1,
-                        **kwargs,
-                    )
-                    return res_json
         return res_json
 
     def postData(
@@ -198,31 +190,22 @@ class AdobeRequest:
         """
         expansion = kwargs.get("expansion")
         if expansion:
+            if params is None:
+                params = {}
             params["expansion"] = expansion
         self._checkingDate()
-        if headers is None:
-            headers = self.header
         if params is None and data is None:
-            res = requests.post(endpoint, headers=headers)
+            res = self.session.post(endpoint, headers=headers)
         elif params is not None and data is None:
-            res = requests.post(endpoint, headers=headers, params=params)
+            res = self.session.post(endpoint, params=params, headers=headers)
         elif params is None and data is not None:
-            res = requests.post(endpoint, headers=headers, data=json.dumps(data))
+            res = self.session.post(endpoint, data=json.dumps(data), headers=headers)
         elif params is not None and data is not None:
-            res = requests.post(
-                endpoint, headers=headers, params=params, data=json.dumps(data)
-            )
+            res = self.session.post(endpoint, params=params, data=json.dumps(data), headers=headers)
         if self.loggingEnabled:
             self.logger.debug(f"request_URL : {res.request.url}")
             self.logger.debug(f"status_code: {res.status_code}")
         try:
-            while (
-                res.status_code == 429 or res.json().get("error_code", None) == "429050"
-            ):
-                if self.loggingEnabled:
-                    self.logger.warning(f"too many request: {res.status}, {res.text}")
-                time.sleep(30)
-                res = self.postData(endpoint, headers=headers, params=params, data=data)
             res_json = res.json()
         except:
             ## handling 1.4
@@ -232,10 +215,10 @@ class AdobeRequest:
                 except:
                     if self.loggingEnabled:
                         self.logger.error(
-                            f"POST method failed: {res.status}, {res.text}"
+                            f"POST method failed: {res.status_code}, {res.text}"
                         )
                     return res.text
-            if res.status_code == '504':
+            if res.status_code == 504:
                 res_json = {"error-504": "504 Gateway Time-out"}
             else:
                 res_json = {"error": f"Request Error, status: {res.status_code}"}
@@ -254,31 +237,22 @@ class AdobeRequest:
         Abstraction for patching data
         """
         self._checkingDate()
-        if headers is None:
-            headers = self.header
-        if params is not None and data is None:
-            res = requests.patch(endpoint, headers=headers, params=params)
+        if params is None and data is None:
+            res = self.session.patch(endpoint, headers=headers)
+        elif params is not None and data is None:
+            res = self.session.patch(endpoint, params=params, headers=headers)
         elif params is None and data is not None:
-            res = requests.patch(endpoint, headers=headers, data=json.dumps(data))
+            res = self.session.patch(endpoint, data=json.dumps(data), headers=headers)
         elif params is not None and data is not None:
-            res = requests.patch(
-                endpoint, headers=headers, params=params, data=json.dumps(data)
-            )
+            res = self.session.patch(endpoint, params=params, data=json.dumps(data), headers=headers)
         if self.loggingEnabled:
             self.logger.debug(f"request_URL : {res.request.url}")
             self.logger.debug(f"status_code: {res.status_code}")
         try:
-            while str(res.status_code) == "429":
-                if kwargs.get("verbose", False):
-                    print(f"Too many requests: retrying in {self.restTime} seconds")
-                time.sleep(self.restTime)
-                res = requests.patch(
-                    endpoint, headers=headers, params=params, data=json.dumps(data)
-                )
             res_json = res.json()
         except:
             if self.loggingEnabled:
-                self.logger.error(f"PATCH method failed: {res.status}, {res.text}")
+                self.logger.error(f"PATCH method failed: {res.status_code}, {res.text}")
             res_json = {"error": "Request Error"}
         return res_json
 
@@ -296,22 +270,18 @@ class AdobeRequest:
         """
         expansion = kwargs.get("expansion")
         if expansion:
+            if params is None:
+                params = {}
             params["expansion"] = expansion
         self._checkingDate()
-        if headers is None:
-            headers = self.header
         if params is not None and data is None:
-            res = requests.put(endpoint, headers=headers, params=params)
+            res = self.session.put(endpoint, params=params, headers=headers)
         elif params is None and data is not None:
-            res = requests.put(endpoint, headers=headers, data=json.dumps(data))
+            res = self.session.put(endpoint, data=json.dumps(data), headers=headers)
         elif params is not None and data is not None:
-            res = requests.put(
-                endpoint, headers=headers, params=params, data=json.dumps(data)
-            )
+            res = self.session.put(endpoint, params=params, data=json.dumps(data), headers=headers)
         elif params is None and data is None:
-            res = requests.put(
-                endpoint, headers=headers
-            )
+            res = self.session.put(endpoint, headers=headers)
         if self.loggingEnabled:
             self.logger.debug(f"request_URL : {res.request.url}")
             self.logger.debug(f"status_code: {res.status_code}")
@@ -319,7 +289,7 @@ class AdobeRequest:
             status_code = res.json()
         except:
             if self.loggingEnabled:
-                self.logger.error(f"PUT method failed: {res.status}, {res.text}")
+                self.logger.error(f"PUT method failed: {res.status_code}, {res.text}")
             status_code = {"error": "Request Error"}
         return status_code
 
@@ -330,21 +300,14 @@ class AdobeRequest:
         Abstraction for deleting data
         """
         self._checkingDate()
-        if headers is None:
-            headers = self.header
         if params is None:
-            res = requests.delete(endpoint, headers=headers)
+            res = self.session.delete(endpoint, headers=headers)
         elif params is not None:
-            res = requests.delete(endpoint, headers=headers, params=params)
+            res = self.session.delete(endpoint, params=params, headers=headers)
         try:
-            while str(res.status_code) == "429":
-                if kwargs.get("verbose", False):
-                    print(f"Too many requests: retrying in {self.restTime} seconds")
-                time.sleep(self.restTime)
-                res = requests.delete(endpoint, headers=headers, params=params)
             status_code = res.status_code
         except:
             if self.loggingEnabled:
-                self.logger.error(f"DELETE method failed: {res.status}, {res.text}")
+                self.logger.error(f"DELETE method failed: {res.status_code}, {res.text}")
             status_code = {"error": "Request Error"}
         return status_code
