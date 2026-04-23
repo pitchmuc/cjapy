@@ -58,6 +58,7 @@ setup(
         "pathlib",
         "requests",
         "pytest",
+        "deprecation",
     ],
     classifiers=CLASSIFIERS,
     python_requires=">=3.6",

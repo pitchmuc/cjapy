@@ -9,7 +9,9 @@ The changes have been tracked starting version 0.1.0
   * configure method can now take an optional parameter: `return_object`
   * importConfigFile can now take an optional parameter: `return_object`
 * Removing JWT references and support for JWT configuration file.
-* More robust handling of issues related to connection errors and over-usage of the API. Refactor of the connector module.
+* More robust handling of issues related to connection errors and over-usage of the API. Refactor of the connector module.\
+Patch:
+* Fix dependency issues with`deprecation` package and remove the `PyJWT` package.
 
 ## 0.2.4
 * adding the `getUsers` method
