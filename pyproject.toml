@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -29,7 +29,6 @@ dependencies = [
         "pathlib",
         "requests",
         "deprecation",
-        "pytest",
     ]
 dynamic = ["version"]
 
@@ -40,5 +39,12 @@ changelog = "https://github.com/pitchmuc/cjapy/blob/master/docs/releases.md"
 [tool.setuptools]
 include-package-data = true
 
+[tool.setuptools.packages.find]
+include = ["cjapy", "cjapy.*"]
+namespaces = false
+
+[tool.setuptools.dynamic]
+version = {attr = "cjapy.__version__.__version__"}
+
 [project.optional-dependencies]
-dynamic = ["version"]
+test = ["pytest>=9.0.3"]
