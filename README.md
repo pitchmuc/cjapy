@@ -69,9 +69,36 @@ In order to use this API in python, you would need to have those libraries insta
 * pathlib
 * pytest
 
-## Test
+## Tests
 
-TBW
+Use Python 3.10 or newer, create a virtual environment, and install the package
+and test dependencies from the repository root:
+
+```sh
+python -m venv .venv
+# Activate .venv using the command for your shell, e.g. source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+```
+
+The connector tests use a local HTTP server on an ephemeral loopback port and
+synthetic, non-expiring credentials. No Adobe account, configuration file, secrets,
+or external network access is needed to run them after dependencies are installed.
+External connections are blocked by a test fixture; local loopback sockets must
+be permitted. The tests exercise the actual requests/urllib3 retry adapter and
+replace only urllib3's clock and sleep functions to verify delays without waiting.
+
+Coverage includes JSON responses, 429 and transient 500/502/503/504 responses,
+Retry-After seconds and HTTP dates, exponential backoff, and retry exhaustion.
+The tests characterize current behavior: `retry=0` still permits three retries,
+POST/PATCH requests are retried too, and exhaustion returns the final JSON error
+(or HTTP status for DELETE) instead of raising a status-retry exception.
+
+GitHub Actions runs the suite on Python 3.10–3.14 for pushes and pull requests.
+This follows `pyproject.toml`'s `requires-python = ">=3.10"`. The older
+`setup.py` declaration (`>=3.6`) and the Python 3.6–3.9 classifiers across the
+metadata files conflict with that minimum. Those declarations remain unchanged;
+maintainers should reconcile the support policy separately.
 
 ## Others Sources
 
