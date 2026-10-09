@@ -13,3 +13,8 @@ __pycache__/
 
 # Optional: log files
 *.log
+
+# Local environments and distribution builds
+.venv/
+build/
+dist/
