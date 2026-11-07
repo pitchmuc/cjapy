@@ -62,8 +62,6 @@ There is a proper documentation in place to understand how you can add the loggi
 Runtime dependencies are declared in `pyproject.toml`:
 
 * pandas
-* pathlib2
-* pathlib
 * requests
 * deprecation
 
@@ -83,5 +81,5 @@ You can find information about the CJA API here :
 ## Packaging checks
 
 See [packaging and release checks](./docs/packaging.md) for wheel/sdist builds,
-fresh-install smoke checks, test dependencies, and unresolved Python/license
-metadata questions.
+fresh-install smoke checks, and test dependencies. The project requires
+Python 3.10 or newer and is licensed under Apache License 2.0.

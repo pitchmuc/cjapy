@@ -38,6 +38,9 @@ assert cjapy.__version__ == metadata.version == sys.argv[1]
 assert importlib.util.find_spec("pytest") is None, "pytest leaked into the runtime install"
 assert "dynamic" not in metadata.metadata.get_all("Provides-Extra", [])
 assert "test" in metadata.metadata.get_all("Provides-Extra", [])
+assert metadata.metadata["Requires-Python"] == ">=3.10", metadata.metadata["Requires-Python"]
+assert metadata.metadata["License-Expression"] == "Apache-2.0", metadata.metadata["License-Expression"]
+assert not any("GPL" in c for c in metadata.metadata.get_all("Classifier", [])), "stale GPL classifier"
 print("Installed", metadata.metadata["Name"], metadata.version, "from", installed)
 """
 

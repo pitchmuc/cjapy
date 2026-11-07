@@ -1,7 +1,8 @@
 # Packaging and release checks
 
-The build backend remains setuptools. Package metadata and runtime dependencies
-are configured in `pyproject.toml`; the version comes from the literal
+The build backend remains setuptools (77.0.3 or newer for SPDX license metadata).
+Package metadata and runtime dependencies are configured in `pyproject.toml`;
+the version comes from the literal
 `__version__` in `cjapy/__version__.py`. Building does not import cjapy or require
 Adobe credentials. Only the `cjapy` package is included in the wheel. The sdist
 also includes contributor documentation and the distribution-check script.
@@ -33,8 +34,7 @@ installed version matches the source version literal. Socket access is blocked
 during imports. Installing dependencies and building the sdist still require
 access to a package index (or a preconfigured local mirror/cache).
 
-The Packaging workflow runs these checks on Python 3.10–3.14. This is a validation
-matrix, not a resolution of the conflicting support declarations below.
+The Packaging workflow runs these checks on Python 3.10-3.14.
 
 ## Test dependencies
 
@@ -46,29 +46,24 @@ python -m pip install -e '.[test]'
 ```
 
 `requirements.txt` retains the existing runtime dependency lower bounds, without
-pytest. The package's existing runtime dependency versions and the legacy
-pathlib/pathlib2 dependencies are unchanged. `setuptools-scm` is no longer a
-build requirement: the version is read from the package's version file, and
+pytest. The package uses Python's standard-library `pathlib` instead of external
+backport dependencies. `setuptools-scm` is no longer a build requirement:
+the version is read from the package's version file, and
 `MANIFEST.in` explicitly retains the documentation previously found via Git.
 
-## Questions for maintainers
+## License
 
-These declarations remain unchanged until maintainers confirm the intended policy:
+The project uses Apache License 2.0. `pyproject.toml` declares the SPDX expression
+`Apache-2.0` and includes the existing `LICENSE` file in distributions. The stale
+GPL declarations and license classifiers have been removed.
 
-- **Python:** `pyproject.toml` declares `>=3.10`, whereas `setup.py` declares
-  `>=3.6`; both have classifiers advertising older versions. The baseline build
-  with setuptools 84 emits `Requires-Python: >=3.6`, despite the pyproject value.
-  Should all declarations converge on 3.10+, or is older Python still supported?
-  This PR preserves the declarations and baseline built requirement; it does not
-  claim that the untested older versions work.
-- **License:** `LICENSE` contains Apache License 2.0 and `pyproject.toml` names
-  Apache License 2.0, while `setup.py` says GPL and both files include a GPLv3
-  classifier. Which license metadata should releases publish? No license text,
-  field, or classifier is changed here. Existing setuptools license deprecation
-  warnings remain pending that decision.
+## Python support and packaging configuration
 
-`setup.py` deliberately retains only those unresolved legacy policy declarations.
-Its duplicate dependency list, version parser, package discovery, and other
-metadata have moved to the existing pyproject configuration. Do not remove the
-remaining declarations without checking both the intended policy and built
-metadata.
+Python 3.10 is the minimum supported version, declared by `requires-python` in
+`pyproject.toml`. Python 3.6-3.9 are no longer advertised or accepted by installers.
+The distribution check verifies that built metadata also declares `>=3.10`.
+
+`setup.py` has been removed: modern pip and `python -m build` use the setuptools
+backend declared in `pyproject.toml` without it. All package metadata, dependency
+declarations, package discovery, and version configuration now live in that file.
+Use `python -m build` rather than legacy `python setup.py` commands.
