@@ -59,15 +59,11 @@ There is a proper documentation in place to understand how you can add the loggi
 
 ## Dependencies
 
-In order to use this API in python, you would need to have those libraries installed :
+Runtime dependencies are declared in `pyproject.toml`:
 
 * pandas
 * requests
-* json
-* PyJWT
-* PyJWT[crypto]
-* pathlib
-* pytest
+* deprecation
 
 ## Test
 
@@ -81,3 +77,9 @@ You can find information about the CJA API here :
 * [https://www.adobe.io/cja-apis/docs/use-cases/]
 
 [1]: https://www.datanalyst.info
+
+## Packaging checks
+
+See [packaging and release checks](./docs/packaging.md) for wheel/sdist builds,
+fresh-install smoke checks, and test dependencies. The project requires
+Python 3.10 or newer and is licensed under Apache License 2.0.

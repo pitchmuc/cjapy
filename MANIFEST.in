@@ -1,0 +1,3 @@
+include requirements.txt requirements-build.txt
+recursive-include docs *.md
+recursive-include scripts *.py
