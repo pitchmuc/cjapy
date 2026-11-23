@@ -751,7 +751,7 @@ class RequestCreator:
         if pos > -1:
             self.__request["globalFilters"][pos] = newDef
         else:  ## in case there is no dateRange already
-            self.__request["globalFilters"][pos].append(newDef)
+            self.__request["globalFilters"].append(newDef)
 
     def removeGlobalFilter(self, index: int = None, filterId: str = None) -> None:
         """

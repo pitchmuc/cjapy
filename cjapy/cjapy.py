@@ -3,12 +3,14 @@
 import json
 from copy import deepcopy
 from pathlib import Path
-from typing import IO, Union, List
+from typing import IO, Union, List, Optional
 from collections import defaultdict, deque
 import time, logging, re
 from itertools import tee
 from datetime import datetime, timedelta
 import string
+import deprecation
+from cjapy.__version__ import __version__
 
 # Non standard libraries
 import pandas as pd
@@ -83,6 +85,7 @@ class CJA:
         self.listProjectIds = []
         self.projectsDetails = {}
         self.filters = []
+        self.segments = []
         self.calculatedMetrics: JsonListOrDataFrameType = []
 
     def getCurrentUser(self, admin: bool = False, useCache: bool = True, **kwargs) -> dict:
@@ -105,7 +108,7 @@ class CJA:
             limit : OPTIONAL : Number of result per request.
             page : OPTIONAL : page used to request
         """
-        path = "/configuration/org/users"
+        path = "/configuration/orgs/users"
         params = {'limit': limit,"page":page}
         res = self.connector.getData(self.endpoint+path,params=params)
         data = res.get('content',[])
@@ -190,7 +193,7 @@ class CJA:
             return df
         if cache:
             self.calculatedMetrics = data
-        return res
+        return data
 
     def getCalculatedMetricsFunctions(
         self, output: str = "raw"
@@ -229,13 +232,16 @@ class CJA:
         res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
 
-    def createCalculatedMetric(self, data: dict = None) -> dict:
+    def createCalculatedMetric(self, data: dict | str = None) -> dict:
         """
         Create a calculated metrics based on the dictionary.
         Arguments:
-            data : REQUIRED : dictionary that will set the creation.
+            data : REQUIRED : dictionary or JSON file path that will set the creation.
         """
-        if data is None:
+        if type(data) == str and 'json' in data:
+            with open(data, 'r') as f:
+                data = json.load(f)
+        if data is None or type(data) != dict:
             raise ValueError("Require a dictionary to create the calculated metrics")
         if self.loggingEnabled:
             self.logger.debug(f"createCalculatedMetric start")
@@ -243,14 +249,17 @@ class CJA:
         res = self.connector.postData(self.endpoint + path, data=data)
         return res
 
-    def validateCalculatedMetric(self, data: dict = None) -> dict:
+    def validateCalculatedMetric(self, data: dict | str = None) -> dict:
         """
         Validate a calculated metrics definition dictionary.
         Arguments:
-            data : REQUIRED : dictionary that will set the creation.
+            data : REQUIRED : dictionary or JSON file path that will set the creation.
         """
-        if data is None or type(data) == dict:
-            raise ValueError("Require a dictionary to create the calculated metrics")
+        if type(data) == str and 'json' in data:
+            with open(data, 'r') as f:
+                data = json.load(f)
+        if data is None or type(data) != dict:
+            raise ValueError("Require a dictionary to validate the calculated metrics")
         if self.loggingEnabled:
             self.logger.debug(f"validateCalculatedMetric start")
         path = "/calculatedmetrics/validate"
@@ -271,7 +280,7 @@ class CJA:
         res = self.connector.deleteData(self.endpoint + path)
         return res
 
-    def updateCalculatedMetrics(self, calcId: str = None, data: dict = None, **kwargs) -> dict:
+    def updateCalculatedMetrics(self, calcId: str = None, data: dict | str = None, **kwargs) -> dict:
         """
         Will overwrite the calculated metrics object with the new object (PUT method)
         Arguments:
@@ -280,8 +289,11 @@ class CJA:
         """
         if calcId is None:
             raise ValueError("Require a calculated metrics")
+        if type(data) == str and 'json' in data:
+            with open(data, 'r') as f:
+                data = json.load(f)
         if data is None or type(data) != dict:
-            raise ValueError("Require a dictionary to create the calculated metrics")
+            raise ValueError("Require a dictionary to update the calculated metrics")
         if self.loggingEnabled:
             self.logger.debug(f"updateCalculatedMetrics start, id: {calcId}")
         path = f"/calculatedmetrics/{calcId}"
@@ -526,14 +538,14 @@ class CJA:
         """
         Create a single dateRange with the dictionary passed
         Argument:
-            dateRangeData : REQUIRED : date range ID to be created
+            dateRangeData : REQUIRED : dictionary holding the new date range definition
         """
         if dateRangeData is None:
             raise ValueError("Require a dictionary with the information")
         if self.loggingEnabled:
             self.logger.debug(f"createDateRange start")
         path = f"/dateranges/"
-        res = self.connector.putData(self.endpoint + path, data=dateRangeData, **kwargs)
+        res = self.connector.postData(self.endpoint + path, data=dateRangeData, **kwargs)
         return res
 
     def getTags(self, limit: int = 100) -> dict:
@@ -545,9 +557,16 @@ class CJA:
         if self.loggingEnabled:
             self.logger.debug(f"getTags start")
         path = "/componentmetadata/tags"
-        params = {"limit": limit}
+        params = {"limit": limit,'page': 0}
         res = self.connector.getData(self.endpoint + path, params=params)
-        return res
+        data = res.get('content',[])
+        last_page = res.get('lastPage', True)
+        while not last_page:
+            params['page'] += 1
+            res = self.connector.getData(self.endpoint + path, params=params)
+            data.extend(res.get('content', []))
+            last_page = res.get('lastPage', True)
+        return data
 
     def createTags(self, data: list = None) -> dict:
         """
@@ -566,7 +585,7 @@ class CJA:
                 ]
         """
         path = "/componentmetadata/tags"
-        if data is None and type(data) != list:
+        if data is None or type(data) != list:
             raise ValueError("Require a list of tags to be created")
         if self.loggingEnabled:
             self.logger.debug(f"createTags start")
@@ -605,7 +624,7 @@ class CJA:
             raise KeyError("componentType not in the enum")
         if self.loggingEnabled:
             self.logger.debug(f"deleteTags start")
-        params = {componentType: componentType, componentIds: componentIds}
+        params = {'componentType': componentType, 'componentIds': componentIds}
         res = self.connector.deleteData(self.endpoint + path, params=params)
         return res
 
@@ -957,7 +976,7 @@ class CJA:
         if output =='df':
             df = pd.DataFrame(metrics)
             return df
-        return res
+        return metrics
 
     def getMetric(
         self, dataviewId: str = None, metricId: str = None, full: bool = True, **kwargs
@@ -1207,13 +1226,13 @@ class CJA:
         return res
 
     def updateDataView(
-        self, dataViewId: str = None, data: Union[dict, IO] = None, **kwargs
+        self, dataViewId: str = None, data: dict | str = None, **kwargs
     ) -> dict:
         """
         Update the Data View definition (PUT method)
         Arguments:
             dataViewId : REQUIRED : the data view ID to be updated
-            data : REQUIRED : The dictionary or JSON file that holds the definition for the dataview to be updated
+            data : REQUIRED : The dictionary or JSON file path that holds the definition for the dataview to be updated
         possible kwargs:
             encoding : if you pass a JSON file, you can change the encoding to read it.
         """
@@ -1226,7 +1245,7 @@ class CJA:
         path = f"/data/dataviews/{dataViewId}"
         if ".json" in data:
             with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
-                data = json.load(f.read())
+                data = json.load(f)
         res = self.connector.putData(self.endpoint + path, data=data)
         return res
 
@@ -1244,6 +1263,84 @@ class CJA:
         res = self.connector.putData(self.endpoint + path, **kwargs)
         return res
 
+    def getSegments(
+            self,
+            limit: int = 1000,
+            full: bool = False,
+            output: str = "df",
+            includeType: str = "all",
+            name: str = None,
+            dataIds: str = None,
+            ownerId: str = None,
+            filterByIds: str = None,
+            cached: bool = True,
+            cache: bool = True,
+            verbose: bool = False,
+            **kwargs
+        ) -> JsonListOrDataFrameType:
+            """
+            Returns a list of segments used in CJA.
+            Arguments:
+                limit : OPTIONAL : number of result per request (default 100)
+                full : OPTIONAL : add additional information to the filters
+                output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
+                includeType : OPTIONAL : Include additional segments not owned by user.(default all)
+                    possible values are "shared" "templates" "deleted" "internal"
+                name : OPTIONAL : Filter list to only include filters that contains the Name
+                dataIds : OPTIONAL : Filter list to only include filters tied to the specified data group ID list (comma-delimited)
+                ownerId : OPTIONAL : Filter by a specific owner ID.
+                filterByIds : OPTIONAL : Filters by filter ID (comma-separated list)
+                cached : OPTIONAL : return cached results
+                cache : OPTIONAL : If you want to cache the results in a local variable
+                toBeUsedInRsid : OPTIONAL : The report suite where the filters is intended to be used. This report suite will be used to determine things like compatibility and permissions.
+            """
+            if self.loggingEnabled:
+                self.logger.debug(f"getSegments start, output: {output}")
+            path = "/segments"
+            params = {
+                "limit": limit,
+                "cached": cached,
+                "includeType": includeType,
+                "page": 0,
+            }
+            if full:
+                params[
+                    "expansion"
+                ] = "compatibility,definition,internal,modified,isDeleted,definitionLastModified,createdDate,recentRecordedAccess,performanceScore,owner,dataId,ownerFullName,dataName,sharesFullName,approved,favorite,shares,tags,usageSummary,usageSummaryWithRelevancyScore"
+            if name is not None:
+                params["name"] = name
+            if dataIds is not None:
+                params["dataIds"] = dataIds
+            if ownerId is not None:
+                params["ownerId"] = ownerId
+            if filterByIds is not None:
+                params["filterByIds"] = filterByIds
+            res = self.connector.getData(
+                self.endpoint + path, params=params, verbose=verbose, **kwargs
+            )
+            lastPage = res.get("lastPage", True)
+            data = res["content"]
+            while lastPage == False:
+                params["page"] += 1
+                res = self.connector.getData(
+                    self.endpoint + path, params=params, verbose=verbose, **kwargs
+                )
+                data += res["content"]
+                lastPage = res.get("lastPage", True)
+            if cache:
+                self.segments = data
+            if output == "df":
+                df = pd.DataFrame(data)
+                return df
+            return data
+
+
+    @deprecation.deprecated(
+        deprecated_in="0.3.1",
+        removed_in="1.0",
+        current_version=__version__,
+        details="Use the getSegments() instead."
+        )
     def getFilters(
         self,
         limit: int = 1000,
@@ -1315,6 +1412,37 @@ class CJA:
             return df
         return data
 
+    def getSegment(
+            self,
+            segmentId: str = None,
+            full: bool = False,
+            **kwargs
+        ) -> dict:
+            """
+            Returns a single segment definition by its ID.
+            Arguments:
+                segmentId : REQUIRED : ID of the segment
+                full : OPTIONAL : Boolean to define additional elements
+            """
+            if segmentId is None:
+                raise ValueError("Require a segment ID")
+            if self.loggingEnabled:
+                self.logger.debug(f"getSegment start, id: {segmentId}")
+            path = f"/segments/{segmentId}"
+            params = {}
+            if full:
+                params[
+                    "expansion"
+                ] = "compatibility,definition,internal,modified,isDeleted,definitionLastModified,createdDate,recentRecordedAccess,performanceScore,owner,dataId,ownerFullName,dataName,sharesFullName,approved,favorite,shares,tags,usageSummary,usageSummaryWithRelevancyScore"
+            res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
+            return res
+
+    @deprecation.deprecated(
+        deprecated_in="0.3.1",
+        removed_in="1.0",
+        current_version=__version__,
+        details="Use the getSegment() instead."
+        )
     def getFilter(
         self,
         filterId: str = None,
@@ -1340,6 +1468,26 @@ class CJA:
         res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
 
+    def deleteSegment(self, segmentId: str = None) -> str:
+        """
+        Delete a segment based on its ID.
+        Arguments:
+            segmentId : REQUIRED : Segment ID to be deleted
+        """
+        if segmentId is None:
+            raise ValueError("Require a segment ID")
+        if self.loggingEnabled:
+            self.logger.debug(f"deleteSegment start, id: {segmentId}")
+        path = f"/segments/{segmentId}"
+        res = self.connector.deleteData(self.endpoint + path)
+        return res
+
+    @deprecation.deprecated(
+        deprecated_in="0.3.1",
+        removed_in="1.0",
+        current_version=__version__,
+        details="Use the deleteSegment() instead."
+        )
     def deleteFilter(self, filterId: str = None) -> str:
         """
         Delete a filter based on its ID.
@@ -1354,11 +1502,41 @@ class CJA:
         res = self.connector.deleteData(self.endpoint + path)
         return res
 
-    def validateFilter(self, data: Union[dict, IO] = None, **kwargs) -> dict:
+
+    def validateSegment(self, data: dict | str = None, **kwargs) -> dict:
+        """
+        Validate the syntax for a segment creation.
+        Arguments:
+            data : REQUIRED : Dictionary or JSON file path to create a segment
+        possible kwargs:
+            encoding : if you pass a JSON file, you can change the encoding to read it.
+        """
+        if data is None:
+            raise ValueError("Require some data to validate")
+        if self.loggingEnabled:
+            self.logger.debug(f"validateSegment start")
+        path = "/segments/validate"
+        if ".json" in data:
+            with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
+                data = json.load(f)
+        elif type(data) == dict:
+            data = data
+        else:
+            raise ValueError("Data must be a dictionary or a JSON file path")
+        res = self.connector.postData(self.endpoint + path, data=data)
+        return res
+
+    @deprecation.deprecated(
+        deprecated_in="0.3.1",
+        removed_in="1.0",
+        current_version=__version__,
+        details="Use the validateSegment() instead."
+        )
+    def validateFilter(self, data: dict | str = None, **kwargs) -> dict:
         """
         Validate the syntax for filter creation.
         Arguments:
-            data : REQUIRED : Dictionary or JSON file to create a filter
+            data : REQUIRED : Dictionary or JSON file path to create a filter
         possible kwargs:
             encoding : if you pass a JSON file, you can change the encoding to read it.
         """
@@ -1369,15 +1547,44 @@ class CJA:
         path = "/filters/validate"
         if ".json" in data:
             with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
-                data = json.load(f.read())
+                data = json.load(f)
         res = self.connector.postData(self.endpoint + path, data=data)
         return res
 
-    def createFilter(self, data: Union[dict, IO] = None, **kwargs) -> dict:
+    def createSegment(self, data: dict | str = None, **kwargs) -> dict:
+        """
+        Create a segment.
+        Arguments:
+            data : REQUIRED : Dictionary or JSON file path to create a segment
+        possible kwargs:
+            encoding : if you pass a JSON file, you can change the encoding to read it.
+        """
+        if data is None:
+            raise ValueError("Require some data to validate")
+        if self.loggingEnabled:
+            self.logger.debug(f"createSegment start")
+        path = "/segments"
+        if ".json" in data:
+            with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
+                data = json.load(f)
+        elif type(data) == dict:
+            data = data
+        else:
+            raise ValueError("Data must be a dictionary or a JSON file path")
+        res = self.connector.postData(self.endpoint + path, data=data)
+        return res
+
+    @deprecation.deprecated(
+        deprecated_in="0.3.1",
+        removed_in="1.0",
+        current_version=__version__,
+        details="Use the createSegment() instead."
+        )
+    def createFilter(self, data: dict | str = None, **kwargs) -> dict:
         """
         Create a filter.
         Arguments:
-            data : REQUIRED : Dictionary or JSON file to create a filter
+            data : REQUIRED : Dictionary or JSON file path to create a filter
         possible kwargs:
             encoding : if you pass a JSON file, you can change the encoding to read it.
         """
@@ -1389,9 +1596,47 @@ class CJA:
         if ".json" in data:
             with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
                 data = json.load(f)
+        elif type(data) == dict:
+            data = data
+        else:
+            raise ValueError("Data must be a dictionary or a JSON file path")
         res = self.connector.postData(self.endpoint + path, data=data)
         return res
 
+    def updateSegment(
+            self, segmentId: str = None, data: Union[dict, IO] = None, **kwargs
+        ) -> dict:
+            """
+            Update a segment based on the segment ID.
+            Arguments:
+                segmentId : REQUIRED : Segment ID to be updated
+                data : REQUIRED : Dictionary or JSON file to update the segment
+            possible kwargs:
+                encoding : if you pass a JSON file, you can change the encoding to read it.
+            """
+            if segmentId is None:
+                raise ValueError("Require a segment ID")
+            if data is None:
+                raise ValueError("Require some data to validate")
+            if self.loggingEnabled:
+                self.logger.debug(f"updateSegment start, id: {segmentId}")
+            path = f"/segments/{segmentId}"
+            if ".json" in data:
+                with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
+                    data = json.load(f)
+            elif type(data) == dict:
+                data = data
+            else:
+                raise ValueError("Data must be a dictionary or a JSON file path")
+            res = self.connector.putData(self.endpoint + path, data=data, **kwargs)
+            return res
+
+    @deprecation.deprecated(
+        deprecated_in="0.3.1",
+        removed_in="1.0",
+        current_version=__version__,
+        details="Use the updateSegment() instead."
+        )
     def updateFilter(
         self, filterId: str = None, data: Union[dict, IO] = None, **kwargs
     ) -> dict:
@@ -1412,7 +1657,11 @@ class CJA:
         path = f"/filters/{filterId}"
         if ".json" in data:
             with open(data, "r", encoding=kwargs.get("encoding", "utf-8")) as f:
-                data = json.load(f.read())
+                data = json.load(f)
+        elif type(data) == dict:
+            data = data
+        else:
+            raise ValueError("Data must be a dictionary or a JSON file path")
         res = self.connector.putData(self.endpoint + path, data=data, **kwargs)
         return res
 
@@ -1465,7 +1714,7 @@ class CJA:
         if componentId is not None:
             params["componentId"] = componentId
         if userType is not None:
-            params["userType"]
+            params["userType"] = userType
         if userId is not None:
             params["userId"] = userId
         if userEmail is not None:
@@ -1485,6 +1734,7 @@ class CJA:
             if save:
                 with open(f"audit_logs_{int(time.time())}.json", "w") as f:
                     f.write(json.dumps(data))
+            return data
         df = pd.DataFrame(data)
         try:
             df["userId"] = df["user"].apply(lambda x: x.get("id", ""))
@@ -1935,18 +2185,21 @@ class CJA:
         res = self.connector.postData(self.endpoint + path, data=projectDefinition, **kwargs)
         return res
 
-    def validateProject(self, projectDefinition: dict = None) -> dict:
+    def validateProject(self, projectDefinition: dict | str = None) -> dict:
         """
         Validates a Project definition.
         Arguments:
-            projectDefinition : REQUIRED : the project dictionary defining the creation.
+            projectDefinition : REQUIRED : the project dictionary or string to a JSON path defining the creation.
         """
+        if type(projectDefinition) == str and 'json' in projectDefinition:
+            with open(projectDefinition, 'r') as f:
+                projectDefinition = json.load(f)
         if projectDefinition is None or type(projectDefinition) != dict:
             raise ValueError("a project definition dictionary is required")
         if self.loggingEnabled:
             self.logger.debug(f"validateProject start")
         path = "/projects/validate"
-        data = {"projects": projectDefinition}
+        data = {"project": projectDefinition}
         res = self.connector.postData(self.endpoint + path, data=data)
         return res
 
@@ -2257,8 +2510,8 @@ class CJA:
         useResultsCache: bool = False,
         includeOberonXml: bool = False,
         includePredictiveObjects: bool = False,
-        returnsNone: bool = None,
-        countRepeatInstances: bool = None,
+        returnsNone: bool = False,
+        countRepeatInstances: Optional[bool] = None,
         ignoreZeroes: bool = None,
         dataViewId: str = None,
         resolveColumns: bool = True,
@@ -2276,8 +2529,8 @@ class CJA:
             useResultsCache : OPTIONAL : Use results caching for faster reporting times (This is a pass through to Oberon which manages the Cache)
             includeOberonXml : OPTIONAL : Controls if Oberon XML should be returned in the response - DEBUG ONLY
             includePredictiveObjects : OPTIONAL : Controls if platform Predictive Objects should be returned in the response. Only available when using Anomaly Detection or Forecasting- DEBUG ONLY
-            returnsNone : OPTIONAL: Overwritte the request setting to return None values.
-            countRepeatInstances : OPTIONAL: Overwritte the request setting to count repeatInstances values.
+            returnsNone : OPTIONAL: Default False. Overwritte the request setting to return None values. If more than one dimension, None are automatically reported.
+            countRepeatInstances : OPTIONAL: Overrides the request setting when supplied. Otherwise preserves it, defaulting to False if absent.
             ignoreZeroes : OPTIONAL : Ignore zeros in the results
             dataViewId : OPTIONAL : Overwrite the data View ID used for report. Only works if the same components are presents.
             resolveColumns: OPTIONAL : automatically resolve columns from ID to name for calculated metrics & segments. Default True. (works on returnClass only)
@@ -2306,14 +2559,14 @@ class CJA:
         ### Settings
         dataRequest["settings"]["page"] = 0
         dataRequest["settings"]["limit"] = limit
-        if returnsNone is None or len(dataRequest.get("dimensions",[])) >1 :
+        if returnsNone is None or len(dataRequest.get("dimensions",[])) >1 or returnsNone is True:
             dataRequest["settings"]["nonesBehavior"] = "return-nones"
         else:
             dataRequest["settings"]["nonesBehavior"] = "exclude-nones"
-        if countRepeatInstances:
-            dataRequest["settings"]["countRepeatInstances"] = True
+        if countRepeatInstances is not None:
+            dataRequest["settings"]["countRepeatInstances"] = countRepeatInstances
         else:
-            dataRequest["settings"]["countRepeatInstances"] = False
+            dataRequest["settings"].setdefault("countRepeatInstances", False)
         if dataViewId is not None:
             dataRequest["dataId"] = dataViewId
         if ignoreZeroes:

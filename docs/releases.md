@@ -3,6 +3,15 @@
 This page will give you the change that are occuring when a new version has been published on pypi.
 The changes have been tracked starting version 0.1.0
 
+## 0.3.1
+* Adding pagination support for `getTags` method in `CJA` class.
+* Adding the segments methods and deprecating the old filter methods.
+* Fix `getUsers` method
+* Fix `createTags` method to reject non-list payloads.
+* Fix `validateProject` method to accept both dictionary and JSON file path as input.
+* Fix `deleteTags` method to use documented query parameter names.
+* Fix `getTags` method to correctly handle array responses and pagination.
+
 ## 0.3.0
 * changing the `setDimension` method in `RequestCreator` to `setDimensions` to support multiple dimensions at the same time
 * Adding the capability to import multiple config files and save them as different class instances.
