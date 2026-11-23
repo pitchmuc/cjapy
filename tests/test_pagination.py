@@ -16,7 +16,7 @@ PAGED_CASES = [
         "lastPage",
     ),
     ("getMetrics", {"dataviewId": "dv-1"}, "/data/dataviews/dv-1/metrics", "lastPage"),
-    ("getDataViews", {}, "/data/dataviews", "last"),
+    ("getDataViews", {}, "/data/dataviews", "lastPage"),
     ("getConnections", {}, "/data/connections", "lastPage"),
     ("getProjects", {"limit": 1}, "/projects", "lastPage"),
 ]
@@ -154,3 +154,50 @@ def test_audit_logs_dataframe_flattens_metadata(client, queued_pages):
         "Project",
     ]
     assert [kwargs["params"]["pageNumber"] for _, kwargs in calls] == [0, 1]
+
+
+def test_data_views_follow_recorded_page_shape(client, queued_pages):
+    """The data views endpoint sends lastPage and no last key.
+
+    These page fields were recorded from a real org (content left out): 111
+    data views across two pages of 100. Stopping on a missing ``last`` key
+    returned only the first page.
+    """
+    calls = queued_pages(
+        [
+            {
+                "content": [{"id": "dv-1"}],
+                "firstPage": True,
+                "lastPage": False,
+                "number": 0,
+                "numberOfElements": 100,
+                "size": 100,
+                "sort": None,
+                "totalElements": 111,
+                "totalPages": 2,
+            },
+            {
+                "content": [{"id": "dv-2"}],
+                "firstPage": False,
+                "lastPage": True,
+                "number": 1,
+                "numberOfElements": 11,
+                "size": 100,
+                "sort": None,
+                "totalElements": 111,
+                "totalPages": 2,
+            },
+        ]
+    )
+    assert client.getDataViews(output="raw") == [{"id": "dv-1"}, {"id": "dv-2"}]
+    assert [kwargs["params"]["page"] for _, kwargs in calls] == [0, 1]
+
+
+def test_data_views_still_accept_a_last_key(client, queued_pages):
+    queued_pages(
+        [
+            {"content": [{"id": "dv-1"}], "last": False},
+            {"content": [{"id": "dv-2"}], "last": True},
+        ]
+    )
+    assert client.getDataViews(output="raw") == [{"id": "dv-1"}, {"id": "dv-2"}]
