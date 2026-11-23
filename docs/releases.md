@@ -3,14 +3,24 @@
 This page will give you the change that are occuring when a new version has been published on pypi.
 The changes have been tracked starting version 0.1.0
 
-## 0.3.1
+## 0.3.2
 * Adding pagination support for `getTags` method in `CJA` class.
-* Adding the segments methods and deprecating the old filter methods.
+* Adding the segments methods (`getSegments`, `getSegment`, `createSegment`, `updateSegment`, `deleteSegment`, `validateSegment`) and deprecating the old filter methods.
 * Fix `getUsers` method
 * Fix `createTags` method to reject non-list payloads.
 * Fix `validateProject` method to accept both dictionary and JSON file path as input.
 * Fix `deleteTags` method to use documented query parameter names.
 * Fix `getTags` method to correctly handle array responses and pagination.
+* `getMetrics` and `getCalculatedMetrics` with `output="raw"` now return the list of all pages instead of the last page's response.
+* `createCalculatedMetric`, `validateCalculatedMetric` and `updateCalculatedMetrics` accept a JSON file path as well as a dictionary.
+* Fix `createDateRange` method to use POST.
+* Fix `getReport` to keep the request's `countRepeatInstances` setting unless the argument is given.
+* Fix `updateDateRange` in `RequestCreator` when the request has no date range yet.
+* Fix `to_csv` and `to_json` in `Workspace` class.
+* Packaging: the `pathlib`, `pathlib2` and `pytest` packages are no longer installed with cjapy. `pytest` moves to the `test` extra. Python 3.10 or later is required.
+
+## 0.3.1
+* Packaging only: fix the dependency on the `deprecation` package and remove the `PyJWT` package (see 0.3.0 patch notes).
 
 ## 0.3.0
 * changing the `setDimension` method in `RequestCreator` to `setDimensions` to support multiple dimensions at the same time
