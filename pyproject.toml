@@ -49,3 +49,4 @@ version = {attr = "cjapy.__version__.__version__"}
 
 [project.optional-dependencies]
 test = ["pytest>=9.0.3"]
+models = ["pydantic>=2,<3"]

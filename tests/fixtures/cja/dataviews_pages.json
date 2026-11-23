@@ -1,0 +1,186 @@
+[
+  {
+    "content": [
+      {
+        "containerNames": {
+          "event": "str_15",
+          "people": "str_13",
+          "person": "str_13",
+          "session": "str_14"
+        },
+        "createdDate": "str_7",
+        "curationEnabled": "true",
+        "currentTimezoneOffset": -5.0,
+        "description": "str_2",
+        "externalData": {
+          "externalId": "str_11",
+          "externalParentId": "str_12"
+        },
+        "id": "str_16",
+        "isDeleted": false,
+        "modifiedBy": "str_9",
+        "modifiedDate": "str_6",
+        "name": "str_1",
+        "organization": "str_8",
+        "owner": {
+          "imsUserId": "str_3",
+          "name": "str_4",
+          "ownerId": "str_3",
+          "type": "imsUser"
+        },
+        "parentConnectionId": "str_5",
+        "parentDataGroupId": "str_5",
+        "recentRecordedAccess": "str_10",
+        "segmentList": [],
+        "sessionDefinition": [
+          {
+            "func": "inactivity",
+            "granularity": "minute",
+            "numPeriods": 30
+          }
+        ],
+        "timezoneDesignator": "US/Eastern"
+      },
+      {
+        "containerNames": {
+          "event": "str_15",
+          "people": "str_13",
+          "person": "str_13",
+          "session": "str_14"
+        },
+        "createdDate": "str_20",
+        "curationEnabled": "true",
+        "currentTimezoneOffset": 0.0,
+        "description": "str_2",
+        "externalData": {
+          "externalId": "str_22",
+          "externalParentId": "str_23"
+        },
+        "id": "str_24",
+        "isDeleted": false,
+        "modifiedBy": "str_9",
+        "modifiedDate": "str_19",
+        "name": "str_17",
+        "organization": "str_8",
+        "owner": {
+          "imsUserId": "str_3",
+          "name": "str_4",
+          "ownerId": "str_3",
+          "type": "imsUser"
+        },
+        "parentConnectionId": "str_18",
+        "parentDataGroupId": "str_18",
+        "recentRecordedAccess": "str_21",
+        "segmentList": [],
+        "sessionDefinition": [
+          {
+            "func": "inactivity",
+            "granularity": "minute",
+            "numPeriods": 30
+          }
+        ],
+        "timezoneDesignator": "GMT"
+      }
+    ],
+    "firstPage": true,
+    "lastPage": false,
+    "number": 0,
+    "numberOfElements": 2,
+    "size": 2,
+    "sort": null,
+    "totalElements": 111,
+    "totalPages": 56
+  },
+  {
+    "content": [
+      {
+        "containerNames": {
+          "event": "str_15",
+          "people": "str_13",
+          "person": "str_13",
+          "session": "str_14"
+        },
+        "createdDate": "str_29",
+        "curationEnabled": "true",
+        "currentTimezoneOffset": 0.0,
+        "description": "str_2",
+        "externalData": {
+          "externalId": "str_31",
+          "externalParentId": "str_32"
+        },
+        "id": "str_33",
+        "isDeleted": false,
+        "modifiedBy": "str_30",
+        "modifiedDate": "str_28",
+        "name": "str_25",
+        "organization": "str_8",
+        "owner": {
+          "imsUserId": "str_26",
+          "name": "str_4",
+          "ownerId": "str_26",
+          "type": "imsUser"
+        },
+        "parentConnectionId": "str_27",
+        "parentDataGroupId": "str_27",
+        "recentRecordedAccess": "str_21",
+        "segmentList": [],
+        "sessionDefinition": [
+          {
+            "func": "inactivity",
+            "granularity": "minute",
+            "numPeriods": 30
+          }
+        ],
+        "timezoneDesignator": "GMT"
+      },
+      {
+        "containerNames": {
+          "event": "str_15",
+          "people": "str_13",
+          "person": "str_13",
+          "session": "str_14"
+        },
+        "createdDate": "str_37",
+        "curationEnabled": "true",
+        "currentTimezoneOffset": -5.0,
+        "description": "str_2",
+        "externalData": {
+          "externalId": "str_38",
+          "externalParentId": "str_39"
+        },
+        "id": "str_40",
+        "isDeleted": false,
+        "modifiedBy": "str_9",
+        "modifiedDate": "str_36",
+        "name": "str_34",
+        "organization": "str_8",
+        "owner": {
+          "imsUserId": "str_3",
+          "name": "str_4",
+          "ownerId": "str_3",
+          "type": "imsUser"
+        },
+        "parentConnectionId": "str_35",
+        "parentDataGroupId": "str_35",
+        "recentRecordedAccess": "str_21",
+        "segmentList": [],
+        "sessionDefinition": [
+          {
+            "func": "inactivity",
+            "granularity": "minute",
+            "numPeriods": 30
+          }
+        ],
+        "timezoneDesignator": "US/Eastern"
+      }
+    ],
+    "firstPage": false,
+    "lastPage": false,
+    "number": 1,
+    "numberOfElements": 2,
+    "size": 2,
+    "sort": null,
+    "totalElements": 111,
+    "totalPages": 56
+  }
+]

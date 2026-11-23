@@ -1,0 +1,45 @@
+{
+  "containerNames": {
+    "event": "str_15",
+    "people": "str_13",
+    "person": "str_13",
+    "session": "str_14"
+  },
+  "createdDate": "str_47",
+  "curationEnabled": "true",
+  "currentTimezoneOffset": -8.0,
+  "description": "str_2",
+  "editableByUser": false,
+  "externalData": {
+    "externalId": "str_50",
+    "externalParentId": "str_42"
+  },
+  "id": "str_51",
+  "isDeleted": false,
+  "modifiedBy": "str_48",
+  "modifiedDate": "str_46",
+  "name": "str_41",
+  "organization": "str_8",
+  "owner": {
+    "imsUserId": "str_3",
+    "name": "str_4",
+    "ownerId": "str_3",
+    "type": "imsUser"
+  },
+  "parentConnectionId": "str_42",
+  "parentDataGroupId": "str_42",
+  "recentRecordedAccess": "str_49",
+  "segmentList": [
+    "str_43",
+    "str_44",
+    "str_45"
+  ],
+  "sessionDefinition": [
+    {
+      "func": "inactivity",
+      "granularity": "minute",
+      "numPeriods": 30
+    }
+  ],
+  "timezoneDesignator": "US/Pacific"
+}

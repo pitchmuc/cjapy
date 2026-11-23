@@ -1,0 +1,2292 @@
+[
+  {
+    "content": [
+      {
+        "approved": false,
+        "attributes": [
+          "str_59",
+          "str_60"
+        ],
+        "baseTableName": "str_54",
+        "dataSetType": "event",
+        "defaultDimensionSort": true,
+        "derivedFieldCompatible": true,
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_55",
+            "label": "str_56"
+          },
+          {
+            "field": "str_56",
+            "func": "timezone-shift",
+            "label": "str_57",
+            "timezone": "str_58"
+          },
+          {
+            "custom-calendar": {
+              "type": "GREGORIAN"
+            },
+            "field": "str_57",
+            "func": "datetime-bucket",
+            "granularity": "SECOND"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "id": "str_52",
+        "name": "str_53",
+        "noValueOptionsSetting": {
+          "includeNoneByDefault": false,
+          "noneChangeable": false
+        },
+        "required": true,
+        "segmentable": true,
+        "sourceFieldType": "standard",
+        "tags": [],
+        "type": "time",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": false,
+        "dataSetIds": [
+          "str_67"
+        ],
+        "dataSetType": "event",
+        "defaultDimensionSort": false,
+        "description": "str_63",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_64",
+            "label": "str_56"
+          },
+          {
+            "end": {
+              "delimiter": "str_68",
+              "func": "delimiter",
+              "inclusive": false,
+              "index": 0
+            },
+            "field": "str_56",
+            "func": "substring",
+            "label": "str_57"
+          },
+          {
+            "field": "str_57",
+            "func": "lowercase"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_61",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "multiValued": false,
+        "name": "str_62",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": false,
+          "noneChangeable": true,
+          "noneSettingType": "str_69"
+        },
+        "persistenceSetting": {
+          "allocationModel": {
+            "context": "str_71",
+            "func": "allocation-firstKnown_dim"
+          },
+          "enabled": true
+        },
+        "schemaPath": "str_64",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldId": "str_64",
+        "sourceFieldName": "str_65",
+        "sourceFieldType": "custom",
+        "storageId": "str_66",
+        "tableName": "str_54",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "companyCount": 1,
+          "count": 0,
+          "itemId": "str_61",
+          "mostRecentTimestamp": null,
+          "relevancyScore": 0.004761905
+        }
+      },
+      {
+        "approved": false,
+        "dataSetIds": [
+          "str_77",
+          "str_78"
+        ],
+        "dataSetType": "event",
+        "defaultDimensionSort": false,
+        "description": "str_74",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_75"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_72",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "multiValued": false,
+        "name": "str_73",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": true,
+          "noneChangeable": true,
+          "noneSettingType": "str_79"
+        },
+        "persistenceSetting": {
+          "enabled": false
+        },
+        "schemaPath": "str_75",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldId": "str_75",
+        "sourceFieldName": "str_65",
+        "sourceFieldType": "custom",
+        "storageId": "str_76",
+        "tableName": "str_54",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": false,
+        "dataSetIds": [
+          "str_84"
+        ],
+        "dataSetType": "lookup",
+        "defaultDimensionSort": false,
+        "description": "str_2",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_87",
+            "label": "str_88"
+          },
+          {
+            "func": "raw-field",
+            "id": "str_82",
+            "label": "str_57"
+          },
+          {
+            "func": "raw-field",
+            "id": "str_89",
+            "label": "str_90"
+          },
+          {
+            "func": "classify",
+            "mapping": {
+              "func": "external",
+              "key-field": "str_90",
+              "value-field": "str_57"
+            },
+            "source-field": "str_88"
+          }
+        ],
+        "fromGlobalLookup": true,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_80",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "multiValued": false,
+        "name": "str_81",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": true,
+          "noneChangeable": true,
+          "noneSettingType": "str_79"
+        },
+        "persistenceSetting": {
+          "enabled": false
+        },
+        "schemaPath": "str_86",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldId": "str_82",
+        "sourceFieldName": "str_81",
+        "sourceFieldType": "globalLookup",
+        "storageId": "str_83",
+        "tableName": "str_85",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": true,
+        "dataSetIds": [
+          "str_67",
+          "str_96"
+        ],
+        "dataSetType": "event",
+        "defaultDimensionSort": false,
+        "description": "str_93",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_94",
+            "label": "str_56"
+          },
+          {
+            "field": "str_56",
+            "func": "lowercase"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_91",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "labels": [
+          {
+            "dataViewId": "str_51",
+            "defaultComponentIds": [],
+            "defaultSchemaPaths": [
+              "str_94",
+              "str_101",
+              "str_102"
+            ],
+            "description": "str_100",
+            "id": "str_98",
+            "labelGroupIds": [
+              "str_103"
+            ],
+            "mappedToId": "str_91",
+            "name": "str_99",
+            "organization": "str_8",
+            "reportingIdentity": "str_104"
+          }
+        ],
+        "multiValued": true,
+        "name": "str_92",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": false,
+          "noneChangeable": true,
+          "noneSettingType": "str_69"
+        },
+        "persistenceSetting": {
+          "enabled": false
+        },
+        "schemaPath": "str_94",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldId": "str_94",
+        "sourceFieldName": "str_65",
+        "sourceFieldType": "custom",
+        "storageId": "str_95",
+        "tableName": "str_97",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "companyCount": 7,
+          "count": 0,
+          "itemId": "str_91",
+          "mostRecentTimestamp": null,
+          "relevancyScore": 0.033333335
+        }
+      },
+      {
+        "approved": false,
+        "dataSetIds": [
+          "str_108",
+          "str_67",
+          "str_96"
+        ],
+        "defaultDimensionSort": false,
+        "description": "str_2",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_94",
+            "label": "str_94"
+          },
+          {
+            "func": "raw-field",
+            "id": "str_110",
+            "label": "str_110"
+          },
+          {
+            "func": "raw-field",
+            "id": "str_111",
+            "label": "str_111"
+          },
+          {
+            "#dataset": "str_108",
+            "#rule_description": "str_2",
+            "#rule_id": "str_112",
+            "#rule_name": "str_113",
+            "#rule_type": "str_114",
+            "func": "classify",
+            "label": "str_112",
+            "mapping": {
+              "func": "external",
+              "key-field": "str_110",
+              "value-field": "str_111"
+            },
+            "source-field": "str_94"
+          },
+          {
+            "#rule_description": "str_2",
+            "#rule_id": "str_135",
+            "#rule_name": "str_134",
+            "#rule_type": "str_136",
+            "branches": [
+              {
+                "map-to": "str_116",
+                "pred": {
+                  "func": "streq",
+                  "val": "str_115"
+                }
+              },
+              {
+                "map-to": "str_118",
+                "pred": {
+                  "func": "streq",
+                  "val": "str_117"
+                }
+              },
+              {
+                "map-to": "str_118",
+                "pred": {
+                  "func": "streq",
+                  "val": "str_119"
+                }
+              },
+              {
+                "map-to": "str_121",
+                "pred": {
+                  "func": "streq",
+                  "val": "str_120"
+                }
+              },
+              {
+                "map-to": "str_118",
+                "pred": {
+                  "func": "streq",
+                  "val": "str_122"
+                }
+              },
+              {
+                "map-to": "str_124",
+                "pred": {
+                  "func": "streq",
+                  "val": "str_123"
+                }
+              },
+              {
+                "map-to": "str_121",
+                "pred": {
+                  "func": "streq",
+                  "val": "str_125"
+                }
+              },
+              {
+                "map-to": "str_116",
+                "pred": {
+                  "func": "streq",
+                  "val": "str_126"
+                }
+              },
+              {
+                "map-to": "str_121",
+                "pred": {
+                  "func": "streq",
+                  "val": "str_127"
+                }
+              },
+              {
+                "map-to": "str_121",
+                "pred": {
+                  "func": "streq",
+                  "val": "str_128"
+                }
+              },
+              {
+                "map-to": "str_118",
+                "pred": {
+                  "func": "streq",
+                  "val": "str_129"
+                }
+              },
+              {
+                "map-to": "str_121",
+                "pred": {
+                  "func": "streq",
+                  "val": "str_130"
+                }
+              },
+              {
+                "map-to": "str_116",
+                "pred": {
+                  "func": "streq",
+                  "val": "str_131"
+                }
+              },
+              {
+                "map-to": "str_116",
+                "pred": {
+                  "func": "streq",
+                  "val": "str_132"
+                }
+              },
+              {
+                "map-to": "str_118",
+                "pred": {
+                  "func": "streq",
+                  "val": "str_133"
+                }
+              },
+              {
+                "pred": {
+                  "func": "true"
+                }
+              }
+            ],
+            "field": "str_112",
+            "func": "match"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_105",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "name": "str_106",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": true,
+          "noneChangeable": true,
+          "noneSettingType": "str_79"
+        },
+        "persistenceSetting": {
+          "enabled": false
+        },
+        "schemaPath": "str_109",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldName": "str_107",
+        "sourceFieldType": "derived",
+        "tableName": "str_97",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": false,
+        "dataSetIds": [
+          "str_142"
+        ],
+        "dataSetType": "lookup",
+        "defaultDimensionSort": false,
+        "description": "str_139",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_144",
+            "label": "str_88"
+          },
+          {
+            "func": "raw-field",
+            "id": "str_140",
+            "label": "str_57"
+          },
+          {
+            "func": "raw-field",
+            "id": "str_145",
+            "label": "str_90"
+          },
+          {
+            "func": "classify",
+            "mapping": {
+              "func": "external",
+              "key-field": "str_90",
+              "value-field": "str_57"
+            },
+            "source-field": "str_88"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_137",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "labels": [
+          {
+            "dataViewId": "str_51",
+            "defaultComponentIds": [],
+            "defaultSchemaPaths": [],
+            "description": "str_148",
+            "id": "str_146",
+            "labelGroupIds": [
+              "str_149"
+            ],
+            "mappedToId": "str_137",
+            "name": "str_147",
+            "organization": "str_8",
+            "reportingIdentity": "str_150"
+          }
+        ],
+        "multiValued": true,
+        "name": "str_138",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": true,
+          "noneChangeable": true,
+          "noneSettingType": "str_79"
+        },
+        "persistenceSetting": {
+          "allocationModel": {
+            "expiration": {
+              "context": "str_71",
+              "func": "allocation-container"
+            },
+            "func": "allocation-lastTouch_dim"
+          },
+          "enabled": true
+        },
+        "schemaPath": "str_143",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldId": "str_140",
+        "sourceFieldName": "str_138",
+        "sourceFieldType": "custom",
+        "storageId": "str_141",
+        "tableName": "str_85",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": false,
+        "attributes": [
+          "str_60"
+        ],
+        "dataSetType": "event",
+        "defaultDimensionSort": true,
+        "derivedFieldCompatible": false,
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_55",
+            "label": "str_153"
+          },
+          {
+            "field": "str_153",
+            "func": "to-timestamp",
+            "granularity": "second",
+            "label": "str_154"
+          },
+          {
+            "bead-field": "str_154",
+            "func": "select-last-of",
+            "label": "str_155",
+            "strand-container": {
+              "context": "str_156"
+            }
+          },
+          {
+            "bead-field": "str_154",
+            "func": "select-first-of",
+            "label": "str_157",
+            "strand-container": {
+              "context": "str_156"
+            }
+          },
+          {
+            "fields": [
+              "str_155",
+              "str_157"
+            ],
+            "func": "subtract",
+            "label": "str_158"
+          },
+          {
+            "branches": [
+              {
+                "map-to": {
+                  "enum-type": "str_159",
+                  "type": "enum",
+                  "value": 0
+                },
+                "pred": {
+                  "field": "str_158",
+                  "func": "lt",
+                  "val": 1
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_159",
+                  "type": "enum",
+                  "value": 1
+                },
+                "pred": {
+                  "field": "str_158",
+                  "func": "lt",
+                  "val": 60
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_159",
+                  "type": "enum",
+                  "value": 60
+                },
+                "pred": {
+                  "field": "str_158",
+                  "func": "lt",
+                  "val": 300
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_159",
+                  "type": "enum",
+                  "value": 300
+                },
+                "pred": {
+                  "field": "str_158",
+                  "func": "lt",
+                  "val": 600
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_159",
+                  "type": "enum",
+                  "value": 600
+                },
+                "pred": {
+                  "field": "str_158",
+                  "func": "lt",
+                  "val": 1800
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_159",
+                  "type": "enum",
+                  "value": 1800
+                },
+                "pred": {
+                  "field": "str_158",
+                  "func": "lt",
+                  "val": 3600
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_159",
+                  "type": "enum",
+                  "value": 3600
+                },
+                "pred": {
+                  "field": "str_158",
+                  "func": "lt",
+                  "val": 7200
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_159",
+                  "type": "enum",
+                  "value": 7200
+                },
+                "pred": {
+                  "field": "str_158",
+                  "func": "lt",
+                  "val": 18000
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_159",
+                  "type": "enum",
+                  "value": 18000
+                },
+                "pred": {
+                  "field": "str_158",
+                  "func": "lt",
+                  "val": 36000
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_159",
+                  "type": "enum",
+                  "value": 36000
+                },
+                "pred": {
+                  "field": "str_158",
+                  "func": "lt",
+                  "val": 54000
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_159",
+                  "type": "enum",
+                  "value": 54000
+                },
+                "pred": {
+                  "func": "true"
+                }
+              }
+            ],
+            "field": "str_158",
+            "func": "match"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_151",
+        "name": "str_152",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "noneSettingType": "str_69"
+        },
+        "segmentable": true,
+        "sourceFieldType": "standard",
+        "tags": [],
+        "type": "ordered-enum",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": false,
+        "dataSetIds": [
+          "str_142"
+        ],
+        "dataSetType": "lookup",
+        "defaultDimensionSort": false,
+        "description": "str_162",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_144",
+            "label": "str_88"
+          },
+          {
+            "func": "raw-field",
+            "id": "str_163",
+            "label": "str_57"
+          },
+          {
+            "func": "raw-field",
+            "id": "str_145",
+            "label": "str_90"
+          },
+          {
+            "func": "classify",
+            "mapping": {
+              "func": "external",
+              "key-field": "str_90",
+              "value-field": "str_57"
+            },
+            "source-field": "str_88"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_160",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "multiValued": true,
+        "name": "str_161",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": true,
+          "noneChangeable": true,
+          "noneSettingType": "str_79"
+        },
+        "persistenceSetting": {
+          "enabled": false
+        },
+        "schemaPath": "str_165",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldId": "str_163",
+        "sourceFieldName": "str_161",
+        "sourceFieldType": "custom",
+        "storageId": "str_164",
+        "tableName": "str_85",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": false,
+        "attributes": [
+          "str_59",
+          "str_60"
+        ],
+        "baseTableName": "str_54",
+        "dataSetType": "event",
+        "defaultDimensionSort": true,
+        "derivedFieldCompatible": true,
+        "description": "str_168",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_55",
+            "label": "str_56"
+          },
+          {
+            "field": "str_56",
+            "func": "timezone-shift",
+            "label": "str_57",
+            "timezone": "str_58"
+          },
+          {
+            "custom-calendar": {
+              "type": "GREGORIAN"
+            },
+            "field": "str_57",
+            "func": "datetime-bucket",
+            "granularity": "DAY"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_166",
+        "name": "str_167",
+        "noValueOptionsSetting": {},
+        "required": true,
+        "segmentable": true,
+        "sourceFieldType": "standard",
+        "tags": [],
+        "type": "time",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": false,
+        "attributes": [
+          "str_60"
+        ],
+        "baseTableName": "str_54",
+        "dataSetType": "event",
+        "defaultDimensionSort": false,
+        "derivedFieldCompatible": true,
+        "description": "str_171",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_55",
+            "label": "str_56"
+          },
+          {
+            "field": "str_56",
+            "func": "timezone-shift",
+            "label": "str_57",
+            "timezone": "str_58"
+          },
+          {
+            "custom-calendar": {
+              "type": "GREGORIAN"
+            },
+            "field": "str_57",
+            "func": "datetime-slice",
+            "slice": "str_172"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_169",
+        "name": "str_170",
+        "noValueOptionsSetting": {},
+        "segmentable": true,
+        "sourceFieldType": "standard",
+        "tags": [],
+        "type": "ordered-enum",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": false,
+        "dataSetIds": [
+          "str_67"
+        ],
+        "dataSetType": "event",
+        "defaultDimensionSort": false,
+        "description": "str_175",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_176"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_173",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "multiValued": false,
+        "name": "str_174",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": true,
+          "noneChangeable": true,
+          "noneSettingType": "str_79"
+        },
+        "persistenceSetting": {
+          "enabled": false
+        },
+        "schemaPath": "str_176",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldId": "str_176",
+        "sourceFieldName": "str_177",
+        "sourceFieldType": "custom",
+        "storageId": "str_178",
+        "tableName": "str_54",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": true,
+        "dataSetIds": [
+          "str_184",
+          "str_185",
+          "str_77",
+          "str_78",
+          "str_186",
+          "str_67",
+          "str_96"
+        ],
+        "dataSetType": "event",
+        "defaultDimensionSort": false,
+        "description": "str_181",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_182"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_179",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "multiValued": false,
+        "name": "str_180",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": true,
+          "noneChangeable": true,
+          "noneSettingType": "str_79"
+        },
+        "persistenceSetting": {
+          "enabled": false
+        },
+        "schemaPath": "str_182",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldId": "str_182",
+        "sourceFieldName": "str_180",
+        "sourceFieldType": "custom",
+        "storageId": "str_183",
+        "tableName": "str_54",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "companyCount": 2,
+          "count": 0,
+          "itemId": "str_179",
+          "mostRecentTimestamp": null,
+          "relevancyScore": 0.00952381
+        }
+      },
+      {
+        "approved": true,
+        "dataSetIds": [
+          "str_67"
+        ],
+        "defaultDimensionSort": false,
+        "description": "str_189",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_64",
+            "label": "str_64"
+          },
+          {
+            "#rule_description": "str_2",
+            "#rule_id": "str_112",
+            "#rule_name": "str_113",
+            "#rule_type": "str_190",
+            "bead-field": "str_64",
+            "func": "shift-field-values",
+            "include-repeats": false,
+            "shift-offset": 1,
+            "strand-container": {
+              "context": "str_156"
+            }
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_187",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "name": "str_188",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": true,
+          "noneChangeable": true,
+          "noneSettingType": "str_79"
+        },
+        "persistenceSetting": {
+          "enabled": false
+        },
+        "schemaPath": "str_109",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldName": "str_188",
+        "sourceFieldType": "derived",
+        "tableName": "str_54",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "companyCount": 1,
+          "count": 0,
+          "itemId": "str_187",
+          "mostRecentTimestamp": null,
+          "relevancyScore": 0.004761905
+        }
+      },
+      {
+        "approved": false,
+        "baseTableName": "str_54",
+        "dataSetType": "event",
+        "defaultDimensionSort": false,
+        "derivedFieldCompatible": true,
+        "description": "str_193",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_194"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_191",
+        "name": "str_192",
+        "noValueOptionsSetting": {
+          "includeNoneByDefault": false,
+          "noneChangeable": false
+        },
+        "segmentable": true,
+        "sourceFieldType": "standard",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": false,
+        "attributes": [
+          "str_60"
+        ],
+        "baseTableName": "str_54",
+        "dataSetType": "event",
+        "defaultDimensionSort": false,
+        "derivedFieldCompatible": true,
+        "description": "str_197",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_55",
+            "label": "str_56"
+          },
+          {
+            "field": "str_56",
+            "func": "timezone-shift",
+            "label": "str_57",
+            "timezone": "str_58"
+          },
+          {
+            "custom-calendar": {
+              "type": "GREGORIAN"
+            },
+            "field": "str_57",
+            "func": "datetime-slice",
+            "slice": "str_198"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "id": "str_195",
+        "name": "str_196",
+        "noValueOptionsSetting": {
+          "includeNoneByDefault": false,
+          "noneChangeable": false
+        },
+        "required": true,
+        "segmentable": true,
+        "sourceFieldType": "standard",
+        "tags": [],
+        "type": "ordered-enum",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": false,
+        "dataSetIds": [
+          "str_77",
+          "str_78"
+        ],
+        "dataSetType": "event",
+        "defaultDimensionSort": false,
+        "description": "str_201",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_202"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_199",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "multiValued": true,
+        "name": "str_200",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": true,
+          "noneChangeable": true,
+          "noneSettingType": "str_79"
+        },
+        "persistenceSetting": {
+          "enabled": false
+        },
+        "schemaPath": "str_202",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldId": "str_202",
+        "sourceFieldName": "str_200",
+        "sourceFieldType": "custom",
+        "storageId": "str_203",
+        "tableName": "str_204",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": false,
+        "dataSetIds": [
+          "str_77",
+          "str_78"
+        ],
+        "dataSetType": "event",
+        "defaultDimensionSort": false,
+        "description": "str_207",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_208"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_205",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "multiValued": true,
+        "name": "str_206",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": true,
+          "noneChangeable": true,
+          "noneSettingType": "str_79"
+        },
+        "persistenceSetting": {
+          "enabled": false
+        },
+        "schemaPath": "str_208",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldId": "str_208",
+        "sourceFieldName": "str_206",
+        "sourceFieldType": "custom",
+        "storageId": "str_209",
+        "tableName": "str_204",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": false,
+        "dataSetIds": [
+          "str_67"
+        ],
+        "defaultDimensionSort": false,
+        "description": "str_2",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_213",
+            "label": "str_213"
+          },
+          {
+            "#rule_id": "str_112",
+            "branches": [
+              {
+                "map-to": "str_214",
+                "pred": {
+                  "func": "true"
+                }
+              }
+            ],
+            "field": "str_213",
+            "func": "match",
+            "label": "str_215"
+          },
+          {
+            "#rule_description": "str_2",
+            "#rule_id": "str_112",
+            "#rule_name": "str_217",
+            "#rule_type": "str_218",
+            "fields": [
+              "str_215",
+              "str_213"
+            ],
+            "func": "join",
+            "label": "str_112",
+            "separator": "str_216"
+          },
+          {
+            "#rule_description": "str_2",
+            "#rule_id": "str_219",
+            "#rule_name": "str_220",
+            "#rule_type": "str_221",
+            "component": {
+              "func": "path"
+            },
+            "field": "str_213",
+            "func": "url-parse",
+            "label": "str_219"
+          },
+          {
+            "#rule_description": "str_2",
+            "#rule_id": "str_135",
+            "#rule_name": "str_134",
+            "#rule_type": "str_286",
+            "branches": [
+              {
+                "map-to": "str_231",
+                "pred": {
+                  "func": "or",
+                  "preds": [
+                    {
+                      "field": "str_219",
+                      "func": "contains",
+                      "val": "str_222"
+                    },
+                    {
+                      "field": "str_219",
+                      "func": "streq",
+                      "val": "str_223"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "starts-with",
+                      "val": "str_224"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "starts-with",
+                      "val": "str_225"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "starts-with",
+                      "val": "str_226"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "starts-with",
+                      "val": "str_227"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "starts-with",
+                      "val": "str_228"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "starts-with",
+                      "val": "str_229"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "starts-with",
+                      "val": "str_230"
+                    }
+                  ]
+                }
+              },
+              {
+                "map-to": "str_246",
+                "pred": {
+                  "func": "or",
+                  "preds": [
+                    {
+                      "field": "str_213",
+                      "func": "starts-with",
+                      "val": "str_232"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "starts-with",
+                      "val": "str_233"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "streq",
+                      "val": "str_234"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "starts-with",
+                      "val": "str_235"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_236"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "streq",
+                      "val": "str_237"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "ends-with",
+                      "val": "str_238"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "streq",
+                      "val": "str_239"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "streq",
+                      "val": "str_240"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "streq",
+                      "val": "str_241"
+                    },
+                    {
+                      "field": "str_219",
+                      "func": "streq",
+                      "val": "str_242"
+                    },
+                    {
+                      "field": "str_219",
+                      "func": "streq",
+                      "val": "str_243"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "streq",
+                      "val": "str_244"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "starts-with",
+                      "val": "str_245"
+                    }
+                  ]
+                }
+              },
+              {
+                "map-to": "str_253",
+                "pred": {
+                  "func": "or",
+                  "preds": [
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_247"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_248"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_249"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_250"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_251"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_252"
+                    }
+                  ]
+                }
+              },
+              {
+                "map-to": "str_261",
+                "pred": {
+                  "func": "or",
+                  "preds": [
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_254"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_255"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_256"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_257"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_258"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_259"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_260"
+                    }
+                  ]
+                }
+              },
+              {
+                "map-to": "str_263",
+                "pred": {
+                  "field": "str_213",
+                  "func": "contains",
+                  "val": "str_262"
+                }
+              },
+              {
+                "map-to": "str_266",
+                "pred": {
+                  "func": "or",
+                  "preds": [
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_264"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "starts-with",
+                      "val": "str_265"
+                    }
+                  ]
+                }
+              },
+              {
+                "map-to": "str_269",
+                "pred": {
+                  "func": "or",
+                  "preds": [
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_267"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "starts-with",
+                      "val": "str_268"
+                    }
+                  ]
+                }
+              },
+              {
+                "map-to": "str_271",
+                "pred": {
+                  "field": "str_213",
+                  "func": "contains",
+                  "val": "str_270"
+                }
+              },
+              {
+                "map-to": "str_278",
+                "pred": {
+                  "func": "or",
+                  "preds": [
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_272"
+                    },
+                    {
+                      "field": "str_219",
+                      "func": "contains",
+                      "val": "str_273"
+                    },
+                    {
+                      "field": "str_219",
+                      "func": "contains",
+                      "val": "str_274"
+                    },
+                    {
+                      "field": "str_219",
+                      "func": "contains",
+                      "val": "str_275"
+                    },
+                    {
+                      "field": "str_219",
+                      "func": "streq",
+                      "val": "str_276"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_277"
+                    }
+                  ]
+                }
+              },
+              {
+                "map-to": "str_279",
+                "pred": {
+                  "func": "not",
+                  "pred": {
+                    "field": "str_213",
+                    "func": "isset"
+                  }
+                }
+              },
+              {
+                "map-to": "str_283",
+                "pred": {
+                  "func": "or",
+                  "preds": [
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_280"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_281"
+                    },
+                    {
+                      "field": "str_213",
+                      "func": "contains",
+                      "val": "str_282"
+                    }
+                  ]
+                }
+              },
+              {
+                "map-to": "str_285",
+                "pred": {
+                  "field": "str_213",
+                  "func": "starts-with",
+                  "val": "str_284"
+                }
+              },
+              {
+                "map-to": {
+                  "type": "field",
+                  "value": "str_112"
+                },
+                "pred": {
+                  "func": "true"
+                }
+              }
+            ],
+            "case-sensitive": false,
+            "field": "str_112",
+            "func": "match"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_210",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "name": "str_211",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": true,
+          "noneChangeable": true,
+          "noneSettingType": "str_79"
+        },
+        "persistenceSetting": {
+          "enabled": false
+        },
+        "schemaPath": "str_109",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldName": "str_212",
+        "sourceFieldType": "derived",
+        "tableName": "str_54",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": false,
+        "attributes": [
+          "str_60"
+        ],
+        "baseTableName": "str_54",
+        "dataSetType": "event",
+        "defaultDimensionSort": false,
+        "derivedFieldCompatible": true,
+        "description": "str_289",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_55",
+            "label": "str_56"
+          },
+          {
+            "field": "str_56",
+            "func": "timezone-shift",
+            "label": "str_57",
+            "timezone": "str_58"
+          },
+          {
+            "custom-calendar": {
+              "type": "GREGORIAN"
+            },
+            "field": "str_57",
+            "func": "datetime-slice",
+            "slice": "str_290"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_287",
+        "name": "str_288",
+        "noValueOptionsSetting": {},
+        "segmentable": true,
+        "sourceFieldType": "standard",
+        "tags": [],
+        "type": "ordered-enum",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": true,
+        "dataSetIds": [
+          "str_67"
+        ],
+        "dataSetType": "event",
+        "defaultDimensionSort": false,
+        "description": "str_293",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_294"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_291",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "multiValued": false,
+        "name": "str_292",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": true,
+          "noneChangeable": true,
+          "noneSettingType": "str_79"
+        },
+        "persistenceSetting": {
+          "enabled": false
+        },
+        "schemaPath": "str_294",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldId": "str_294",
+        "sourceFieldName": "str_292",
+        "sourceFieldType": "custom",
+        "storageId": "str_295",
+        "tableName": "str_54",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "companyCount": 1,
+          "count": 0,
+          "itemId": "str_291",
+          "mostRecentTimestamp": null,
+          "relevancyScore": 0.004761905
+        }
+      },
+      {
+        "approved": true,
+        "defaultDimensionSort": false,
+        "description": "str_298",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "field-def-reference",
+            "id": "str_300",
+            "label": "str_300",
+            "namespace": "str_299"
+          },
+          {
+            "#rule_description": "str_303",
+            "#rule_id": "str_304",
+            "#rule_name": "str_297",
+            "#rule_type": "str_286",
+            "branches": [
+              {
+                "map-to": "str_301",
+                "pred": {
+                  "func": "or",
+                  "preds": [
+                    {
+                      "field": "str_300",
+                      "func": "eq",
+                      "val": 11
+                    },
+                    {
+                      "field": "str_300",
+                      "func": "eq",
+                      "val": 12
+                    }
+                  ]
+                }
+              },
+              {
+                "map-to": "str_302",
+                "pred": {
+                  "func": "true"
+                }
+              }
+            ],
+            "case-sensitive": false,
+            "field": "str_300",
+            "func": "match"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_296",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "name": "str_297",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": true,
+          "noneChangeable": true,
+          "noneSettingType": "str_79"
+        },
+        "persistenceSetting": {
+          "allocationModel": {
+            "expiration": {
+              "context": "str_71",
+              "func": "allocation-container"
+            },
+            "func": "allocation-lastTouch_dim"
+          },
+          "enabled": true
+        },
+        "schemaPath": "str_109",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldName": "str_297",
+        "sourceFieldType": "derived",
+        "tableName": "str_54",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": false,
+        "attributes": [
+          "str_60"
+        ],
+        "dataSetType": "event",
+        "defaultDimensionSort": true,
+        "derivedFieldCompatible": false,
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_55",
+            "label": "str_153"
+          },
+          {
+            "field": "str_153",
+            "func": "to-timestamp",
+            "granularity": "second",
+            "label": "str_154"
+          },
+          {
+            "bead-field": "str_154",
+            "func": "diff",
+            "label": "str_307",
+            "strand-container": {
+              "context": "str_156"
+            }
+          },
+          {
+            "branches": [
+              {
+                "map-to": null,
+                "pred": {
+                  "func": "not",
+                  "pred": {
+                    "field": "str_307",
+                    "func": "isset"
+                  }
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_308",
+                  "type": "enum",
+                  "value": 0
+                },
+                "pred": {
+                  "field": "str_307",
+                  "func": "lt",
+                  "val": 15
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_308",
+                  "type": "enum",
+                  "value": 15
+                },
+                "pred": {
+                  "field": "str_307",
+                  "func": "lt",
+                  "val": 30
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_308",
+                  "type": "enum",
+                  "value": 30
+                },
+                "pred": {
+                  "field": "str_307",
+                  "func": "lt",
+                  "val": 60
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_308",
+                  "type": "enum",
+                  "value": 60
+                },
+                "pred": {
+                  "field": "str_307",
+                  "func": "lt",
+                  "val": 180
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_308",
+                  "type": "enum",
+                  "value": 180
+                },
+                "pred": {
+                  "field": "str_307",
+                  "func": "lt",
+                  "val": 300
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_308",
+                  "type": "enum",
+                  "value": 300
+                },
+                "pred": {
+                  "field": "str_307",
+                  "func": "lt",
+                  "val": 600
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_308",
+                  "type": "enum",
+                  "value": 600
+                },
+                "pred": {
+                  "field": "str_307",
+                  "func": "lt",
+                  "val": 900
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_308",
+                  "type": "enum",
+                  "value": 900
+                },
+                "pred": {
+                  "field": "str_307",
+                  "func": "lt",
+                  "val": 1200
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_308",
+                  "type": "enum",
+                  "value": 1200
+                },
+                "pred": {
+                  "field": "str_307",
+                  "func": "lt",
+                  "val": 1800
+                }
+              },
+              {
+                "map-to": {
+                  "enum-type": "str_308",
+                  "type": "enum",
+                  "value": 1800
+                },
+                "pred": {
+                  "func": "true"
+                }
+              }
+            ],
+            "field": "str_307",
+            "func": "match"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_305",
+        "name": "str_306",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "noneSettingType": "str_69"
+        },
+        "segmentable": true,
+        "sourceFieldType": "standard",
+        "tags": [],
+        "type": "ordered-enum",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": false,
+        "dataSetIds": [
+          "str_77",
+          "str_78"
+        ],
+        "dataSetType": "event",
+        "defaultDimensionSort": false,
+        "description": "str_311",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_312"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_309",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "multiValued": false,
+        "name": "str_310",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": true,
+          "noneChangeable": true,
+          "noneSettingType": "str_79"
+        },
+        "persistenceSetting": {
+          "enabled": false
+        },
+        "schemaPath": "str_312",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldId": "str_312",
+        "sourceFieldName": "str_313",
+        "sourceFieldType": "custom",
+        "storageId": "str_314",
+        "tableName": "str_54",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "count": 0,
+          "itemId": null,
+          "mostRecentTimestamp": null
+        }
+      },
+      {
+        "approved": true,
+        "dataSetIds": [
+          "str_67"
+        ],
+        "dataSetType": "event",
+        "defaultDimensionSort": false,
+        "description": "str_317",
+        "favorite": false,
+        "fieldDefinition": [
+          {
+            "func": "raw-field",
+            "id": "str_213",
+            "label": "str_56"
+          },
+          {
+            "component": {
+              "func": "query",
+              "param": "str_320"
+            },
+            "field": "str_56",
+            "func": "url-parse",
+            "label": "str_57"
+          },
+          {
+            "field": "str_57",
+            "func": "lowercase"
+          }
+        ],
+        "fromGlobalLookup": false,
+        "hasData": true,
+        "hidden": false,
+        "hideFromReporting": false,
+        "id": "str_315",
+        "includeExcludeSetting": {
+          "enabled": false
+        },
+        "multiValued": false,
+        "name": "str_316",
+        "noValueOptionsSetting": {
+          "customNoneValue": "str_70",
+          "includeNoneByDefault": true,
+          "noneChangeable": true,
+          "noneSettingType": "str_79"
+        },
+        "persistenceSetting": {
+          "enabled": false
+        },
+        "schemaPath": "str_213",
+        "schemaType": "string",
+        "segmentable": true,
+        "sourceFieldId": "str_213",
+        "sourceFieldName": "str_318",
+        "sourceFieldType": "custom",
+        "storageId": "str_319",
+        "tableName": "str_54",
+        "tags": [],
+        "type": "string",
+        "usageSummary": {
+          "companyCount": 3,
+          "count": 0,
+          "itemId": "str_315",
+          "mostRecentTimestamp": null,
+          "relevancyScore": 0.014285715
+        }
+      }
+    ],
+    "firstPage": true,
+    "lastPage": true,
+    "number": 0,
+    "numberOfElements": 92,
+    "size": 92,
+    "sort": null,
+    "totalElements": 92,
+    "totalPages": 1
+  }
+]

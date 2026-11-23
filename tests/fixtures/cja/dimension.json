@@ -1,0 +1,50 @@
+{
+  "approved": false,
+  "attributes": [
+    "str_59",
+    "str_60"
+  ],
+  "dataSetType": "event",
+  "defaultDimensionSort": true,
+  "favorite": false,
+  "fieldDefinition": [
+    {
+      "func": "raw-field",
+      "id": "str_55",
+      "label": "str_56"
+    },
+    {
+      "field": "str_56",
+      "func": "timezone-shift",
+      "label": "str_57",
+      "timezone": "str_58"
+    },
+    {
+      "custom-calendar": {
+        "type": "GREGORIAN"
+      },
+      "field": "str_57",
+      "func": "datetime-bucket",
+      "granularity": "SECOND"
+    }
+  ],
+  "fromGlobalLookup": false,
+  "hasData": true,
+  "hidden": false,
+  "id": "str_52",
+  "name": "str_53",
+  "noValueOptionsSetting": {
+    "includeNoneByDefault": false,
+    "noneChangeable": false
+  },
+  "required": true,
+  "segmentable": true,
+  "sourceFieldType": "standard",
+  "tags": [],
+  "type": "time",
+  "usageSummary": {
+    "count": 0,
+    "itemId": null,
+    "mostRecentTimestamp": null
+  }
+}
