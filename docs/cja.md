@@ -656,7 +656,7 @@ Arguments:
 * includeOberonXml : OPTIONAL : Controls if Oberon XML should be returned in the response - DEBUG ONLY
 * includePredictiveObjects : OPTIONAL : Controls if platform Predictive Objects should be returned in the response. Only available when using Anomaly Detection or Forecasting- DEBUG ONLY
 * returnsNone : OPTIONAL: Overwritte the request setting to return None values.
-* countRepeatInstance : OPTIONAL: Overwritte the request setting to count repeatInstances values.
+* countRepeatInstances : OPTIONAL: Overrides the request setting when supplied. If omitted, preserves the request setting, defaulting to False if absent.
 * ignoreZeroes : OPTIONAL : Ignore zeros in the results
 * dataViewId : OPTIONAL : Overwrite the data View ID used for report. Only works if the same components are presents.
 * resolveColumns: OPTIONAL : automatically resolve columns from ID to name for calculated metrics & segments. Default True. (works on returnClass only)

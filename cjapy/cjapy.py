@@ -3,7 +3,7 @@
 import json
 from copy import deepcopy
 from pathlib import Path
-from typing import IO, Union, List
+from typing import IO, Union, List, Optional
 from collections import defaultdict, deque
 import time, logging, re
 from itertools import tee
@@ -2511,7 +2511,7 @@ class CJA:
         includeOberonXml: bool = False,
         includePredictiveObjects: bool = False,
         returnsNone: bool = False,
-        countRepeatInstances: bool = False,
+        countRepeatInstances: Optional[bool] = None,
         ignoreZeroes: bool = None,
         dataViewId: str = None,
         resolveColumns: bool = True,
@@ -2530,7 +2530,7 @@ class CJA:
             includeOberonXml : OPTIONAL : Controls if Oberon XML should be returned in the response - DEBUG ONLY
             includePredictiveObjects : OPTIONAL : Controls if platform Predictive Objects should be returned in the response. Only available when using Anomaly Detection or Forecasting- DEBUG ONLY
             returnsNone : OPTIONAL: Default False. Overwritte the request setting to return None values. If more than one dimension, None are automatically reported.
-            countRepeatInstances : OPTIONAL: Default False. Overwritte the request setting to count repeatInstances values.
+            countRepeatInstances : OPTIONAL: Overrides the request setting when supplied. Otherwise preserves it, defaulting to False if absent.
             ignoreZeroes : OPTIONAL : Ignore zeros in the results
             dataViewId : OPTIONAL : Overwrite the data View ID used for report. Only works if the same components are presents.
             resolveColumns: OPTIONAL : automatically resolve columns from ID to name for calculated metrics & segments. Default True. (works on returnClass only)
@@ -2563,10 +2563,10 @@ class CJA:
             dataRequest["settings"]["nonesBehavior"] = "return-nones"
         else:
             dataRequest["settings"]["nonesBehavior"] = "exclude-nones"
-        if countRepeatInstances:
-            dataRequest["settings"]["countRepeatInstances"] = True
+        if countRepeatInstances is not None:
+            dataRequest["settings"]["countRepeatInstances"] = countRepeatInstances
         else:
-            dataRequest["settings"]["countRepeatInstances"] = False
+            dataRequest["settings"].setdefault("countRepeatInstances", False)
         if dataViewId is not None:
             dataRequest["dataId"] = dataViewId
         if ignoreZeroes:

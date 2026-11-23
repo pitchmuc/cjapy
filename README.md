@@ -102,7 +102,6 @@ status for all 21 issues.
 
 | Method | Observed defect |
 | --- | --- |
-| `CJA.getReport` | An omitted repeat-instance override still replaces the supplied setting with `False` (ISSUE-18). |
 | `Workspace.to_csv` | Passes pandas an unsupported `delimiter` keyword instead of `sep` (ISSUE-19). |
 
 ## Others Sources
