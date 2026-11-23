@@ -1,96 +1,109 @@
-import importlib
-import importlib.util
-import sys
-from copy import deepcopy
-from pathlib import Path
-from unittest.mock import Mock
+"""Local transport fixtures; no Adobe credentials or external connections."""
+
+import json
+import socket
+from collections import deque
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from threading import Thread
+from types import SimpleNamespace
 
 import pytest
-import requests
+import urllib3.util.retry as retry_module
+
+from cjapy.connector import AdobeRequest
 
 
 @pytest.fixture(autouse=True)
-def no_network(monkeypatch):
-    def blocked(*args, **kwargs):
-        pytest.fail("Tests must not make HTTP requests")
+def loopback_only(monkeypatch):
+    """Fail before DNS or a connection can reach anything except our IPv4 server."""
+    original_getaddrinfo = socket.getaddrinfo
+    original_connect = socket.socket.connect
 
-    monkeypatch.setattr(requests.sessions.Session, "request", blocked)
+    def getaddrinfo(host, *args, **kwargs):
+        assert host == "127.0.0.1", "Tests may only resolve the local HTTP server"
+        return original_getaddrinfo(host, *args, **kwargs)
+
+    def connect(sock, address):
+        assert address[0] == "127.0.0.1", "Tests may only connect to loopback"
+        return original_connect(sock, address)
+
+    monkeypatch.setattr(socket, "getaddrinfo", getaddrinfo)
+    monkeypatch.setattr(socket.socket, "connect", connect)
 
 
-@pytest.fixture(scope="session")
-def sdk():
-    """Unblock method tests without hiding the independent import smoke failure."""
-    package = Path(__file__).resolve().parents[1] / "cjapy"
-    if (package / "version.py").exists():
-        return importlib.import_module("cjapy")
-    spec = importlib.util.spec_from_file_location(
-        "cjapy.version", package / "__version__.py"
+@pytest.fixture
+def retry_clock(monkeypatch):
+    """Keep Retry's calculations real; record waits without wall-clock delays."""
+    sleeps = []
+    monkeypatch.setattr(
+        retry_module, "time", SimpleNamespace(time=lambda: 1700000000, sleep=sleeps.append)
     )
-    version = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(version)
-    with pytest.MonkeyPatch.context() as patch:
-        patch.setitem(sys.modules, "cjapy.version", version)
-        return importlib.import_module("cjapy")
+    return sleeps
 
 
 @pytest.fixture
-def isolated_config(sdk):
-    config = sdk.ConfigObj(
-        org_id="test-org@AdobeOrg",
-        client_id="test-client",
-        secret="test-secret",
-        scopes="openid,additional_info.projectedProductContext",
-    )
-    config.config_object.update(token="test-token", date_limit=float("inf"))
-    config.header["Authorization"] = "Bearer test-token"
-    return config
+def connector_factory():
+    connectors = []
+
+    def create(**kwargs):
+        connector = AdobeRequest(
+            config_object={
+                "org_id": "test-org",
+                "token": "not-a-real-token",
+                "date_limit": float("inf"),
+            },
+            header={"Authorization": "Bearer not-a-real-token"},
+            **kwargs,
+        )
+        # Ignore the contributor's proxies and .netrc credentials.
+        connector.session.trust_env = False
+        connectors.append(connector)
+        return connector
+
+    yield create
+    for connector in connectors:
+        connector.session.close()
 
 
 @pytest.fixture
-def client(sdk, monkeypatch, isolated_config):
-    transport = Mock(
-        spec=[
-            "getData",
-            "postData",
-            "putData",
-            "patchData",
-            "deleteData",
-            "header",
-            "config",
-        ]
-    )
-    transport.header = deepcopy(isolated_config.header)
-    transport.config = deepcopy(isolated_config.config_object)
-    connector = importlib.import_module("cjapy.connector")
-    monkeypatch.setattr(connector, "AdobeRequest", Mock(return_value=transport))
-    return sdk.CJA(config_object=isolated_config)
+def http_server():
+    """Serve scripted responses through real sockets, repeating the final response."""
+    responses = deque()
+    received = []
 
+    class Handler(BaseHTTPRequestHandler):
+        def respond(self):
+            body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+            received.append({"method": self.command, "path": self.path, "body": body})
+            status, payload, headers = responses[0]
+            if len(responses) > 1:
+                responses.popleft()
+            content = json.dumps(payload).encode("utf-8")
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(content)))
+            for name, value in headers.items():
+                self.send_header(name, value)
+            self.end_headers()
+            self.wfile.write(content)
 
-@pytest.fixture
-def queued_pages(client):
-    def queue(responses):
-        calls = []
-        pages = iter(deepcopy(responses))
+        do_GET = do_POST = do_PATCH = do_PUT = do_DELETE = respond
 
-        def respond(url, **kwargs):
-            calls.append((url, deepcopy(kwargs)))
-            try:
-                return next(pages)
-            except StopIteration:
-                pytest.fail("Pagination requested an unexpected extra page")
+        def log_message(self, *args):
+            pass
 
-        client.connector.getData.side_effect = respond
-        client.connector.postData.side_effect = respond
-        return calls
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
+    thread.start()
 
-    return queue
+    def script(*items):
+        responses.extend(items)
+        return "http://127.0.0.1:{}/resource".format(server.server_port), received
 
-
-@pytest.fixture
-def report_request(sdk):
-    request = sdk.RequestCreator()
-    request.setDataViewId("dv-test")
-    request.setDimensions("variables/page")
-    request.addMetric("metrics/pageviews")
-    request.setDateRange("2025-01-01", "2025-01-31")
-    return request.to_dict()
+    try:
+        yield script
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+        assert not thread.is_alive()

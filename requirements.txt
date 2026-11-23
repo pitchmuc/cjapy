@@ -1,3 +1,7 @@
 pandas>=1.0.1
 requests>=2.22.0
+<<<<<<< HEAD
 deprecation
+=======
+deprecation
+>>>>>>> a1dfad406231ef805e839a5c2ba55481a93f6e41
