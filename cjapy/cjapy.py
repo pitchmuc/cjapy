@@ -1051,14 +1051,14 @@ class CJA:
             self.endpoint + path, params=params, verbose=verbose, **kwargs
         )
         data = res["content"]
-        last = res.get("last", True)
+        last = res.get("lastPage", res.get("last", True))
         while last != True:
             params["page"] += 1
             res = self.connector.getData(
                 self.endpoint + path, params=params, verbose=verbose, **kwargs
             )
             data += res["content"]
-            last = res.get("last", True)
+            last = res.get("lastPage", res.get("last", True))
         if output == "df":
             df = pd.DataFrame(data)
             return df
