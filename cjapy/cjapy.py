@@ -1336,7 +1336,7 @@ class CJA:
 
 
     @deprecation.deprecated(
-        deprecated_in="0.3.1",
+        deprecated_in="0.3.2",
         removed_in="1.0",
         current_version=__version__,
         details="Use the getSegments() instead."
@@ -1438,7 +1438,7 @@ class CJA:
             return res
 
     @deprecation.deprecated(
-        deprecated_in="0.3.1",
+        deprecated_in="0.3.2",
         removed_in="1.0",
         current_version=__version__,
         details="Use the getSegment() instead."
@@ -1483,7 +1483,7 @@ class CJA:
         return res
 
     @deprecation.deprecated(
-        deprecated_in="0.3.1",
+        deprecated_in="0.3.2",
         removed_in="1.0",
         current_version=__version__,
         details="Use the deleteSegment() instead."
@@ -1527,7 +1527,7 @@ class CJA:
         return res
 
     @deprecation.deprecated(
-        deprecated_in="0.3.1",
+        deprecated_in="0.3.2",
         removed_in="1.0",
         current_version=__version__,
         details="Use the validateSegment() instead."
@@ -1575,7 +1575,7 @@ class CJA:
         return res
 
     @deprecation.deprecated(
-        deprecated_in="0.3.1",
+        deprecated_in="0.3.2",
         removed_in="1.0",
         current_version=__version__,
         details="Use the createSegment() instead."
@@ -1632,7 +1632,7 @@ class CJA:
             return res
 
     @deprecation.deprecated(
-        deprecated_in="0.3.1",
+        deprecated_in="0.3.2",
         removed_in="1.0",
         current_version=__version__,
         details="Use the updateSegment() instead."
