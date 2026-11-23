@@ -76,6 +76,32 @@ cjapy.importConfigFile('myconfig.json')
 cja = cjapy.CJA()
 ```
 
+### Optional proxy
+
+To route OAuth token requests and all CJA API requests through a proxy, add a
+`"proxy"` key to your configuration JSON, pass `proxy` to `configure` or
+`ConfigObj`, or override it for an individual connection:
+
+```python
+cja = cjapy.CJA(proxy="http://proxy.example.com:8080")
+```
+
+A URL applies to both HTTP and HTTPS. You can also pass a per-protocol mapping:
+
+```python
+cja = cjapy.CJA(proxy={
+    "http": "http://proxy.example.com:8080",
+    "https": "http://proxy.example.com:8080",
+})
+```
+
+`createConfigFile(proxy="http://proxy.example.com:8080")` includes the proxy in
+the generated template. A non-empty constructor override takes precedence over
+the configuration; otherwise the configured proxy is used. When no proxy is
+configured, Requests retains its normal behavior, including `HTTP_PROXY` and
+`HTTPS_PROXY` environment variables. The normalized mapping is available as
+`cja.proxy` and `cja.connector.proxies`.
+
 ## 6. Use the methods in your instance
 
 Once you have the instance created, you can use the different methods available to them.

@@ -13,30 +13,88 @@ The methods available directly from the module are the following:
 ### createConfigFile
 
 This methods allows you to create JSON file that will host the different information required for your connection to Adobe IO and to retrieve the token.\
-It has 2 possible parameters:
+It accepts the following optional parameters:
 * filename : OPTIONAL : If you want to create your config file from a specific name
-* auth_type : OPTIONAL : By default using OauthV2 (Server-to-Server) but can be changed to `jwt`. JWT will be discontinue in 2025.
+* auth_type : OPTIONAL : Defaults to OauthV2 (Server-to-Server).
+* verbose : OPTIONAL : Print the location of the generated file.
+* proxy : OPTIONAL : Proxy URL or per-protocol mapping to include in the generated file.
 
 It usually looks like this.
 
 ```python
-import aanalytics2 as api2
-api2.createConfigFile()
+import cjapy
+cjapy.createConfigFile()
 ```
 
 As you can see, it no arguments are required and the output of the file will look like this :
 
-```JavaScript
+```json
 {
-    'org_id': '<orgId>',
-    'client_id': "<clientId>",
-    'tech_id': "<something>@techacct.adobe.com",
-    'secret': "<YourSecret>",
-    'scopes': '<scopesServerToServer>',
+    "org_id": "<orgId>",
+    "client_id": "<clientId>",
+    "secret": "<YourSecret>",
+    "scopes": "<scopesServerToServer>"
 }
 ```
 
 You update the information from the Adobe IO account that you have setup.
+
+#### Using a proxy
+
+If your network requires outbound traffic to go through a proxy (common in some corporate environments), add an optional `"proxy"` key to the config file. A URL applies to both `http` and `https` traffic, for all CJA API requests, including the initial OAuth token exchange and subsequent token refreshes.
+
+```json
+{
+    "org_id": "<orgID>",
+    "client_id": "<APIkey>",
+    "secret": "<YourSecret>",
+    "scopes": "<scopes>",
+    "proxy": "http://proxy.example.com:8080"
+}
+```
+
+This is entirely optional. Omit the key (the default) to retain Requests' normal behavior: a direct connection unless environment proxies such as `HTTP_PROXY` or `HTTPS_PROXY` are set.
+
+You can pre-fill the proxy when generating the template:
+
+```python
+cjapy.createConfigFile(proxy="http://proxy.example.com:8080")
+```
+
+You can also pass it programmatically, without a config file:
+
+```python
+cjapy.configure(
+    org_id="<orgID>",
+    client_id="<APIkey>",
+    secret="<YourSecret>",
+    scopes="<scopes>",
+    proxy="http://proxy.example.com:8080",
+)
+cja = cjapy.CJA()
+```
+
+Alternatively, pass `proxy` to `ConfigObj`, or override it per instance via `CJA(config_object=..., proxy=...)`. This is useful for setting it independently of the config file, for example from an environment variable in a deployment script:
+
+```python
+import os
+
+cjapy.importConfigFile("config.json")
+cja = cjapy.CJA(proxy=os.getenv("CJA_PROXY"))
+```
+
+`CJA_PROXY` is an example variable read explicitly by this script; the library does not read it automatically. A non-empty constructor proxy takes precedence over the configuration. An omitted or empty value falls back to the configured proxy.
+
+For separate HTTP and HTTPS proxies, use a mapping instead of a URL:
+
+```python
+cja = cjapy.CJA(proxy={
+    "http": "http://http-proxy.example.com:8080",
+    "https": "http://https-proxy.example.com:8080",
+})
+```
+
+The same mapping format is accepted in the config file and by `configure`, `ConfigObj`, and `createConfigFile`. The resolved mapping is available as `cja.proxy` and `cja.connector.proxies`.
 
 
 ### importConfigFile
@@ -66,6 +124,7 @@ It takes the following parameters:
 * client_id : REQUIRED : The client ID from your Adobe IO project.
 * secret : REQUIRED : secret generated for your connection
 * scopes : REQUIRED : The OAuth Server-to-Server scopes defined in your Adobe IO project.
+* proxy : OPTIONAL : Proxy URL or per-protocol mapping for API requests and OAuth token generation. See [Using a proxy](#using-a-proxy).
 
 ### ConfigObj and multiple CJA instances
 

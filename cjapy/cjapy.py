@@ -37,6 +37,7 @@ class CJA:
         self,
         config_object: Union[ConfigObj, dict, None] = None,
         loggingObject: dict = None,
+        proxy: str | dict[str, str] | None = None,
     ) -> None:
         """
         Instantiate the class with the information provided.
@@ -49,6 +50,8 @@ class CJA:
                 - ``None`` (default): uses the global config set by :func:`~cjapy.configure` or
                   :func:`~cjapy.importConfigFile`.
             loggingObject : OPTIONAL : If you want to set logging capability for your actions.
+            proxy : OPTIONAL : Proxy URL for both HTTP and HTTPS, or a per-protocol
+                mapping. A non-empty value overrides the proxy in the configuration.
         """
         if isinstance(config_object, ConfigObj):
             _config_object = config_object.config_object
@@ -79,8 +82,10 @@ class CJA:
             header=_header,
             loggingEnabled=self.loggingEnabled,
             logger=self.logger,
+            proxy=proxy,
         )
         self.header = self.connector.header
+        self.proxy = self.connector.proxies
         self.endpoint = config.endpoints["global"]
         self.listProjectIds = []
         self.projectsDetails = {}

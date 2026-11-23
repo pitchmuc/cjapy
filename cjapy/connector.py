@@ -1,7 +1,7 @@
 import json
 import time
 from copy import deepcopy
-from typing import Dict
+from typing import Dict, Optional
 
 # Non standard libraries
 import requests
@@ -9,6 +9,15 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from cjapy import config
+
+
+def normalize_proxy(proxy: str | dict[str, str] | None) -> Optional[dict[str, str]]:
+    """Convert a proxy URL or per-protocol mapping to requests' proxy format."""
+    if not proxy:
+        return None
+    if isinstance(proxy, str):
+        return {"http": proxy, "https": proxy}
+    return deepcopy(proxy)
 
 
 class AdobeRequest:
@@ -28,6 +37,7 @@ class AdobeRequest:
         retry: int = 0,
         loggingEnabled: bool = False,
         logger: object = None,
+        proxy: str | dict[str, str] | None = None,
     ) -> None:
         """
         Set the connector to be used for handling request to AAM
@@ -38,12 +48,17 @@ class AdobeRequest:
             retry : OPTIONAL : If you wish to retry failed GET requests
             loggingEnabled : OPTIONAL : if the logging is enable for that instance.
             logger : OPTIONAL : instance of the logger created
+            proxy : OPTIONAL : Proxy URL for both HTTP and HTTPS, or a per-protocol
+                mapping. Falls back to config_object["proxy"] when omitted.
         """
         if config_object["org_id"] == "":
             raise Exception(
                 "You have to upload the configuration file with importConfigFile method."
             )
         self.config = deepcopy(config_object)
+        self.proxies = normalize_proxy(proxy) or normalize_proxy(self.config.get("proxy"))
+        # OAuth acquisition and refresh must use the same resolved proxy as API calls.
+        self.config["proxy"] = self.proxies
         self.header = deepcopy(header)
         self.loggingEnabled = loggingEnabled
         self.logger = logger
@@ -85,7 +100,8 @@ class AdobeRequest:
                 "scope": config["scopes"]
             }
             response = requests.post(
-                config["oauthTokenEndpoint"], data=oauth_payload
+                config["oauthTokenEndpoint"], data=oauth_payload,
+                proxies=normalize_proxy(config.get("proxy")),
             )
             responseJson = response.json()
             token = responseJson.get('access_token')
@@ -115,6 +131,8 @@ class AdobeRequest:
         session.mount("https://", adapter)
         session.mount("http://", adapter)
         session.headers.update(self.header)
+        if self.proxies:
+            session.proxies.update(self.proxies)
         return session
 
     def _checkingDate(self) -> None:

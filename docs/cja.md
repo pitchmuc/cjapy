@@ -54,6 +54,20 @@ print(fa.result())
 print(fb.result())
 ```
 
+**Optional proxy**
+
+All three configuration patterns support a proxy. `CJA` inherits the proxy from
+the configuration, or accepts a non-empty per-instance override:
+
+```python
+cja = cjapy.CJA(config_object=cfg_a, proxy="http://proxy.example.com:8080")
+```
+
+The proxy applies to API requests and OAuth token acquisition and refresh.
+It can be a URL for both HTTP and HTTPS or a per-protocol mapping.
+See [Using a proxy](./main.md#using-a-proxy) for configuration examples and
+environment-variable behavior.
+
 In the following part, I will explain the GET, DELETE and CREATE methods that are available on your instance of this class.\
 At the end, we will focus briefly on the `getReport` method available.
 

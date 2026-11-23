@@ -7,6 +7,7 @@ config_object = {
     "scopes":"",
     "imsEndpoint":"https://ims-na1.adobelogin.com",
     "oauthTokenEndpoint": "",
+    "proxy": None,
 }
 header = {"Accept": "application/json",
           "Content-Type": "application/json",
