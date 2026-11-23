@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from typing import Optional
 import time
+from copy import deepcopy
 
 # Non standard libraries
 from cjapy.config import config_object, header
@@ -31,6 +32,7 @@ def createConfigFile(
     filename: str = "config_analytics_template.json",
     auth_type:str = "OauthV2",
     verbose: bool = False, 
+    proxy: str | dict[str, str] | None = None,
      **kwargs
 ) -> None:
     """Creates a `config_admin.json` file with the pre-defined configuration format
@@ -39,6 +41,7 @@ def createConfigFile(
         filename : OPTIONAL : : name of the config file.
         auth_type : OPTIONAL : type of authentication. Default is oauthV2
         verbose : OPTIONAL : set to true, gives you a print stateent where is the location.
+        proxy : OPTIONAL : Proxy URL or per-protocol mapping to include in the template.
     """
     json_data = {
         "org_id": "<orgID>",
@@ -46,6 +49,8 @@ def createConfigFile(
         "secret": "<YourSecret>",
         "scopes": "<scope1,scope2>",
     }
+    if proxy is not None:
+        json_data["proxy"] = proxy
     with open(filename, "w") as cf:
         cf.write(json.dumps(json_data, indent=4))
     if verbose:
@@ -66,6 +71,7 @@ def importConfigFile(
         path: REQUIRED : path to the configuration file. Can be either a fully-qualified or relative.
         client_secret_index : OPTIONAL : choose which of your client secrets that you want to use, specify the index, default 0.
         return_object : OPTIONAL : If True, returns a ConfigObj instance instead of updating the global config. Default False.
+        The optional "proxy" key is loaded as a URL or per-protocol mapping.
     
     Example of path value.
     "config.json"
@@ -119,14 +125,10 @@ def importConfigFile(
             "client_id": client_id,
             "secret": client_secret,
             "scopes": ",".join(scopes) if type(scopes) == list else scopes.replace(' ',''),
+            "proxy": provided_config.get("proxy"),
         }
         if return_object:
-            return ConfigObj(
-                org_id=args["org_id"],
-                client_id=args["client_id"],
-                secret=args["secret"],
-                scopes=args["scopes"],
-            )
+            return ConfigObj(**args)
         configure(**args)
 
 
@@ -136,6 +138,7 @@ def configure(
     client_id: str = None,
     scopes: str = None,
     return_object: bool = False,
+    proxy: str | dict[str, str] | None = None,
 ) -> Optional["ConfigObj"]:
     """Performs programmatic configuration of the API using provided values.
     Arguments:
@@ -144,6 +147,7 @@ def configure(
         client_id : REQUIRED : The client_id (old api_key) provided by the connection.
         scopes : REQUIRED : The scopes defined in your project for your API connection.
         return_object : OPTIONAL : If True, returns a ConfigObj instance instead of updating the global config. Default False.
+        proxy : OPTIONAL : Proxy URL for both HTTP and HTTPS, or a per-protocol mapping.
     """
     if not org_id:
         raise ValueError("`org_id` must be specified in the configuration.")
@@ -159,6 +163,7 @@ def configure(
     header["x-gw-ims-org-id"] = org_id
     config_object["secret"] = secret
     config_object["scopes"] = scopes
+    config_object["proxy"] = deepcopy(proxy)
     config_object["oauthTokenEndpoint"] = f"{config_object['imsEndpoint']}/ims/token/v3"
 
     # ensure the reset of the state by overwriting possible values from previous import.
@@ -170,6 +175,7 @@ def configure(
             client_id=client_id,
             secret=secret,
             scopes=scopes,
+            proxy=proxy,
         )
 
 class ConfigObj:
@@ -189,6 +195,7 @@ class ConfigObj:
         client_id: str = "",
         secret: str = "",
         scopes: str = None,
+        proxy: str | dict[str, str] | None = None,
     ) -> None:
         ims_endpoint = "https://ims-na1.adobelogin.com"
         self.config_object: dict = {
@@ -200,6 +207,7 @@ class ConfigObj:
             "scopes": scopes,
             "imsEndpoint": ims_endpoint,
             "oauthTokenEndpoint": f"{ims_endpoint}/ims/token/v3",
+            "proxy": deepcopy(proxy),
         }
         self.header: dict = {
             "Accept": "application/json",
