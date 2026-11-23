@@ -17,7 +17,9 @@ import socket
 def blocked(*args, **kwargs):
     raise AssertionError("Package imports must not access the network")
 
+socket.getaddrinfo = blocked
 socket.socket.connect = blocked
+socket.socket.connect_ex = blocked
 import cjapy
 for name in ("config", "configs", "connector", "cjapy", "projects",
              "requestCreator", "workspace", "__version__"):

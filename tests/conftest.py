@@ -1,16 +1,97 @@
-"""Local transport fixtures; no Adobe credentials or external connections."""
+"""Offline SDK and local transport fixtures; no Adobe credentials."""
 
 import json
 import socket
 from collections import deque
+from copy import deepcopy
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
+from typing import Any, Callable, Iterator
+from unittest.mock import create_autospec
 
+import cjapy
 import pytest
 import urllib3.util.retry as retry_module
 
+from cjapy import config, configs
 from cjapy.connector import AdobeRequest
+
+
+Page = dict[str, Any]
+RequestCalls = list[tuple[str, dict[str, Any]]]
+
+
+@pytest.fixture
+def sdk(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
+    isolated_globals = {
+        "config_object": deepcopy(config.config_object),
+        "header": deepcopy(config.header),
+    }
+    # These modules import the same mutable dictionaries by reference.
+    for module in (config, configs, cjapy):
+        for name, value in isolated_globals.items():
+            monkeypatch.setattr(module, name, value)
+    return cjapy
+
+
+@pytest.fixture
+def isolated_config(sdk: ModuleType) -> cjapy.ConfigObj:
+    credentials = sdk.ConfigObj(org_id="test-org", client_id="test-client")
+    credentials.config_object.update(token="test-token", date_limit=float("inf"))
+    credentials.header["Authorization"] = "Bearer test-token"
+    return credentials
+
+
+@pytest.fixture
+def client(sdk: ModuleType, isolated_config: cjapy.ConfigObj) -> Iterator[cjapy.CJA]:
+    instance = sdk.CJA(config_object=isolated_config)
+    transport = instance.connector
+    try:
+        instance.connector = create_autospec(transport, spec_set=True)
+        yield instance
+    finally:
+        transport.session.close()
+
+
+@pytest.fixture
+def queued_pages(client: cjapy.CJA) -> Callable[[list[Page]], RequestCalls]:
+    def queue(pages: list[Page]) -> RequestCalls:
+        responses = iter(deepcopy(pages))
+        calls: RequestCalls = []
+
+        def respond(url: str, **kwargs: Any) -> Page:
+            calls.append((url, deepcopy(kwargs)))
+            try:
+                return next(responses)
+            except StopIteration:
+                pytest.fail("Unexpected extra pagination request")
+
+        client.connector.getData.side_effect = respond
+        client.connector.postData.side_effect = respond
+        return calls
+
+    return queue
+
+
+@pytest.fixture
+def report_request() -> Page:
+    return {
+        "dataId": "dv-1",
+        "dimensions": [{"columnId": "col0", "id": "variables/page"}],
+        "metricContainer": {
+            "metrics": [{"columnId": "0", "id": "metrics/pageviews"}],
+            "metricFilters": [],
+        },
+        "globalFilters": [
+            {
+                "type": "dateRange",
+                "dateRange": "2025-01-01T00:00:00.000/2025-01-31T23:59:59.999",
+            }
+        ],
+        "settings": {"countRepeatInstances": True, "page": 0, "limit": 20000},
+        "statistics": {"functions": ["col-max", "col-min"]},
+    }
 
 
 @pytest.fixture(autouse=True)
@@ -18,6 +99,7 @@ def loopback_only(monkeypatch):
     """Fail before DNS or a connection can reach anything except our IPv4 server."""
     original_getaddrinfo = socket.getaddrinfo
     original_connect = socket.socket.connect
+    original_connect_ex = socket.socket.connect_ex
 
     def getaddrinfo(host, *args, **kwargs):
         assert host == "127.0.0.1", "Tests may only resolve the local HTTP server"
@@ -27,8 +109,13 @@ def loopback_only(monkeypatch):
         assert address[0] == "127.0.0.1", "Tests may only connect to loopback"
         return original_connect(sock, address)
 
+    def connect_ex(sock, address):
+        assert address[0] == "127.0.0.1", "Tests may only connect to loopback"
+        return original_connect_ex(sock, address)
+
     monkeypatch.setattr(socket, "getaddrinfo", getaddrinfo)
     monkeypatch.setattr(socket.socket, "connect", connect)
+    monkeypatch.setattr(socket.socket, "connect_ex", connect_ex)
 
 
 @pytest.fixture
