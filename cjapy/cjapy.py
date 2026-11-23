@@ -870,7 +870,7 @@ class CJA:
 
             for dv_id, dv_name in dv_map.items():
                 try:
-                    comps = fetch_fn(dv_id, inclType=True, full=True)
+                    comps = fetch_fn(dv_id, inclType="hidden", full=True)
                     shared = comps[comps["sharedComponent"] == True][["id", "name"]]
                     results[dv_name] = set(shared["id"].tolist())
                     id_to_name.update(dict(zip(shared["id"], shared["name"])))
@@ -991,7 +991,7 @@ class CJA:
         if dataviewId is None:
             raise ValueError("Require a Data View ID")
         if metricId is None:
-            raise ValueError("Require a Dimension ID")
+            raise ValueError("Require a Metric ID")
         if self.loggingEnabled:
             self.logger.debug(f"getMetric start, id: {metricId}")
         path = f"/data/dataviews/{dataviewId}/metrics/{metricId}"
