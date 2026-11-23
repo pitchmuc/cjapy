@@ -3,7 +3,7 @@
 This page will give you the change that are occuring when a new version has been published on pypi.
 The changes have been tracked starting version 0.1.0
 
-## 0.3.1
+## 0.3.2
 * Adding pagination support for `getTags` method in `CJA` class.
 * Adding the segments methods and deprecating the old filter methods.
 * Fix `getUsers` method
