@@ -914,7 +914,7 @@ class CJA:
         Return a specific dimension based on the dataview ID and dimension ID passed.
         Arguments:
             dataviewId : REQUIRED : the Data View ID to retrieve data from.
-            dimensionId : REQUIRED : the dimension ID to return
+            dimensionId : REQUIRED : the dimension ID to return, with or without the "variables/" prefix
             full : OPTIONAL : To add additional elements (default True)
         """
         if dataviewId is None:
@@ -923,12 +923,15 @@ class CJA:
             raise ValueError("Require a Dimension ID")
         if self.loggingEnabled:
             self.logger.debug(f"getDimension start, id: {dimensionId}")
+        # getDimensions returns IDs such as "variables/page", but this endpoint
+        # takes the ID without the prefix and answers 404 otherwise.
+        dimensionId = dimensionId.removeprefix("variables/")
         path = f"/data/dataviews/{dataviewId}/dimensions/{dimensionId}"
         params = {}
         if full:
             params[
                 "expansion"
-            ] = "approved,favorite,tags,usageSummary,usageSummaryWithRelevancyScore,description,sourceFieldId,segmentable,required,hideFromReporting,hidden,includeExcludeSetting,fieldDefinition,storageId,tableName,dataSetIds,dataSetType,type,schemaPath,hasData,sourceFieldName,schemaType,sourceFieldType,fromGlobalLookup,multiValued,precision"
+            ] = "approved,favorite,tags,usageSummary,usageSummaryWithRelevancyScore,description,sourceFieldId,segmentable,required,hideFromReporting,hidden,includeExcludeSetting,fieldDefinition,bucketingSetting,noValueOptionsSetting,defaultDimensionSort,persistenceSetting,storageId,tableName,dataSetIds,dataSetType,type,schemaPath,hasData,sourceFieldName,schemaType,sourceFieldType,fromGlobalLookup,multiValued,precision"
         res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
 
@@ -985,7 +988,7 @@ class CJA:
         Return a specific metric based on the dataview ID and dimension ID passed.
         Arguments:
             dataviewId : REQUIRED : the Data View ID to retrieve data from.
-            metricId : REQUIRED : the metric ID to return
+            metricId : REQUIRED : the metric ID to return, with or without the "metrics/" prefix
             full : OPTIONAL : To add additional elements (default True)
         """
         if dataviewId is None:
@@ -994,12 +997,15 @@ class CJA:
             raise ValueError("Require a Dimension ID")
         if self.loggingEnabled:
             self.logger.debug(f"getMetric start, id: {metricId}")
+        # getMetrics returns IDs such as "metrics/visits", but this endpoint
+        # takes the ID without the prefix and answers 404 otherwise.
+        metricId = metricId.removeprefix("metrics/")
         path = f"/data/dataviews/{dataviewId}/metrics/{metricId}"
         params = {}
         if full:
             params[
                 "expansion"
-            ] = "approved,favorite,tags,usageSummary,usageSummaryWithRelevancyScore,description,sourceFieldId,segmentable,required,hideFromReporting,hidden,includeExcludeSetting,fieldDefinition,bucketingSetting,noValueOptionsSetting,defaultDimensionSort,persistenceSetting,storageId,tableName,dataSetIds,dataSetType,type,schemaPath,hasData,sourceFieldName,schemaType,sourceFieldType,fromGlobalLookup,multiValued,precision"
+            ] = "approved,favorite,tags,usageSummary,usageSummaryWithRelevancyScore,description,sourceFieldId,segmentable,required,hideFromReporting,hidden,includeExcludeSetting,fieldDefinition,storageId,tableName,dataSetIds,dataSetType,type,schemaPath,hasData,sourceFieldName,schemaType,sourceFieldType,fromGlobalLookup,multiValued,precision"
         res = self.connector.getData(self.endpoint + path, params=params, **kwargs)
         return res
 
