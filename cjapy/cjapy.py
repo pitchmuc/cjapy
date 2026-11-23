@@ -24,6 +24,14 @@ JsonOrDataFrameType = Union[pd.DataFrame, dict]
 JsonListOrDataFrameType = Union[pd.DataFrame, List[dict]]
 
 
+def _to_models(rows: list, model_name: str) -> list:
+    """Convert raw rows to cjapy.models objects. Pydantic is imported only here."""
+    from cjapy import models
+
+    model = getattr(models, model_name)
+    return [model.model_validate(row) for row in rows]
+
+
 class CJA:
     """
     Class that instantiate a connection to a single CJA API connection.
@@ -800,7 +808,8 @@ class CJA:
             dataviewId : REQUIRED : the Data View ID to retrieve data from.
             full : OPTIONAL : To add additional elements (default False)
             inclType : OPTIONAL : Possibility to add "hidden" values
-            output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
+            output : OPTIONAL : Type of output selected, either "df" (default), "raw", or "model"
+                ("model" returns cjapy.models.Dimension objects and needs: pip install cjapy[models])
         """
         if dataviewId is None:
             raise ValueError("Require a Data View ID")
@@ -829,6 +838,8 @@ class CJA:
         if output == "df":
             df = pd.DataFrame(dimensions)
             return df
+        if output == "model":
+            return _to_models(dimensions, "Dimension")
         return dimensions
 
     def getSharedComponentsMatrix(self, include_dimensions=True, include_metrics=True):
@@ -947,7 +958,8 @@ class CJA:
             dataviewId : REQUIRED : the Data View ID to retrieve data from.
             full : OPTIONAL : To add additional elements (default False)
             inclType : OPTIONAL : Possibility to add "hidden" values
-            output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
+            output : OPTIONAL : Type of output selected, either "df" (default), "raw", or "model"
+                ("model" returns cjapy.models.Metric objects and needs: pip install cjapy[models])
         """
         if dataviewId is None:
             raise ValueError("Require a Data View ID")
@@ -976,6 +988,8 @@ class CJA:
         if output =='df':
             df = pd.DataFrame(metrics)
             return df
+        if output == "model":
+            return _to_models(metrics, "Metric")
         return metrics
 
     def getMetric(
@@ -1021,7 +1035,8 @@ class CJA:
         Arguments:
             limit : OPTIONAL : number of results per request (default 100)
             full : OPTIONAL : define if all possible information are returned (default True).
-            output : OPTIONAL : Type of output selected, either "df" (default) or "raw"
+            output : OPTIONAL : Type of output selected, either "df" (default), "raw", or "model"
+                ("model" returns cjapy.models.DataView objects and needs: pip install cjapy[models])
             parentDataGroupId : OPTIONAL : Filters data views by a single parentDataGroupId
             externalIds : OPTIONAL : Comma-delimited list of external ids to limit the response with.
             externalParentIds : OPTIONAL : Comma-delimited list of external parent ids to limit the response with.
@@ -1062,6 +1077,8 @@ class CJA:
         if output == "df":
             df = pd.DataFrame(data)
             return df
+        if output == "model":
+            return _to_models(data, "DataView")
         return data
 
     def getDataView(

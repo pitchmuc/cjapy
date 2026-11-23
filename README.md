@@ -15,6 +15,7 @@ Documentation is split in different places:
 * Workspace class documentation: [Workspace class](./docs/workspace.md)
 * RequestCreator class documentation: [RequestCreator class](./docs/requestCreator.md)
 * Project class documentation : [Project class](./docs/projects.md)
+* Optional Pydantic models: [cjapy models](./docs/models.md)
 
 ## Versions
 

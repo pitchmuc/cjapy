@@ -1,0 +1,54 @@
+{
+  "approved": false,
+  "attributes": [
+    "str_59",
+    "str_60"
+  ],
+  "baseTableName": "str_323",
+  "dataSetType": "event",
+  "derivedFieldCompatible": true,
+  "description": "str_193",
+  "favorite": false,
+  "fieldDefinition": [
+    {
+      "func": "raw-field",
+      "id": "str_324",
+      "label": "str_325"
+    },
+    {
+      "branches": [
+        {
+          "map-to": 1,
+          "pred": {
+            "field": "str_325",
+            "func": "is_visitors_first",
+            "lookback": 13
+          }
+        },
+        {
+          "map-to": 0,
+          "pred": {
+            "func": "true"
+          }
+        }
+      ],
+      "field": "str_325",
+      "func": "match"
+    }
+  ],
+  "fromGlobalLookup": false,
+  "hasData": true,
+  "hidden": false,
+  "hideFromReporting": false,
+  "id": "str_321",
+  "name": "str_322",
+  "segmentable": true,
+  "sourceFieldType": "standard",
+  "tags": [],
+  "type": "int",
+  "usageSummary": {
+    "count": 0,
+    "itemId": null,
+    "mostRecentTimestamp": null
+  }
+}
